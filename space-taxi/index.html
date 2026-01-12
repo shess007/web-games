@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Space Taxi Ultra - Sassy Edition</title>
+    <title>Space Taxi Ultra - Sound & Music Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -50,6 +50,8 @@
         #passenger-comment {
             transition: opacity 0.3s;
         }
+        .speed-safe { color: #0f0; text-shadow: 0 0 5px #0f0; }
+        .speed-danger { color: #f33; text-shadow: 0 0 5px #f33; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -59,23 +61,24 @@
         <div id="ui" class="absolute top-0 left-0 w-full p-4 flex justify-between ui-panel text-xs md:text-sm z-10 select-none pointer-events-none">
             <div class="flex gap-6">
                 <div>
-                    CASH: $<span id="cash">0</span><br>
-                    PASSENGERS: <span id="pass-count">0/3</span>
+                    KONTO: $<span id="cash">0</span><br>
+                    PASSAGIERE: <span id="pass-count">0/3</span>
                 </div>
                 <div>
-                    FUEL: <span id="fuel-val">100</span>%
+                    TANK: <span id="fuel-val">100</span>%
                     <div class="w-24 h-2 bg-gray-800 mt-1 border border-gray-600">
                         <div id="fuel-bar" class="h-full bg-green-500" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
             <div class="text-center flex flex-col items-center flex-1 px-4">
-                <span id="message" class="text-yellow-400 font-bold uppercase text-sm md:text-lg">Initializing...</span>
+                <span id="message" class="text-yellow-400 font-bold uppercase text-sm md:text-lg">Bereit zum Start</span>
                 <span id="passenger-comment" class="text-white italic text-[10px] md:text-xs opacity-0"></span>
             </div>
             <div class="text-right">
                 LEVEL: <span id="level-idx">1</span><br>
-                GO TO: <span id="target" class="text-white">-</span>
+                SPEED: <span id="speed-val" class="speed-safe">0.0</span><br>
+                ZIEL: <span id="target" class="text-white">-</span>
             </div>
         </div>
 
@@ -85,9 +88,9 @@
             <p id="overlay-msg" class="mb-8 text-sm md:text-base leading-relaxed">
                 Transportiere 3 Passagiere pro Level.<br>
                 Nutze die grünen Tankstellen zum Auffüllen.<br>
-                Vermeide die roten Hindernisse!
+                Landung nur bei <span class="text-green-400">grüner Geschwindigkeitsanzeige</span>!
             </p>
-            <button id="start-btn" class="px-10 py-4 bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold rounded-none border-b-4 border-yellow-800 transition-all active:translate-y-1 uppercase">Start Mission</button>
+            <button id="start-btn" class="px-10 py-4 bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold rounded-none border-b-4 border-yellow-800 transition-all active:translate-y-1 uppercase">Mission Starten</button>
         </div>
 
         <canvas id="gameCanvas" class="retro-border"></canvas>
@@ -127,6 +130,7 @@
         const VIEW_H = 600;
         const TAXI_WIDTH = 30;
         const TAXI_HEIGHT = 20;
+        const MAX_LANDING_VEL = 0.8;
 
         const camera = { x: 0, y: 0 };
         const taxi = {
@@ -142,24 +146,15 @@
         };
 
         const boardingComments = [
-            "Wird auch Zeit!",
-            "Nicht so wackelig!",
-            "Beeilung, ich hab Termine.",
-            "Ist das Ding überhaupt sicher?",
-            "Hoffentlich riecht es hier drin nicht nach Abgas.",
-            "Fliegen Sie bloß vorsichtig!"
+            "Wird auch Zeit!", "Nicht so wackelig!", "Beeilung, ich hab Termine.",
+            "Ist das Ding sicher?", "Ugh, dieser Geruch...", "Fliegen Sie vorsichtig!"
         ];
 
         const landingComments = [
-            "Trinkgeld? Träum weiter.",
-            "Eher eine Bruchlandung...",
-            "Endlich raus hier.",
-            "Suchen Sie sich einen neuen Job.",
-            "Ganz passabel... für einen Amateur.",
-            "Viel Glück noch, Sie werden es brauchen."
+            "Trinkgeld? Träum weiter.", "Eher eine Bruchlandung...", "Endlich raus hier.",
+            "Suchen Sie sich einen neuen Job.", "Passabel... für einen Amateur.", "Ganz schwache Leistung."
         ];
 
-        // Obstacle Logic
         class MovingObstacle {
             constructor(x, y, w, h, xRange, yRange, speed) {
                 this.startX = x; this.startY = y;
@@ -218,7 +213,8 @@
                     { x: 1100, y: 900, w: 150, h: 15, id: 3 },
                     { x: 100, y: 1600, w: 100, h: 15, id: 4 },
                     { x: 2100, y: 1600, w: 100, h: 15, id: 5 },
-                    { x: 1150, y: 250, w: 80, h: 15, id: 99, isFuelStation: true }
+                    { x: 1150, y: 250, w: 80, h: 15, id: 99, isFuelStation: true },
+                    { x: 1200, y: 1400, w: 80, h: 15, id: 98, isFuelStation: true } // Zweite Fuel-Station Level 2
                 ],
                 walls: [
                     { x: 0, y: 0, w: 2400, h: 25 }, { x: 0, y: 1775, w: 2400, h: 25 },
@@ -242,6 +238,72 @@
 
         let activePassenger = null;
         let audioCtx = null;
+        let noiseBuffer = null;
+        
+        let engineGainNode = null;
+        let engineFilterNode = null;
+        let noiseSource = null;
+
+        // BGM State
+        let bgmInterval = null;
+        let bgmBeat = 0;
+
+        function setupEngineAudio() {
+            if (!audioCtx) return;
+            const bufferSize = audioCtx.sampleRate * 2;
+            noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+
+            engineFilterNode = audioCtx.createBiquadFilter();
+            engineFilterNode.type = 'lowpass';
+            engineFilterNode.frequency.setValueAtTime(200, audioCtx.currentTime);
+            engineFilterNode.Q.setValueAtTime(5, audioCtx.currentTime);
+
+            engineGainNode = audioCtx.createGain();
+            engineGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            noiseSource.connect(engineFilterNode);
+            engineFilterNode.connect(engineGainNode);
+            engineGainNode.connect(audioCtx.destination);
+            noiseSource.start();
+        }
+
+        function updateEngineAudio(isThrusting) {
+            if (!engineGainNode) return;
+            const targetGain = isThrusting ? 0.2 : 0;
+            const targetFreq = isThrusting ? 1200 : 200;
+            
+            engineGainNode.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.05);
+            engineFilterNode.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+        }
+
+        function startBGM() {
+            if (bgmInterval) return;
+            // Pentatonic scale frequencies
+            const scale = [130.81, 146.83, 164.81, 196.00, 220.00]; // C2 scale
+            const arpeggio = [261.63, 329.63, 392.00, 523.25]; // C4 chords
+
+            bgmInterval = setInterval(() => {
+                if (gameState !== 'PLAYING') return;
+                
+                // Bass pulse every beat
+                playSound(scale[bgmBeat % scale.length] * 0.5, 0.4, 'triangle', 0.03);
+
+                // Arpeggio every other beat
+                if (bgmBeat % 2 === 0) {
+                    playSound(arpeggio[(bgmBeat / 2) % arpeggio.length], 0.6, 'sine', 0.02);
+                }
+
+                bgmBeat++;
+            }, 400); // 150 BPM
+        }
 
         function playSound(freq, duration, type = 'square', volume = 0.1, slideTo = null) {
             if (!audioCtx) return;
@@ -263,10 +325,10 @@
         function createParticle(x, y, color, side) {
             particles.push({
                 x, y,
-                vx: (Math.random() - 0.5) * 2,
-                vy: side === 'up' ? Math.random() * 3 + 2 : (Math.random() - 0.5) * 2,
+                vx: (Math.random() - 0.5) * 4,
+                vy: side === 'up' ? Math.random() * 4 + 2 : (Math.random() - 0.5) * 3,
                 life: 1.0,
-                decay: 0.02 + Math.random() * 0.05,
+                decay: 0.04 + Math.random() * 0.04,
                 color
             });
         }
@@ -285,7 +347,7 @@
             const list = type === 'boarding' ? boardingComments : landingComments;
             const comment = list[Math.floor(Math.random() * list.length)];
             const el = document.getElementById('passenger-comment');
-            el.innerText = `Passenger: "${comment}"`;
+            el.innerText = `Passagier: "${comment}"`;
             el.style.opacity = "1";
             setTimeout(() => { el.style.opacity = "0"; }, 3000);
         }
@@ -304,9 +366,9 @@
             };
             
             document.getElementById('pass-count').innerText = `${passengerIndex + 1}/3`;
-            document.getElementById('target').innerText = "Platform " + activePassenger.fromId;
+            document.getElementById('target').innerText = "Plattform " + activePassenger.fromId;
             document.getElementById('target').style.color = "#ff0";
-            document.getElementById('message').innerText = "Pick up passenger!";
+            document.getElementById('message').innerText = "Passagier abholen!";
         }
 
         function resize() {
@@ -341,10 +403,12 @@
 
             const level = levels[currentLevelIdx];
 
-            // Input
             const thrustUp = keys['ArrowUp'] || keys['KeyW'] || btns.up.isDown;
             const thrustLeft = keys['ArrowLeft'] || keys['KeyA'] || btns.left.isDown;
             const thrustRight = keys['ArrowRight'] || keys['KeyD'] || btns.right.isDown;
+            const isAnyThrusting = (thrustUp || thrustLeft || thrustRight) && fuel > 0;
+
+            updateEngineAudio(isAnyThrusting);
 
             if (fuel > 0) {
                 if (thrustUp) {
@@ -352,62 +416,53 @@
                     fuel -= 0.15;
                     createParticle(taxi.x, taxi.y + 8, '#f90', 'up');
                     createParticle(taxi.x, taxi.y + 8, '#f20', 'up');
-                    // Thrust Sound: Rumbly
-                    if (Math.random() > 0.6) playSound(50 + Math.random() * 30, 0.1, 'sawtooth', 0.04);
                 }
                 if (thrustLeft) { 
                     taxi.vx -= 0.08; fuel -= 0.05; taxi.angle = -0.15; 
                     createParticle(taxi.x + 12, taxi.y, '#0cf', 'side');
-                    if (Math.random() > 0.8) playSound(40 + Math.random() * 20, 0.1, 'sawtooth', 0.02);
                 }
                 else if (thrustRight) { 
                     taxi.vx += 0.08; fuel -= 0.05; taxi.angle = 0.15; 
                     createParticle(taxi.x - 12, taxi.y, '#0cf', 'side');
-                    if (Math.random() > 0.8) playSound(40 + Math.random() * 20, 0.1, 'sawtooth', 0.02);
                 }
                 else { taxi.angle *= 0.9; }
             } else {
                 taxi.angle *= 0.9;
                 if (!fuelAlertTriggered) {
                     fuelAlertTriggered = true;
-                    // Power Down sound
-                    playSound(400, 1.5, 'sine', 0.2, 10);
-                    document.getElementById('message').innerText = "ENGINE FAILURE!";
+                    playSound(400, 2.0, 'sine', 0.4, 10);
+                    document.getElementById('message').innerText = "TRIEBWERKSAUSFALL!";
                 }
             }
 
-            taxi.vy += 0.035; // Gravity
-            taxi.vx *= 0.985; // Friction
+            taxi.vy += 0.035; 
+            taxi.vx *= 0.985; 
             taxi.vy *= 0.985;
             taxi.x += taxi.vx;
             taxi.y += taxi.vy;
 
+            const speed = Math.sqrt(taxi.vx * taxi.vx + taxi.vy * taxi.vy);
             updateParticles();
-
             if (fuel <= 0) fuel = 0;
 
-            // Camera follow
             camera.x = taxi.x - VIEW_W / 2;
             camera.y = taxi.y - VIEW_H / 2;
             camera.x = Math.max(0, Math.min(camera.x, level.worldW - VIEW_W));
             camera.y = Math.max(0, Math.min(camera.y, level.worldH - VIEW_H));
 
-            // Collisions: Walls
             for (let wall of level.walls) {
                 if (checkCollision(taxi, wall)) { crash(); return; }
             }
-            // Collisions: Obstacles
             for (let obs of level.obstacles) {
                 obs.update();
                 if (checkCollision(taxi, obs)) { crash(); return; }
             }
 
-            // Collisions: Platforms
             let landing = false;
             let currentPlat = null;
             for (let plat of level.platforms) {
                 if (checkCollision(taxi, plat)) {
-                    if (taxi.vy > 0.8 || Math.abs(taxi.vx) > 0.8 || Math.abs(taxi.angle) > 0.2) {
+                    if (speed > MAX_LANDING_VEL || Math.abs(taxi.angle) > 0.2) {
                         crash(); return;
                     } else {
                         taxi.y = plat.y - TAXI_HEIGHT / 2;
@@ -419,22 +474,19 @@
             }
             if (!landing) taxi.landedOn = null;
 
-            // Fuel Logic
             if (currentPlat && currentPlat.isFuelStation && fuel < 100) {
                 fuel = Math.min(100, fuel + 0.4);
                 if (cash > 0) cash = Math.max(0, cash - 0.1);
-                document.getElementById('message').innerText = "REFUELING...";
-                // Refuel Sound: Mechanical ticking
-                if (Math.random() > 0.8) playSound(800 + Math.random()*200, 0.05, 'triangle', 0.03);
+                document.getElementById('message').innerText = "AUFTANKEN...";
+                if (Math.random() > 0.8) playSound(1400, 0.05, 'triangle', 0.03);
             }
 
-            // Passenger State Machine
             if (activePassenger.state === 'WAITING' && taxi.landedOn === activePassenger.fromId) {
                 activePassenger.state = 'IN_TAXI';
                 playSound(600, 0.2, 'sine');
-                document.getElementById('target').innerText = "Platform " + activePassenger.toId;
+                document.getElementById('target').innerText = "Plattform " + activePassenger.toId;
                 document.getElementById('target').style.color = "#0f0";
-                document.getElementById('message').innerText = "Go to Destination!";
+                document.getElementById('message').innerText = "Ziel anfliegen!";
                 showPassengerComment('boarding');
             } else if (activePassenger.state === 'IN_TAXI' && taxi.landedOn === activePassenger.toId) {
                 activePassenger.state = 'ARRIVED';
@@ -445,23 +497,27 @@
                 if (passengerIndex < 3) {
                     initPassenger();
                 } else {
-                    document.getElementById('message').innerText = "LEVEL CLEAR!";
+                    document.getElementById('message').innerText = "LEVEL GESCHAFFT!";
                     setTimeout(nextLevel, 1500);
                 }
             }
 
-            updateUI();
+            updateUI(speed);
             updateMinimap();
             draw();
             animationId = requestAnimationFrame(gameLoop);
         }
 
-        function updateUI() {
+        function updateUI(speed) {
             document.getElementById('cash').innerText = Math.floor(cash);
             document.getElementById('fuel-val').innerText = Math.floor(fuel);
             const fuelBar = document.getElementById('fuel-bar');
             fuelBar.style.width = fuel + '%';
             fuelBar.className = fuel < 25 ? 'h-full bg-red-500' : (fuel < 50 ? 'h-full bg-yellow-500' : 'h-full bg-green-500');
+            
+            const speedEl = document.getElementById('speed-val');
+            speedEl.innerText = speed.toFixed(1);
+            speedEl.className = speed <= MAX_LANDING_VEL ? 'speed-safe' : 'speed-danger';
         }
 
         function updateMinimap() {
@@ -475,12 +531,11 @@
 
             let markers = `<div style="position:absolute; left:${tx-2}px; top:${ty-2}px; width:4px; height:4px; background:yellow; border-radius:50%; z-index:10;"></div>`;
 
-            const fuelPlat = level.platforms.find(p => p.isFuelStation);
-            if (fuelPlat) {
-                const fx = (fuelPlat.x / level.worldW) * MAP_W;
-                const fy = (fuelPlat.y / level.worldH) * MAP_H;
+            level.platforms.filter(p => p.isFuelStation).forEach(f => {
+                const fx = (f.x / level.worldW) * MAP_W;
+                const fy = (f.y / level.worldH) * MAP_H;
                 markers += `<div style="position:absolute; left:${fx}px; top:${fy}px; width:6px; height:2px; background:#0f0; z-index:5;"></div>`;
-            }
+            });
 
             if (activePassenger) {
                 const goalId = activePassenger.state === 'WAITING' ? activePassenger.fromId : activePassenger.toId;
@@ -512,9 +567,7 @@
             level.walls.forEach(w => {
                 const rx = w.x - camera.x;
                 const ry = w.y - camera.y;
-                if (rx + w.w > 0 && rx < VIEW_W && ry + w.h > 0 && ry < VIEW_H) {
-                    ctx.fillRect(rx, ry, w.w, w.h);
-                }
+                if (rx + w.w > 0 && rx < VIEW_W && ry + w.h > 0 && ry < VIEW_H) ctx.fillRect(rx, ry, w.w, w.h);
             });
 
             level.platforms.forEach(p => {
@@ -525,7 +578,7 @@
                     ctx.fillRect(rx, ry, p.w, p.h);
                     ctx.fillStyle = '#fff';
                     ctx.font = '10px monospace';
-                    ctx.fillText(p.isFuelStation ? 'FUEL' : 'P'+p.id, rx + 5, ry + 11);
+                    ctx.fillText(p.isFuelStation ? 'TANK' : 'P'+p.id, rx + 5, ry + 11);
                 }
             });
 
@@ -560,13 +613,13 @@
 
         function crash() {
             gameState = 'CRASHED';
-            // Explosion sound: Noise
-            playSound(100, 0.5, 'sawtooth', 0.3);
-            playSound(40, 0.8, 'square', 0.3);
+            updateEngineAudio(false);
+            playSound(100, 0.5, 'sawtooth', 0.5);
+            playSound(40, 1.2, 'square', 0.4);
             overlay.classList.remove('hidden');
-            const crashMsg = fuel <= 0 ? "TANK LEER!" : "EXPLODIERT!";
-            overlayMsg.innerHTML = `<span class="text-red-500 text-3xl font-bold">${crashMsg}</span><br>Passagiere hassen Bruchlandungen.<br>Cash: $${Math.floor(cash)}`;
-            startBtn.innerText = "Try Again";
+            const crashMsg = fuel <= 0 ? "TANK LEER!" : "BRUCHLANDUNG!";
+            overlayMsg.innerHTML = `<span class="text-red-500 text-3xl font-bold">${crashMsg}</span><br>Passagiere hassen Explosionen.<br>Einnahmen verloren!`;
+            startBtn.innerText = "Nochmal versuchen";
             cancelAnimationFrame(animationId);
         }
 
@@ -574,9 +627,10 @@
             currentLevelIdx++;
             if (currentLevelIdx >= levels.length) {
                 gameState = 'SUCCESS';
+                updateEngineAudio(false);
                 overlay.classList.remove('hidden');
-                overlayMsg.innerHTML = `<span class="text-green-500 text-3xl font-bold">TYCOON COMPLETE</span><br>Du bist die Legende des Sektors!<br>Total Cash: $${Math.floor(cash)}`;
-                startBtn.innerText = "New Game";
+                overlayMsg.innerHTML = `<span class="text-green-500 text-3xl font-bold">LEGENDÄRER PILOT</span><br>Du hast das System erobert!<br>Gesamt-Cash: $${Math.floor(cash)}`;
+                startBtn.innerText = "Neues Spiel";
                 currentLevelIdx = 0;
             } else {
                 passengerIndex = 0;
@@ -594,7 +648,11 @@
         }
 
         startBtn.onclick = () => {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                setupEngineAudio();
+                startBGM();
+            }
             overlay.classList.add('hidden');
             if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0 && currentLevelIdx === 0)) {
                 cash = 0;
