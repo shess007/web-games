@@ -3,94 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Space Taxi Ultra - Sound & Music Edition</title>
+    <title>Space Taxi - 16-Bit SNES Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --snes-blue: #3e3ab3;
+            --snes-light-blue: #5c59d4;
+            --snes-gray: #c0c0c0;
+            --snes-dark-gray: #404040;
+            --snes-purple: #7a5ba0;
+        }
+
         body {
-            background-color: #000;
+            background-color: #1a1a1a;
             margin: 0;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Press Start 2P', cursive;
+            image-rendering: pixelated;
         }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 8px solid var(--snes-dark-gray);
+            border-radius: 4px;
+        }
+
+        /* CRT Scanline Effect */
+        #game-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 15;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+
         canvas {
             image-rendering: pixelated;
             display: block;
             margin: 0 auto;
-            background: #020205;
+            background: #0b0a1a;
             touch-action: none;
         }
-        .retro-border {
-            border: 4px solid #444;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
+
         .ui-panel {
-            background: rgba(10, 10, 15, 0.9);
-            color: #0f0;
-            text-shadow: 0 0 5px #0f0;
-            border-bottom: 2px solid #333;
+            background: linear-gradient(to bottom, var(--snes-light-blue), var(--snes-blue));
+            color: #fff;
+            border: 4px solid #fff;
+            box-shadow: inset -4px -4px 0px #000, inset 4px 4px 0px #8080ff;
+            text-transform: uppercase;
         }
+
         .minimap {
             position: absolute;
             bottom: 20px;
             right: 20px;
             width: 120px;
             height: 90px;
-            background: rgba(0, 50, 0, 0.2);
-            border: 1px solid #0f0;
+            background: #000;
+            border: 3px solid var(--snes-gray);
             pointer-events: none;
             overflow: hidden;
+            z-index: 12;
         }
+
         @keyframes pulse-mini {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.7; }
         }
         .target-dot {
-            animation: pulse-mini 1s infinite;
+            animation: pulse-mini 0.8s infinite;
         }
-        #passenger-comment {
-            transition: opacity 0.3s;
+
+        .speed-safe { color: #55ff55; text-shadow: 2px 2px #004400; }
+        .speed-danger { color: #ff5555; text-shadow: 2px 2px #440000; }
+        
+        #overlay h1 {
+            text-shadow: 4px 4px #000, -2px -2px #888;
+            letter-spacing: 2px;
         }
-        .speed-safe { color: #0f0; text-shadow: 0 0 5px #0f0; }
-        .speed-danger { color: #f33; text-shadow: 0 0 5px #f33; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
 
     <div id="game-container" class="relative overflow-hidden">
         <!-- UI Overlay -->
-        <div id="ui" class="absolute top-0 left-0 w-full p-4 flex justify-between ui-panel text-xs md:text-sm z-10 select-none pointer-events-none">
-            <div class="flex gap-6">
+        <div id="ui" class="absolute top-0 left-0 w-full p-4 flex justify-between ui-panel text-[8px] md:text-[10px] z-20 select-none pointer-events-none">
+            <div class="flex gap-4">
                 <div>
-                    KONTO: $<span id="cash">0</span><br>
-                    PASSAGIERE: <span id="pass-count">0/3</span>
+                    CASH $<span id="cash">0</span><br>
+                    PASS <span id="pass-count">0/3</span>
                 </div>
                 <div>
-                    TANK: <span id="fuel-val">100</span>%
-                    <div class="w-24 h-2 bg-gray-800 mt-1 border border-gray-600">
+                    FUEL <span id="fuel-val">100</span>%
+                    <div class="w-20 h-3 bg-black mt-1 border border-white">
                         <div id="fuel-bar" class="h-full bg-green-500" style="width: 100%"></div>
                     </div>
                 </div>
             </div>
-            <div class="text-center flex flex-col items-center flex-1 px-4">
-                <span id="message" class="text-yellow-400 font-bold uppercase text-sm md:text-lg">Bereit zum Start</span>
-                <span id="passenger-comment" class="text-white italic text-[10px] md:text-xs opacity-0"></span>
+            <div class="text-center flex flex-col items-center flex-1 px-2">
+                <span id="message" class="text-yellow-300 font-bold mb-1">BEREIT</span>
+                <span id="passenger-comment" class="text-white text-[7px] lowercase italic opacity-0"></span>
             </div>
             <div class="text-right">
-                LEVEL: <span id="level-idx">1</span><br>
-                SPEED: <span id="speed-val" class="speed-safe">0.0</span><br>
-                ZIEL: <span id="target" class="text-white">-</span>
+                LV <span id="level-idx">1</span><br>
+                SPD <span id="speed-val" class="speed-safe">0.0</span><br>
+                TO <span id="target" class="text-white">-</span>
             </div>
         </div>
 
         <!-- Start/Game Over Screens -->
-        <div id="overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 text-white text-center p-6">
-            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-yellow-500 italic uppercase">Space Taxi Ultra</h1>
-            <p id="overlay-msg" class="mb-8 text-sm md:text-base leading-relaxed">
-                Transportiere 3 Passagiere pro Level.<br>
-                Nutze die grünen Tankstellen zum Auffüllen.<br>
-                Landung nur bei <span class="text-green-400">grüner Geschwindigkeitsanzeige</span>!
-            </p>
-            <button id="start-btn" class="px-10 py-4 bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold rounded-none border-b-4 border-yellow-800 transition-all active:translate-y-1 uppercase">Mission Starten</button>
+        <div id="overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-30 text-white text-center p-6">
+            <h1 class="text-2xl md:text-5xl font-bold mb-6 text-yellow-500 italic uppercase">Space Taxi</h1>
+            <div class="bg-blue-900 border-4 border-white p-4 mb-8 max-w-md shadow-[8px_8px_0px_#000]">
+                <p id="overlay-msg" class="text-[8px] md:text-[12px] leading-loose">
+                    WILLKOMMEN PILOT!<br><br>
+                    - TRANSPORTIERE 3 GÄSTE<br>
+                    - TANKEN AN GRÜNEN ZONEN<br>
+                    - LANDEN BEI <span class="text-green-400">GRÜNEM TACHO</span>
+                </p>
+            </div>
+            <button id="start-btn" class="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold border-4 border-white shadow-[6px_6px_0px_#000] active:translate-y-1 active:shadow-none uppercase text-xs md:text-sm">Starten</button>
         </div>
 
         <canvas id="gameCanvas" class="retro-border"></canvas>
@@ -99,13 +137,13 @@
         <div class="minimap" id="minimap"></div>
 
         <!-- Touch Controls -->
-        <div id="controls" class="absolute bottom-4 left-4 right-4 flex justify-between md:hidden z-10 pointer-events-none">
+        <div id="controls" class="absolute bottom-4 left-4 right-4 flex justify-between md:hidden z-20 pointer-events-none">
             <div class="flex gap-4 pointer-events-auto">
-                <button id="btn-left" class="w-16 h-16 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center text-3xl">←</button>
-                <button id="btn-right" class="w-16 h-16 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center text-3xl">→</button>
+                <button id="btn-left" class="w-14 h-14 bg-gray-400/50 rounded border-4 border-white flex items-center justify-center text-xl">←</button>
+                <button id="btn-right" class="w-14 h-14 bg-gray-400/50 rounded border-4 border-white flex items-center justify-center text-xl">→</button>
             </div>
             <div class="pointer-events-auto">
-                <button id="btn-up" class="w-20 h-20 bg-yellow-500/20 rounded-full border-2 border-yellow-500/40 flex items-center justify-center text-4xl">↑</button>
+                <button id="btn-up" class="w-16 h-16 bg-purple-500/50 rounded-full border-4 border-white flex items-center justify-center text-2xl">↑</button>
             </div>
         </div>
     </div>
@@ -128,8 +166,8 @@
         
         const VIEW_W = 800;
         const VIEW_H = 600;
-        const TAXI_WIDTH = 30;
-        const TAXI_HEIGHT = 20;
+        const TAXI_WIDTH = 34;
+        const TAXI_HEIGHT = 22;
         const MAX_LANDING_VEL = 0.8;
 
         const camera = { x: 0, y: 0 };
@@ -146,13 +184,13 @@
         };
 
         const boardingComments = [
-            "Wird auch Zeit!", "Nicht so wackelig!", "Beeilung, ich hab Termine.",
-            "Ist das Ding sicher?", "Ugh, dieser Geruch...", "Fliegen Sie vorsichtig!"
+            "endlich!", "wackelig hier...", "beeilung!",
+            "sicher?", "riecht komisch...", "pass bloß auf!"
         ];
 
         const landingComments = [
-            "Trinkgeld? Träum weiter.", "Eher eine Bruchlandung...", "Endlich raus hier.",
-            "Suchen Sie sich einen neuen Job.", "Passabel... für einen Amateur.", "Ganz schwache Leistung."
+            "kein trinkgeld.", "bruchlandung...", "endlich raus.",
+            "such dir 'nen job.", "ganz okay...", "schwache leistung."
         ];
 
         class MovingObstacle {
@@ -170,11 +208,15 @@
                 if (this.yRange > 0) this.y = this.startY + Math.cos(this.time) * (this.yRange / 2);
             }
             draw(ctx, cam) {
-                ctx.fillStyle = '#f33';
+                ctx.fillStyle = '#ff3333';
+                // Beveled look for obstacle
                 ctx.fillRect(this.x - cam.x, this.y - cam.y, this.w, this.h);
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(this.x - cam.x, this.y - cam.y, this.w, this.h);
+                ctx.fillStyle = '#ff8888';
+                ctx.fillRect(this.x - cam.x, this.y - cam.y, this.w, 4);
+                ctx.fillRect(this.x - cam.x, this.y - cam.y, 4, this.h);
+                ctx.fillStyle = '#880000';
+                ctx.fillRect(this.x - cam.x + this.w - 4, this.y - cam.y, 4, this.h);
+                ctx.fillRect(this.x - cam.x, this.y - cam.y + this.h - 4, this.w, 4);
             }
         }
 
@@ -183,22 +225,23 @@
                 worldW: 1800, worldH: 1400,
                 spawn: { x: 100, y: 100 },
                 platforms: [
-                    { x: 50, y: 300, w: 100, h: 15, id: 1 },
-                    { x: 1500, y: 300, w: 120, h: 15, id: 2 },
-                    { x: 800, y: 800, w: 100, h: 15, id: 3 },
-                    { x: 100, y: 1200, w: 100, h: 15, id: 4 },
-                    { x: 1600, y: 1300, w: 100, h: 15, id: 5 },
-                    { x: 900, y: 250, w: 100, h: 15, id: 99, isFuelStation: true }
+                    { x: 50, y: 300, w: 110, h: 20, id: 1 },
+                    { x: 1500, y: 300, w: 120, h: 20, id: 2 },
+                    { x: 800, y: 800, w: 110, h: 20, id: 3 },
+                    { x: 100, y: 1200, w: 110, h: 20, id: 4 },
+                    { x: 1600, y: 1300, w: 110, h: 20, id: 5 },
+                    { x: 900, y: 250, w: 110, h: 20, id: 99, isFuelStation: true },
+                    { x: 1300, y: 1200, w: 110, h: 20, id: 98, isFuelStation: true }
                 ],
                 walls: [
-                    { x: 0, y: 0, w: 1800, h: 20 }, { x: 0, y: 1380, w: 1800, h: 20 },
-                    { x: 0, y: 0, w: 20, h: 1400 }, { x: 1780, y: 0, w: 20, h: 1400 },
-                    { x: 400, y: 400, w: 40, h: 600 }, { x: 1200, y: 400, w: 40, h: 600 }
+                    { x: 0, y: 0, w: 1800, h: 40 }, { x: 0, y: 1360, w: 1800, h: 40 },
+                    { x: 0, y: 0, w: 40, h: 1400 }, { x: 1760, y: 0, w: 40, h: 1400 },
+                    { x: 400, y: 400, w: 60, h: 600 }, { x: 1200, y: 400, w: 60, h: 600 }
                 ],
                 obstacles: [
-                    new MovingObstacle(600, 300, 40, 40, 400, 0, 0.02),
-                    new MovingObstacle(1000, 1000, 60, 20, 0, 400, 0.03),
-                    new MovingObstacle(1400, 600, 30, 30, 200, 200, 0.02)
+                    new MovingObstacle(600, 300, 48, 48, 400, 0, 0.02),
+                    new MovingObstacle(1000, 1000, 64, 32, 0, 400, 0.03),
+                    new MovingObstacle(1400, 600, 48, 48, 200, 200, 0.02)
                 ],
                 passengers: [
                     { from: 1, to: 2 }, { from: 4, to: 3 }, { from: 5, to: 1 }
@@ -208,27 +251,27 @@
                 worldW: 2400, worldH: 1800,
                 spawn: { x: 100, y: 100 },
                 platforms: [
-                    { x: 100, y: 350, w: 100, h: 15, id: 1 },
-                    { x: 2100, y: 200, w: 100, h: 15, id: 2 },
-                    { x: 1100, y: 900, w: 150, h: 15, id: 3 },
-                    { x: 100, y: 1600, w: 100, h: 15, id: 4 },
-                    { x: 2100, y: 1600, w: 100, h: 15, id: 5 },
-                    { x: 1150, y: 250, w: 80, h: 15, id: 99, isFuelStation: true },
-                    { x: 1200, y: 1400, w: 80, h: 15, id: 98, isFuelStation: true } // Zweite Fuel-Station Level 2
+                    { x: 100, y: 350, w: 110, h: 20, id: 1 },
+                    { x: 2100, y: 200, w: 110, h: 20, id: 2 },
+                    { x: 1100, y: 900, w: 160, h: 20, id: 3 },
+                    { x: 100, y: 1600, w: 110, h: 20, id: 4 },
+                    { x: 2100, y: 1600, w: 110, h: 20, id: 5 },
+                    { x: 1150, y: 250, w: 90, h: 20, id: 99, isFuelStation: true },
+                    { x: 1200, y: 1400, w: 90, h: 20, id: 98, isFuelStation: true }
                 ],
                 walls: [
-                    { x: 0, y: 0, w: 2400, h: 25 }, { x: 0, y: 1775, w: 2400, h: 25 },
-                    { x: 0, y: 0, w: 25, h: 1800 }, { x: 2375, y: 0, w: 25, h: 1800 },
-                    { x: 500, y: 0, w: 30, h: 600 }, { x: 500, y: 1000, w: 30, h: 800 },
-                    { x: 1800, y: 0, w: 30, h: 800 }, { x: 1800, y: 1200, w: 30, h: 600 },
-                    { x: 900, y: 600, w: 600, h: 30 }
+                    { x: 0, y: 0, w: 2400, h: 40 }, { x: 0, y: 1760, w: 2400, h: 40 },
+                    { x: 0, y: 0, w: 40, h: 1800 }, { x: 2360, y: 0, w: 40, h: 1800 },
+                    { x: 500, y: 0, w: 60, h: 600 }, { x: 500, y: 1000, w: 60, h: 800 },
+                    { x: 1800, y: 0, w: 60, h: 800 }, { x: 1800, y: 1200, w: 60, h: 600 },
+                    { x: 900, y: 600, w: 600, h: 40 }
                 ],
                 obstacles: [
-                    new MovingObstacle(300, 800, 100, 20, 200, 0, 0.05),
-                    new MovingObstacle(2000, 800, 100, 20, 200, 0, 0.05),
-                    new MovingObstacle(1150, 400, 40, 40, 600, 0, 0.02),
-                    new MovingObstacle(1150, 1400, 40, 40, 600, 0, 0.03),
-                    new MovingObstacle(100, 1000, 30, 30, 2000, 0, 0.01)
+                    new MovingObstacle(300, 800, 110, 32, 200, 0, 0.05),
+                    new MovingObstacle(2000, 800, 110, 32, 200, 0, 0.05),
+                    new MovingObstacle(1150, 400, 48, 48, 600, 0, 0.02),
+                    new MovingObstacle(1150, 1400, 48, 48, 600, 0, 0.03),
+                    new MovingObstacle(100, 1000, 32, 32, 2000, 0, 0.01)
                 ],
                 passengers: [
                     { from: 2, to: 4 }, { from: 1, to: 5 }, { from: 3, to: 2 }
@@ -239,12 +282,9 @@
         let activePassenger = null;
         let audioCtx = null;
         let noiseBuffer = null;
-        
         let engineGainNode = null;
         let engineFilterNode = null;
         let noiseSource = null;
-
-        // BGM State
         let bgmInterval = null;
         let bgmBeat = 0;
 
@@ -263,8 +303,8 @@
 
             engineFilterNode = audioCtx.createBiquadFilter();
             engineFilterNode.type = 'lowpass';
-            engineFilterNode.frequency.setValueAtTime(200, audioCtx.currentTime);
-            engineFilterNode.Q.setValueAtTime(5, audioCtx.currentTime);
+            engineFilterNode.frequency.setValueAtTime(120, audioCtx.currentTime);
+            engineFilterNode.Q.setValueAtTime(10, audioCtx.currentTime); 
 
             engineGainNode = audioCtx.createGain();
             engineGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
@@ -277,8 +317,8 @@
 
         function updateEngineAudio(isThrusting) {
             if (!engineGainNode) return;
-            const targetGain = isThrusting ? 0.2 : 0;
-            const targetFreq = isThrusting ? 1200 : 200;
+            const targetGain = isThrusting ? 0.4 : 0; 
+            const targetFreq = isThrusting ? 380 : 120; 
             
             engineGainNode.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.05);
             engineFilterNode.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
@@ -286,23 +326,62 @@
 
         function startBGM() {
             if (bgmInterval) return;
-            // Pentatonic scale frequencies
-            const scale = [130.81, 146.83, 164.81, 196.00, 220.00]; // C2 scale
-            const arpeggio = [261.63, 329.63, 392.00, 523.25]; // C4 chords
+            
+            // Bass: Deep Triangle pulses
+            const bassline = [130.81, 130.81, 110.00, 110.00, 98.00, 98.00, 130.81, 146.83];
+            // Arpeggio: Faster pulsing synth
+            const arpeggio = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+            // Melody: Slow, atmospheric Lead
+            const melody = [
+                523.25, 0, 587.33, 0, 659.25, 0, 523.25, 0,
+                783.99, 0, 698.46, 0, 659.25, 0, 587.33, 0
+            ];
 
             bgmInterval = setInterval(() => {
                 if (gameState !== 'PLAYING') return;
-                
-                // Bass pulse every beat
-                playSound(scale[bgmBeat % scale.length] * 0.5, 0.4, 'triangle', 0.03);
 
-                // Arpeggio every other beat
+                // 1. Bass (Every 2 beats)
                 if (bgmBeat % 2 === 0) {
-                    playSound(arpeggio[(bgmBeat / 2) % arpeggio.length], 0.6, 'sine', 0.02);
+                    playSound(bassline[(bgmBeat / 2) % bassline.length], 0.4, 'triangle', 0.04);
+                }
+
+                // 2. Arpeggio (Fast)
+                playSound(arpeggio[bgmBeat % arpeggio.length], 0.15, 'sine', 0.015);
+
+                // 3. Lead Melody (Slow)
+                const melNote = melody[(Math.floor(bgmBeat / 2)) % melody.length];
+                if (melNote > 0 && bgmBeat % 4 === 0) {
+                    playSound(melNote, 0.8, 'square', 0.015, melNote * 0.98);
+                }
+
+                // 4. Subtle Percussion (Noise bursts)
+                if (bgmBeat % 8 === 4) {
+                    playPercussion(0.015); // Snare-ish
+                } else if (bgmBeat % 2 === 0) {
+                    playPercussion(0.005, 1500); // Hi-hat-ish
                 }
 
                 bgmBeat++;
-            }, 400); // 150 BPM
+            }, 180); // Higher BPM for the 180ms interval
+        }
+
+        function playPercussion(volume, filterFreq = 1000) {
+            if (!audioCtx || !noiseBuffer) return;
+            const source = audioCtx.createBufferSource();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            source.buffer = noiseBuffer;
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(filterFreq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
         }
 
         function playSound(freq, duration, type = 'square', volume = 0.1, slideTo = null) {
@@ -311,9 +390,7 @@
             const gain = audioCtx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            if (slideTo !== null) {
-                osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + duration);
-            }
+            if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + duration);
             gain.gain.setValueAtTime(volume, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
             osc.connect(gain);
@@ -325,10 +402,10 @@
         function createParticle(x, y, color, side) {
             particles.push({
                 x, y,
-                vx: (Math.random() - 0.5) * 4,
-                vy: side === 'up' ? Math.random() * 4 + 2 : (Math.random() - 0.5) * 3,
+                vx: (Math.random() - 0.5) * 5,
+                vy: side === 'up' ? Math.random() * 5 + 3 : (Math.random() - 0.5) * 4,
                 life: 1.0,
-                decay: 0.04 + Math.random() * 0.04,
+                decay: 0.03 + Math.random() * 0.05,
                 color
             });
         }
@@ -347,16 +424,15 @@
             const list = type === 'boarding' ? boardingComments : landingComments;
             const comment = list[Math.floor(Math.random() * list.length)];
             const el = document.getElementById('passenger-comment');
-            el.innerText = `Passagier: "${comment}"`;
+            el.innerText = `[ ${comment} ]`;
             el.style.opacity = "1";
-            setTimeout(() => { el.style.opacity = "0"; }, 3000);
+            setTimeout(() => { el.style.opacity = "0"; }, 2500);
         }
 
         function initPassenger() {
             const level = levels[currentLevelIdx];
             const passData = level.passengers[passengerIndex];
             const pStart = level.platforms.find(pl => pl.id === passData.from);
-            
             activePassenger = {
                 state: 'WAITING',
                 fromId: passData.from,
@@ -364,11 +440,10 @@
                 x: pStart.x + pStart.w / 2,
                 y: pStart.y - 5
             };
-            
             document.getElementById('pass-count').innerText = `${passengerIndex + 1}/3`;
-            document.getElementById('target').innerText = "Plattform " + activePassenger.fromId;
-            document.getElementById('target').style.color = "#ff0";
-            document.getElementById('message').innerText = "Passagier abholen!";
+            document.getElementById('target').innerText = "P" + activePassenger.fromId;
+            document.getElementById('target').style.color = "#ffff55";
+            document.getElementById('message').innerText = "GAST HOLEN";
         }
 
         function resize() {
@@ -400,7 +475,6 @@
 
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
-
             const level = levels[currentLevelIdx];
 
             const thrustUp = keys['ArrowUp'] || keys['KeyW'] || btns.up.isDown;
@@ -412,47 +486,38 @@
 
             if (fuel > 0) {
                 if (thrustUp) {
-                    taxi.vy -= 0.12;
-                    fuel -= 0.15;
-                    createParticle(taxi.x, taxi.y + 8, '#f90', 'up');
-                    createParticle(taxi.x, taxi.y + 8, '#f20', 'up');
+                    taxi.vy -= 0.12; fuel -= 0.16;
+                    createParticle(taxi.x, taxi.y + 10, '#ffff55', 'up');
+                    createParticle(taxi.x, taxi.y + 10, '#ff5500', 'up');
                 }
                 if (thrustLeft) { 
-                    taxi.vx -= 0.08; fuel -= 0.05; taxi.angle = -0.15; 
-                    createParticle(taxi.x + 12, taxi.y, '#0cf', 'side');
+                    taxi.vx -= 0.09; fuel -= 0.06; taxi.angle = -0.15; 
+                    createParticle(taxi.x + 14, taxi.y, '#00ffff', 'side');
                 }
                 else if (thrustRight) { 
-                    taxi.vx += 0.08; fuel -= 0.05; taxi.angle = 0.15; 
-                    createParticle(taxi.x - 12, taxi.y, '#0cf', 'side');
-                }
-                else { taxi.angle *= 0.9; }
+                    taxi.vx += 0.09; fuel -= 0.06; taxi.angle = 0.15; 
+                    createParticle(taxi.x - 14, taxi.y, '#00ffff', 'side');
+                } else taxi.angle *= 0.88;
             } else {
                 taxi.angle *= 0.9;
                 if (!fuelAlertTriggered) {
                     fuelAlertTriggered = true;
-                    playSound(400, 2.0, 'sine', 0.4, 10);
-                    document.getElementById('message').innerText = "TRIEBWERKSAUSFALL!";
+                    playSound(350, 1.8, 'sine', 0.4, 5);
+                    document.getElementById('message').innerText = "MOTOR AUS!";
                 }
             }
 
-            taxi.vy += 0.035; 
-            taxi.vx *= 0.985; 
-            taxi.vy *= 0.985;
-            taxi.x += taxi.vx;
-            taxi.y += taxi.vy;
+            taxi.vy += 0.038; taxi.vx *= 0.982; taxi.vy *= 0.982;
+            taxi.x += taxi.vx; taxi.y += taxi.vy;
 
             const speed = Math.sqrt(taxi.vx * taxi.vx + taxi.vy * taxi.vy);
             updateParticles();
             if (fuel <= 0) fuel = 0;
 
-            camera.x = taxi.x - VIEW_W / 2;
-            camera.y = taxi.y - VIEW_H / 2;
-            camera.x = Math.max(0, Math.min(camera.x, level.worldW - VIEW_W));
-            camera.y = Math.max(0, Math.min(camera.y, level.worldH - VIEW_H));
+            camera.x = Math.max(0, Math.min(taxi.x - VIEW_W / 2, level.worldW - VIEW_W));
+            camera.y = Math.max(0, Math.min(taxi.y - VIEW_H / 2, level.worldH - VIEW_H));
 
-            for (let wall of level.walls) {
-                if (checkCollision(taxi, wall)) { crash(); return; }
-            }
+            for (let wall of level.walls) if (checkCollision(taxi, wall)) { crash(); return; }
             for (let obs of level.obstacles) {
                 obs.update();
                 if (checkCollision(taxi, obs)) { crash(); return; }
@@ -462,9 +527,8 @@
             let currentPlat = null;
             for (let plat of level.platforms) {
                 if (checkCollision(taxi, plat)) {
-                    if (speed > MAX_LANDING_VEL || Math.abs(taxi.angle) > 0.2) {
-                        crash(); return;
-                    } else {
+                    if (speed > MAX_LANDING_VEL || Math.abs(taxi.angle) > 0.22) { crash(); return; }
+                    else {
                         taxi.y = plat.y - TAXI_HEIGHT / 2;
                         taxi.vy = 0; taxi.vx = 0; taxi.angle = 0;
                         landing = true; taxi.landedOn = plat.id;
@@ -475,29 +539,27 @@
             if (!landing) taxi.landedOn = null;
 
             if (currentPlat && currentPlat.isFuelStation && fuel < 100) {
-                fuel = Math.min(100, fuel + 0.4);
-                if (cash > 0) cash = Math.max(0, cash - 0.1);
-                document.getElementById('message').innerText = "AUFTANKEN...";
-                if (Math.random() > 0.8) playSound(1400, 0.05, 'triangle', 0.03);
+                fuel = Math.min(100, fuel + 0.45);
+                if (cash > 0) cash = Math.max(0, cash - 0.12);
+                document.getElementById('message').innerText = "TANKE...";
+                if (Math.random() > 0.82) playSound(1300, 0.06, 'triangle', 0.04);
             }
 
             if (activePassenger.state === 'WAITING' && taxi.landedOn === activePassenger.fromId) {
                 activePassenger.state = 'IN_TAXI';
-                playSound(600, 0.2, 'sine');
-                document.getElementById('target').innerText = "Plattform " + activePassenger.toId;
-                document.getElementById('target').style.color = "#0f0";
-                document.getElementById('message').innerText = "Ziel anfliegen!";
+                playSound(550, 0.22, 'sine');
+                document.getElementById('target').innerText = "P" + activePassenger.toId;
+                document.getElementById('message').innerText = "LOS JETZT!";
                 showPassengerComment('boarding');
             } else if (activePassenger.state === 'IN_TAXI' && taxi.landedOn === activePassenger.toId) {
                 activePassenger.state = 'ARRIVED';
                 cash += 100;
-                playSound(800, 0.3, 'sine');
+                playSound(750, 0.35, 'sine');
                 showPassengerComment('landing');
                 passengerIndex++;
-                if (passengerIndex < 3) {
-                    initPassenger();
-                } else {
-                    document.getElementById('message').innerText = "LEVEL GESCHAFFT!";
+                if (passengerIndex < 3) initPassenger();
+                else {
+                    document.getElementById('message').innerText = "SEKTOR KLAR!";
                     setTimeout(nextLevel, 1500);
                 }
             }
@@ -513,8 +575,7 @@
             document.getElementById('fuel-val').innerText = Math.floor(fuel);
             const fuelBar = document.getElementById('fuel-bar');
             fuelBar.style.width = fuel + '%';
-            fuelBar.className = fuel < 25 ? 'h-full bg-red-500' : (fuel < 50 ? 'h-full bg-yellow-500' : 'h-full bg-green-500');
-            
+            fuelBar.className = fuel < 25 ? 'h-full bg-red-600' : (fuel < 50 ? 'h-full bg-orange-500' : 'h-full bg-green-500');
             const speedEl = document.getElementById('speed-val');
             speedEl.innerText = speed.toFixed(1);
             speedEl.className = speed <= MAX_LANDING_VEL ? 'speed-safe' : 'speed-danger';
@@ -523,30 +584,22 @@
         function updateMinimap() {
             const m = document.getElementById('minimap');
             const level = levels[currentLevelIdx];
-            const MAP_W = 120;
-            const MAP_H = 90;
+            const MAP_W = 120, MAP_H = 90;
+            const tx = (taxi.x / level.worldW) * MAP_W, ty = (taxi.y / level.worldH) * MAP_H;
 
-            const tx = (taxi.x / level.worldW) * MAP_W;
-            const ty = (taxi.y / level.worldH) * MAP_H;
-
-            let markers = `<div style="position:absolute; left:${tx-2}px; top:${ty-2}px; width:4px; height:4px; background:yellow; border-radius:50%; z-index:10;"></div>`;
-
+            let markers = `<div style="position:absolute; left:${tx-2}px; top:${ty-2}px; width:4px; height:4px; background:yellow; z-index:10;"></div>`;
             level.platforms.filter(p => p.isFuelStation).forEach(f => {
-                const fx = (f.x / level.worldW) * MAP_W;
-                const fy = (f.y / level.worldH) * MAP_H;
-                markers += `<div style="position:absolute; left:${fx}px; top:${fy}px; width:6px; height:2px; background:#0f0; z-index:5;"></div>`;
+                const fx = (f.x / level.worldW) * MAP_W, fy = (f.y / level.worldH) * MAP_H;
+                markers += `<div style="position:absolute; left:${fx}px; top:${fy}px; width:8px; height:3px; background:#00ff00; z-index:5;"></div>`;
             });
-
             if (activePassenger) {
                 const goalId = activePassenger.state === 'WAITING' ? activePassenger.fromId : activePassenger.toId;
                 const goalPlat = level.platforms.find(p => p.id === goalId);
                 if (goalPlat) {
-                    const gx = (goalPlat.x / level.worldW) * MAP_W;
-                    const gy = (goalPlat.y / level.worldH) * MAP_H;
-                    markers += `<div class="target-dot" style="position:absolute; left:${gx-1}px; top:${gy-2}px; width:8px; height:3px; background:#f0f; border:1px solid white; z-index:8;"></div>`;
+                    const gx = (goalPlat.x / level.worldW) * MAP_W, gy = (goalPlat.y / level.worldH) * MAP_H;
+                    markers += `<div class="target-dot" style="position:absolute; left:${gx-1}px; top:${gy-2}px; width:10px; height:4px; background:#ff00ff; border:1px solid white; z-index:8;"></div>`;
                 }
             }
-
             m.innerHTML = markers;
         }
 
@@ -554,72 +607,106 @@
             ctx.clearRect(0, 0, VIEW_W, VIEW_H);
             const level = levels[currentLevelIdx];
 
-            ctx.fillStyle = '#111';
-            for(let i=0; i<50; i++) {
-                let sx = (i * 137.5) % level.worldW - camera.x;
-                let sy = (i * 137.5 * 1.5) % level.worldH - camera.y;
-                if (sx >= 0 && sx <= VIEW_W && sy >= 0 && sy <= VIEW_H) {
-                    ctx.fillRect(sx, sy, 2, 2);
+            // Background Stars with parallax-ish depth
+            ctx.fillStyle = '#222244';
+            for(let i=0; i<60; i++) {
+                let sx = (i * 145) % level.worldW - camera.x;
+                let sy = (i * 210) % level.worldH - camera.y;
+                if (sx >= -10 && sx <= VIEW_W + 10 && sy >= -10 && sy <= VIEW_H + 10) {
+                    ctx.fillRect(sx, sy, 3, 3);
                 }
             }
 
-            ctx.fillStyle = '#445';
+            // Draw Walls - Brick style
             level.walls.forEach(w => {
-                const rx = w.x - camera.x;
-                const ry = w.y - camera.y;
-                if (rx + w.w > 0 && rx < VIEW_W && ry + w.h > 0 && ry < VIEW_H) ctx.fillRect(rx, ry, w.w, w.h);
+                const rx = w.x - camera.x, ry = w.y - camera.y;
+                if (rx + w.w > 0 && rx < VIEW_W && ry + w.h > 0 && ry < VIEW_H) {
+                    ctx.fillStyle = '#4a4a58';
+                    ctx.fillRect(rx, ry, w.w, w.h);
+                    ctx.strokeStyle = '#222';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(rx, ry, w.w, w.h);
+                    // Detail lines
+                    ctx.fillStyle = '#5c5c6d';
+                    for(let x=0; x<w.w; x+=30) ctx.fillRect(rx+x, ry, 2, w.h);
+                    for(let y=0; y<w.h; y+=20) ctx.fillRect(rx, ry+y, w.w, 2);
+                }
             });
 
+            // Draw Platforms - SNES shaded metal
             level.platforms.forEach(p => {
-                const rx = p.x - camera.x;
-                const ry = p.y - camera.y;
+                const rx = p.x - camera.x, ry = p.y - camera.y;
                 if (rx + p.w > 0 && rx < VIEW_W && ry + p.h > 0 && ry < VIEW_H) {
-                    ctx.fillStyle = p.isFuelStation ? '#2d5a27' : '#667';
+                    const colBase = p.isFuelStation ? '#2d5a27' : '#555566';
+                    const colLight = p.isFuelStation ? '#44cc44' : '#888899';
+                    ctx.fillStyle = colBase;
                     ctx.fillRect(rx, ry, p.w, p.h);
+                    ctx.fillStyle = colLight;
+                    ctx.fillRect(rx, ry, p.w, 4);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(rx, ry+p.h-4, p.w, 4);
                     ctx.fillStyle = '#fff';
-                    ctx.font = '10px monospace';
-                    ctx.fillText(p.isFuelStation ? 'TANK' : 'P'+p.id, rx + 5, ry + 11);
+                    ctx.font = '8px "Press Start 2P"';
+                    ctx.fillText(p.isFuelStation ? 'FUEL' : 'P'+p.id, rx + 10, ry + 14);
                 }
             });
 
             level.obstacles.forEach(o => o.draw(ctx, camera));
 
+            // Particles
             particles.forEach(p => {
                 ctx.globalAlpha = p.life;
                 ctx.fillStyle = p.color;
-                ctx.fillRect(p.x - camera.x, p.y - camera.y, 3, 3);
+                ctx.fillRect(p.x - camera.x, p.y - camera.y, 4, 4);
             });
             ctx.globalAlpha = 1.0;
 
+            // Draw Passenger - Pixel sprite
             if (activePassenger && activePassenger.state === 'WAITING') {
-                const rx = activePassenger.x - camera.x;
-                const ry = activePassenger.y - camera.y;
+                const rx = activePassenger.x - camera.x, ry = activePassenger.y - camera.y;
                 if (rx > 0 && rx < VIEW_W && ry > 0 && ry < VIEW_H) {
-                    ctx.fillStyle = '#f0f';
-                    ctx.fillRect(rx - 3, ry - 10, 6, 10);
-                    ctx.beginPath(); ctx.arc(rx, ry - 12, 4, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#ff00ff'; // Body
+                    ctx.fillRect(rx - 5, ry - 14, 10, 14);
+                    ctx.fillStyle = '#ffccaa'; // Face
+                    ctx.fillRect(rx - 3, ry - 18, 6, 6);
+                    ctx.fillStyle = '#000'; // Eyes
+                    ctx.fillRect(rx - 2, ry - 16, 1, 1);
+                    ctx.fillRect(rx + 1, ry - 16, 1, 1);
                 }
             }
 
+            // Draw Taxi - Sprite style
             ctx.save();
             ctx.translate(taxi.x - camera.x, taxi.y - camera.y);
             ctx.rotate(taxi.angle);
-            ctx.fillStyle = fuel > 0 ? '#ff0' : '#444';
-            ctx.fillRect(-TAXI_WIDTH/2, -TAXI_HEIGHT/2, TAXI_WIDTH, TAXI_HEIGHT-5);
-            ctx.fillStyle = '#0cf';
-            ctx.fillRect(2, -8, 10, 6);
+            // Main body shaded
+            ctx.fillStyle = fuel > 0 ? '#ccaa00' : '#444';
+            ctx.fillRect(-TAXI_WIDTH/2, -TAXI_HEIGHT/2, TAXI_WIDTH, TAXI_HEIGHT-6);
+            ctx.fillStyle = fuel > 0 ? '#ffff55' : '#666';
+            ctx.fillRect(-TAXI_WIDTH/2, -TAXI_HEIGHT/2, TAXI_WIDTH, 5);
+            ctx.fillStyle = fuel > 0 ? '#886600' : '#222';
+            ctx.fillRect(-TAXI_WIDTH/2, TAXI_HEIGHT/2-10, TAXI_WIDTH, 4);
+            // Glass
+            ctx.fillStyle = '#00ccff';
+            ctx.fillRect(4, -7, 10, 7);
+            ctx.fillStyle = '#ffffff'; // Shine
+            ctx.fillRect(10, -6, 2, 2);
+            // Landing gear
+            ctx.fillStyle = '#222';
+            ctx.fillRect(-14, 5, 8, 6);
+            ctx.fillRect(6, 5, 8, 6);
             ctx.restore();
         }
 
         function crash() {
             gameState = 'CRASHED';
             updateEngineAudio(false);
-            playSound(100, 0.5, 'sawtooth', 0.5);
-            playSound(40, 1.2, 'square', 0.4);
+            playSound(100, 0.6, 'sawtooth', 0.5);
+            playSound(30, 1.4, 'square', 0.4);
             overlay.classList.remove('hidden');
-            const crashMsg = fuel <= 0 ? "TANK LEER!" : "BRUCHLANDUNG!";
-            overlayMsg.innerHTML = `<span class="text-red-500 text-3xl font-bold">${crashMsg}</span><br>Passagiere hassen Explosionen.<br>Einnahmen verloren!`;
-            startBtn.innerText = "Nochmal versuchen";
+            const crashMsg = fuel <= 0 ? "TANK LEER!" : "BRUCH!";
+            overlayMsg.innerHTML = `<span class="text-red-500 text-xl md:text-3xl font-bold">${crashMsg}</span><br><br>GELD VERLOREN.<br>PILOT GESCHEITERT.`;
+            startBtn.innerText = "Try Again";
             cancelAnimationFrame(animationId);
         }
 
@@ -629,8 +716,8 @@
                 gameState = 'SUCCESS';
                 updateEngineAudio(false);
                 overlay.classList.remove('hidden');
-                overlayMsg.innerHTML = `<span class="text-green-500 text-3xl font-bold">LEGENDÄRER PILOT</span><br>Du hast das System erobert!<br>Gesamt-Cash: $${Math.floor(cash)}`;
-                startBtn.innerText = "Neues Spiel";
+                overlayMsg.innerHTML = `<span class="text-green-500 text-xl md:text-3xl font-bold">LEGENDÄR!</span><br><br>DU HAST DEN SEKTOR EROBERT.<br>KONTO: $${Math.floor(cash)}`;
+                startBtn.innerText = "New Game";
                 currentLevelIdx = 0;
             } else {
                 passengerIndex = 0;
@@ -654,9 +741,7 @@
                 startBGM();
             }
             overlay.classList.add('hidden');
-            if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0 && currentLevelIdx === 0)) {
-                cash = 0;
-            }
+            if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0 && currentLevelIdx === 0)) cash = 0;
             gameState = 'PLAYING';
             initLevel();
             gameLoop();
