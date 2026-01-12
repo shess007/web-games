@@ -1,25 +1,526 @@
-Prozessablauf für unseren Rovo Agent "PitStop Inspect Agent" für unsere Codegeist 2025 Projekt:
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Space Taxi Ultra - Massive World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #000;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        canvas {
+            image-rendering: pixelated;
+            display: block;
+            margin: 0 auto;
+            background: #020205;
+            touch-action: none;
+        }
+        .retro-border {
+            border: 4px solid #444;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        .ui-panel {
+            background: rgba(10, 10, 15, 0.9);
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+            border-bottom: 2px solid #333;
+        }
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 90px;
+            background: rgba(0, 50, 0, 0.2);
+            border: 1px solid #0f0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        @keyframes pulse-mini {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+        .target-dot {
+            animation: pulse-mini 1s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
 
-1. Der User startet in Jira. Dort ruft er in der Sidebar über “Ask Rovo” unseren PitStop Inspect Agent auf.
+    <div id="game-container" class="relative overflow-hidden">
+        <!-- UI Overlay -->
+        <div id="ui" class="absolute top-0 left-0 w-full p-4 flex justify-between ui-panel text-xs md:text-sm z-10 select-none pointer-events-none">
+            <div class="flex gap-6">
+                <div>
+                    CASH: $<span id="cash">0</span><br>
+                    PASSENGERS: <span id="pass-count">0/3</span>
+                </div>
+                <div>
+                    FUEL: <span id="fuel-val">100</span>%
+                    <div class="w-24 h-2 bg-gray-800 mt-1 border border-gray-600">
+                        <div id="fuel-bar" class="h-full bg-green-500" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <span id="message" class="text-yellow-400 font-bold uppercase text-lg">Initializing...</span>
+            </div>
+            <div class="text-right">
+                LEVEL: <span id="level-idx">1</span><br>
+                GO TO: <span id="target" class="text-white">-</span>
+            </div>
+        </div>
 
-2. Unser Agent begrüßt ihn im Chat und fragt nach den zwei Bildern des Wagens. Eins, dass den Zustand vor dem Rennen zeigt. Das zweite für den Zustand nach dem Rennen. 
+        <!-- Start/Game Over Screens -->
+        <div id="overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 text-white text-center p-6">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 text-yellow-500 italic">SPACE TAXI ULTRA</h1>
+            <p id="overlay-msg" class="mb-8 text-sm md:text-base leading-relaxed">
+                Transportiere 3 Passagiere pro Level.<br>
+                Nutze die grünen Tankstellen zum Auffüllen.<br>
+                Vermeide die roten Hindernisse!
+            </p>
+            <button id="start-btn" class="px-10 py-4 bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold rounded-none border-b-4 border-yellow-800 transition-all active:translate-y-1 uppercase">Start Mission</button>
+        </div>
 
-3. Der User lädt die angefragten 2 Bilder im Agent Chat hoch.
+        <canvas id="gameCanvas" class="retro-border"></canvas>
 
-4. Unser Agent fragt auch noch nach einer Confluence Page ID, um im zugehörigen Confluence nach den Fahrzeugdaten zu suchen (z.B. erforderliche Reifenprofiltiefe), um diese Daten mit dem Bild zu vergleichen.
+        <!-- Minimap -->
+        <div class="minimap" id="minimap"></div>
 
-5. Der User gibt ihm die Page Id.
+        <!-- Touch Controls -->
+        <div id="controls" class="absolute bottom-4 left-4 right-4 flex justify-between md:hidden z-10 pointer-events-none">
+            <div class="flex gap-4 pointer-events-auto">
+                <button id="btn-left" class="w-16 h-16 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center text-3xl">←</button>
+                <button id="btn-right" class="w-16 h-16 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center text-3xl">→</button>
+            </div>
+            <div class="pointer-events-auto">
+                <button id="btn-up" class="w-20 h-20 bg-yellow-500/20 rounded-full border-2 border-yellow-500/40 flex items-center justify-center text-4xl">↑</button>
+            </div>
+        </div>
+    </div>
 
-4. Unser Agent beginnt sofort mit der Damage Detection. Er prüft sorgfältig, ob neue Schäden hinzukamen und geht die aus Confluence ermittelten Fahrzeugdaten durch und prüft diese mit dem Wagen im Bild ab.  
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('start-btn');
+        const overlay = document.getElementById('overlay');
+        const overlayMsg = document.getElementById('overlay-msg');
+        
+        let gameState = 'START';
+        let cash = 0;
+        let fuel = 100;
+        let currentLevelIdx = 0;
+        let animationId;
+        let passengerIndex = 0; // Current passenger in the sequence (0, 1, 2)
+        
+        const VIEW_W = 800;
+        const VIEW_H = 600;
+        const TAXI_WIDTH = 30;
+        const TAXI_HEIGHT = 20;
 
-5. Unser Agent erkennt, dass etwas am Auto kaputt ist und gibt eine List der Schäden und eine Zusammenfassung in natürlicher Sprache aus.
+        const camera = { x: 0, y: 0 };
+        const taxi = {
+            x: 100, y: 100, vx: 0, vy: 0, angle: 0,
+            thrusting: { up: false, left: false, right: false },
+            landedOn: null,
+            reset(x = 100, y = 100) {
+                this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.angle = 0;
+                this.landedOn = null;
+            }
+        };
 
-6. Unser Agent fragt den User, ob er ein Jira Ticket erstellen soll, um den Fehler beim Reparatur-Team zu melden. Und bittet den User um einen Jira-Projekt Schlüssel.
+        // Obstacle Logic
+        class MovingObstacle {
+            constructor(x, y, w, h, xRange, yRange, speed) {
+                this.startX = x; this.startY = y;
+                this.x = x; this.y = y;
+                this.w = w; this.h = h;
+                this.xRange = xRange; this.yRange = yRange;
+                this.speed = speed;
+                this.time = Math.random() * 100;
+            }
+            update() {
+                this.time += this.speed;
+                if (this.xRange > 0) this.x = this.startX + Math.sin(this.time) * (this.xRange / 2);
+                if (this.yRange > 0) this.y = this.startY + Math.cos(this.time) * (this.yRange / 2);
+            }
+            draw(ctx, cam) {
+                ctx.fillStyle = '#f33';
+                ctx.fillRect(this.x - cam.x, this.y - cam.y, this.w, this.h);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(this.x - cam.x, this.y - cam.y, this.w, this.h);
+            }
+        }
 
-7. Der User gibt den Jira Projekt-Schlüssel an, in dem unser Agent das Ticket erstellen wird.
+        const levels = [
+            {
+                worldW: 1800, worldH: 1400,
+                spawn: { x: 100, y: 100 },
+                platforms: [
+                    { x: 50, y: 200, w: 100, h: 15, id: 1 },
+                    { x: 1500, y: 300, w: 120, h: 15, id: 2 },
+                    { x: 800, y: 800, w: 100, h: 15, id: 3 },
+                    { x: 100, y: 1200, w: 100, h: 15, id: 4 },
+                    { x: 1600, y: 1300, w: 100, h: 15, id: 5 },
+                    { x: 900, y: 100, w: 100, h: 15, id: 99, isFuelStation: true }
+                ],
+                walls: [
+                    { x: 0, y: 0, w: 1800, h: 20 }, { x: 0, y: 1380, w: 1800, h: 20 },
+                    { x: 0, y: 0, w: 20, h: 1400 }, { x: 1780, y: 0, w: 20, h: 1400 },
+                    { x: 400, y: 400, w: 40, h: 600 }, { x: 1200, y: 400, w: 40, h: 600 }
+                ],
+                obstacles: [
+                    new MovingObstacle(600, 300, 40, 40, 400, 0, 0.02),
+                    new MovingObstacle(1000, 1000, 60, 20, 0, 400, 0.03),
+                    new MovingObstacle(1400, 600, 30, 30, 200, 200, 0.02)
+                ],
+                passengers: [
+                    { from: 1, to: 2 }, { from: 4, to: 3 }, { from: 5, to: 1 }
+                ]
+            },
+            {
+                worldW: 2400, worldH: 1800,
+                spawn: { x: 100, y: 100 },
+                platforms: [
+                    { x: 100, y: 200, w: 100, h: 15, id: 1 },
+                    { x: 2100, y: 200, w: 100, h: 15, id: 2 },
+                    { x: 1100, y: 900, w: 150, h: 15, id: 3 },
+                    { x: 100, y: 1600, w: 100, h: 15, id: 4 },
+                    { x: 2100, y: 1600, w: 100, h: 15, id: 5 },
+                    { x: 1150, y: 100, w: 80, h: 15, id: 99, isFuelStation: true }
+                ],
+                walls: [
+                    { x: 0, y: 0, w: 2400, h: 25 }, { x: 0, y: 1775, w: 2400, h: 25 },
+                    { x: 0, y: 0, w: 25, h: 1800 }, { x: 2375, y: 0, w: 25, h: 1800 },
+                    // Maze walls
+                    { x: 500, y: 0, w: 30, h: 600 }, { x: 500, y: 1000, w: 30, h: 800 },
+                    { x: 1800, y: 0, w: 30, h: 800 }, { x: 1800, y: 1200, w: 30, h: 600 },
+                    { x: 900, y: 600, w: 600, h: 30 }
+                ],
+                obstacles: [
+                    new MovingObstacle(300, 800, 100, 20, 200, 0, 0.05),
+                    new MovingObstacle(2000, 800, 100, 20, 200, 0, 0.05),
+                    new MovingObstacle(1150, 400, 40, 40, 600, 0, 0.02),
+                    new MovingObstacle(1150, 1400, 40, 40, 600, 0, 0.03),
+                    new MovingObstacle(100, 1000, 30, 30, 2000, 0, 0.01)
+                ],
+                passengers: [
+                    { from: 2, to: 4 }, { from: 1, to: 5 }, { from: 3, to: 2 }
+                ]
+            }
+        ];
 
-8. Unser Agent erstellt anschließend ein Hauptticket und darin Unter-Tickets für jeden gefundenen Schaden.
+        let activePassenger = null;
+        let audioCtx = null;
 
-9. Zum Schluss bestätigt unser Agent, dass das Ticket im angegebenen Projekt erstellt wurde und sich das Reparaturteam bei Rückfragen beim User melden wird.
+        function playSound(freq, duration, type = 'square', volume = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
 
-10. Da unser Agent auch einen Link zu dem erstellten Ticket ausgibt, können wir es aufrufen und sehen dort die Subtasks für die einzelnen Schäden die man reparieren muss.
+        function initPassenger() {
+            const level = levels[currentLevelIdx];
+            const passData = level.passengers[passengerIndex];
+            const pStart = level.platforms.find(pl => pl.id === passData.from);
+            
+            activePassenger = {
+                state: 'WAITING',
+                fromId: passData.from,
+                toId: passData.to,
+                x: pStart.x + pStart.w / 2,
+                y: pStart.y - 5
+            };
+            
+            document.getElementById('pass-count').innerText = `${passengerIndex + 1}/3`;
+            document.getElementById('target').innerText = "Platform " + activePassenger.fromId;
+            document.getElementById('target').style.color = "#ff0";
+            document.getElementById('message').innerText = "Pick up passenger!";
+        }
+
+        function resize() {
+            canvas.width = VIEW_W;
+            canvas.height = VIEW_H;
+            const screenW = Math.min(window.innerWidth - 20, VIEW_W);
+            canvas.style.width = screenW + 'px';
+            canvas.style.height = (screenW * 0.75) + 'px';
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        const btns = { up: document.getElementById('btn-up'), left: document.getElementById('btn-left'), right: document.getElementById('btn-right') };
+        Object.keys(btns).forEach(k => {
+            btns[k].addEventListener('touchstart', (e) => { e.preventDefault(); btns[k].isDown = true; });
+            btns[k].addEventListener('touchend', (e) => { e.preventDefault(); btns[k].isDown = false; });
+        });
+
+        function checkCollision(obj, target) {
+            return obj.x - TAXI_WIDTH / 2 < target.x + target.w &&
+                   obj.x + TAXI_WIDTH / 2 > target.x &&
+                   obj.y - TAXI_HEIGHT / 2 < target.y + target.h &&
+                   obj.y + TAXI_HEIGHT / 2 > target.y;
+        }
+
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+
+            const level = levels[currentLevelIdx];
+
+            // Input
+            const thrustUp = keys['ArrowUp'] || keys['KeyW'] || btns.up.isDown;
+            const thrustLeft = keys['ArrowLeft'] || keys['KeyA'] || btns.left.isDown;
+            const thrustRight = keys['ArrowRight'] || keys['KeyD'] || btns.right.isDown;
+
+            if (thrustUp && fuel > 0) {
+                taxi.vy -= 0.12;
+                fuel -= 0.15;
+                if (Math.random() > 0.8) playSound(100 + Math.random() * 50, 0.05, 'sawtooth', 0.05);
+            }
+            if (thrustLeft && fuel > 0) { taxi.vx -= 0.08; fuel -= 0.05; taxi.angle = -0.15; }
+            else if (thrustRight && fuel > 0) { taxi.vx += 0.08; fuel -= 0.05; taxi.angle = 0.15; }
+            else { taxi.angle *= 0.9; }
+
+            taxi.vy += 0.035; // Gravity
+            taxi.vx *= 0.985; // Friction
+            taxi.vy *= 0.985;
+            taxi.x += taxi.vx;
+            taxi.y += taxi.vy;
+
+            if (fuel <= 0) fuel = 0;
+
+            // Camera follow
+            camera.x = taxi.x - VIEW_W / 2;
+            camera.y = taxi.y - VIEW_H / 2;
+            camera.x = Math.max(0, Math.min(camera.x, level.worldW - VIEW_W));
+            camera.y = Math.max(0, Math.min(camera.y, level.worldH - VIEW_H));
+
+            // Collisions: Walls
+            for (let wall of level.walls) {
+                if (checkCollision(taxi, wall)) { crash(); return; }
+            }
+            // Collisions: Obstacles
+            for (let obs of level.obstacles) {
+                obs.update();
+                if (checkCollision(taxi, obs)) { crash(); return; }
+            }
+
+            // Collisions: Platforms
+            let landing = false;
+            let currentPlat = null;
+            for (let plat of level.platforms) {
+                if (checkCollision(taxi, plat)) {
+                    if (taxi.vy > 0.8 || Math.abs(taxi.vx) > 0.8 || Math.abs(taxi.angle) > 0.2) {
+                        crash(); return;
+                    } else {
+                        taxi.y = plat.y - TAXI_HEIGHT / 2;
+                        taxi.vy = 0; taxi.vx = 0; taxi.angle = 0;
+                        landing = true; taxi.landedOn = plat.id;
+                        currentPlat = plat;
+                    }
+                }
+            }
+            if (!landing) taxi.landedOn = null;
+
+            // Fuel Logic
+            if (currentPlat && currentPlat.isFuelStation && fuel < 100) {
+                fuel = Math.min(100, fuel + 0.4);
+                if (cash > 0) cash = Math.max(0, cash - 0.1);
+                document.getElementById('message').innerText = "REFUELING...";
+            }
+
+            // Passenger State Machine
+            if (activePassenger.state === 'WAITING' && taxi.landedOn === activePassenger.fromId) {
+                activePassenger.state = 'IN_TAXI';
+                playSound(600, 0.2);
+                document.getElementById('target').innerText = "Platform " + activePassenger.toId;
+                document.getElementById('target').style.color = "#0f0";
+                document.getElementById('message').innerText = "Hurry up!";
+            } else if (activePassenger.state === 'IN_TAXI' && taxi.landedOn === activePassenger.toId) {
+                activePassenger.state = 'ARRIVED';
+                cash += 100;
+                playSound(800, 0.3);
+                passengerIndex++;
+                if (passengerIndex < 3) {
+                    initPassenger();
+                } else {
+                    document.getElementById('message').innerText = "LEVEL CLEAR!";
+                    setTimeout(nextLevel, 1500);
+                }
+            }
+
+            updateUI();
+            updateMinimap();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateUI() {
+            document.getElementById('cash').innerText = Math.floor(cash);
+            document.getElementById('fuel-val').innerText = Math.floor(fuel);
+            const fuelBar = document.getElementById('fuel-bar');
+            fuelBar.style.width = fuel + '%';
+            fuelBar.className = fuel < 25 ? 'h-full bg-red-500' : (fuel < 50 ? 'h-full bg-yellow-500' : 'h-full bg-green-500');
+        }
+
+        function updateMinimap() {
+            const m = document.getElementById('minimap');
+            const level = levels[currentLevelIdx];
+            const MAP_W = 120;
+            const MAP_H = 90;
+
+            // Taxi Pos
+            const tx = (taxi.x / level.worldW) * MAP_W;
+            const ty = (taxi.y / level.worldH) * MAP_H;
+
+            let markers = `<div style="position:absolute; left:${tx-2}px; top:${ty-2}px; width:4px; height:4px; background:yellow; border-radius:50%; z-index:10;"></div>`;
+
+            // Fuel Station
+            const fuelPlat = level.platforms.find(p => p.isFuelStation);
+            if (fuelPlat) {
+                const fx = (fuelPlat.x / level.worldW) * MAP_W;
+                const fy = (fuelPlat.y / level.worldH) * MAP_H;
+                markers += `<div style="position:absolute; left:${fx}px; top:${fy}px; width:6px; height:2px; background:#0f0; z-index:5;"></div>`;
+            }
+
+            // Current Goal (Passenger or Destination)
+            const goalId = activePassenger.state === 'WAITING' ? activePassenger.fromId : activePassenger.toId;
+            const goalPlat = level.platforms.find(p => p.id === goalId);
+            if (goalPlat) {
+                const gx = (goalPlat.x / level.worldW) * MAP_W;
+                const gy = (goalPlat.y / level.worldH) * MAP_H;
+                markers += `<div class="target-dot" style="position:absolute; left:${gx-1}px; top:${gy-2}px; width:8px; height:3px; background:#f0f; border:1px solid white; z-index:8;"></div>`;
+            }
+
+            m.innerHTML = markers;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, VIEW_W, VIEW_H);
+            const level = levels[currentLevelIdx];
+
+            // Stars Background
+            ctx.fillStyle = '#111';
+            for(let i=0; i<50; i++) {
+                let sx = (i * 137.5) % level.worldW - camera.x;
+                let sy = (i * 137.5 * 1.5) % level.worldH - camera.y;
+                if (sx >= 0 && sx <= VIEW_W && sy >= 0 && sy <= VIEW_H) {
+                    ctx.fillRect(sx, sy, 2, 2);
+                }
+            }
+
+            // Draw Walls
+            ctx.fillStyle = '#445';
+            level.walls.forEach(w => {
+                const rx = w.x - camera.x;
+                const ry = w.y - camera.y;
+                if (rx + w.w > 0 && rx < VIEW_W && ry + w.h > 0 && ry < VIEW_H) {
+                    ctx.fillRect(rx, ry, w.w, w.h);
+                }
+            });
+
+            // Draw Platforms
+            level.platforms.forEach(p => {
+                const rx = p.x - camera.x;
+                const ry = p.y - camera.y;
+                if (rx + p.w > 0 && rx < VIEW_W && ry + p.h > 0 && ry < VIEW_H) {
+                    ctx.fillStyle = p.isFuelStation ? '#2d5a27' : '#667';
+                    ctx.fillRect(rx, ry, p.w, p.h);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(p.isFuelStation ? 'FUEL' : 'P'+p.id, rx + 5, ry + 11);
+                }
+            });
+
+            // Draw Obstacles
+            level.obstacles.forEach(o => o.draw(ctx, camera));
+
+            // Draw Passenger
+            if (activePassenger && activePassenger.state === 'WAITING') {
+                const rx = activePassenger.x - camera.x;
+                const ry = activePassenger.y - camera.y;
+                if (rx > 0 && rx < VIEW_W && ry > 0 && ry < VIEW_H) {
+                    ctx.fillStyle = '#f0f';
+                    ctx.fillRect(rx - 3, ry - 10, 6, 10);
+                    ctx.beginPath(); ctx.arc(rx, ry - 12, 4, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            // Draw Taxi
+            ctx.save();
+            ctx.translate(taxi.x - camera.x, taxi.y - camera.y);
+            ctx.rotate(taxi.angle);
+            ctx.fillStyle = fuel > 0 ? '#ff0' : '#444';
+            ctx.fillRect(-TAXI_WIDTH/2, -TAXI_HEIGHT/2, TAXI_WIDTH, TAXI_HEIGHT-5);
+            ctx.fillStyle = '#0cf';
+            ctx.fillRect(2, -8, 10, 6);
+            if (taxi.thrusting.up && fuel > 0) {
+                ctx.fillStyle = '#f90';
+                ctx.fillRect(-6, 8, 12, 8 + Math.random()*8);
+            }
+            ctx.restore();
+        }
+
+        function crash() {
+            gameState = 'CRASHED';
+            playSound(100, 0.5, 'sawtooth', 0.3);
+            overlay.classList.remove('hidden');
+            overlayMsg.innerHTML = `<span class="text-red-500 text-3xl font-bold">CRASHED!</span><br>Passagiere hassen Explosionen.<br>Cash: $${Math.floor(cash)}`;
+            startBtn.innerText = "Try Again";
+            cancelAnimationFrame(animationId);
+        }
+
+        function nextLevel() {
+            currentLevelIdx++;
+            if (currentLevelIdx >= levels.length) {
+                gameState = 'SUCCESS';
+                overlay.classList.remove('hidden');
+                overlayMsg.innerHTML = `<span class="text-green-500 text-3xl font-bold">TYCOON COMPLETE</span><br>Du hast alle Sektoren erschlossen!<br>Total Cash: $${Math.floor(cash)}`;
+                startBtn.innerText = "New Game";
+                currentLevelIdx = 0;
+            } else {
+                passengerIndex = 0;
+                initLevel();
+            }
+        }
+
+        function initLevel() {
+            const level = levels[currentLevelIdx];
+            taxi.reset(level.spawn.x, level.spawn.y);
+            fuel = 100;
+            passengerIndex = 0;
+            initPassenger();
+            document.getElementById('level-idx').innerText = currentLevelIdx + 1;
+        }
+
+        startBtn.onclick = () => {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            overlay.classList.add('hidden');
+            if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0 && currentLevelIdx === 0)) {
+                cash = 0;
+            }
+            gameState = 'PLAYING';
+            initLevel();
+            gameLoop();
+        };
+
+        draw();
+    </script>
+</body>
+</html>
