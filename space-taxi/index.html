@@ -139,8 +139,8 @@
             <!-- Overlays -->
             <div id="overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-40 text-white text-center p-6">
                 <h1 class="text-2xl sm:text-4xl font-bold mb-2 text-yellow-500 italic uppercase tracking-widest text-shadow">Space Taxi</h1>
-                <p class="text-[6px] sm:text-[8px] mb-6 text-gray-400">Entwickelt von Chuck Heß</p>
-                <div class="border-2 border-yellow-600 p-4 mb-6 bg-gray-900 shadow-[8px_8px_0px_#000]">
+                <p class="text-[6px] sm:text-[8px] mb-4 text-gray-400">Entwickelt von Chuck Heß</p>
+                <div class="border-2 border-yellow-600 p-4 mb-4 bg-gray-900 shadow-[8px_8px_0px_#000]">
                     <p id="overlay-msg" class="text-[7px] sm:text-[10px] leading-relaxed uppercase">
                         Sektor-Kontrolle aktiviert.<br><br>
                         - Bringe 3 Passagiere ans Ziel<br>
@@ -148,7 +148,38 @@
                         - Lande vorsichtig (Tacho <span class="text-green-400">GRÜN</span>)
                     </p>
                 </div>
+                <div id="highscore-display" class="border-2 border-cyan-600 p-3 mb-4 bg-gray-900/70 shadow-[4px_4px_0px_#000] text-[6px] sm:text-[8px]">
+                    <p class="text-cyan-400 mb-1">🏆 REKORDE 🏆</p>
+                    <p id="best-time-display" class="text-gray-300">Beste Zeit: --:--</p>
+                    <p id="best-cash-display" class="text-gray-300">Bestes Konto: $0</p>
+                </div>
                 <button id="start-btn" class="px-8 py-4 bg-blue-700 hover:bg-blue-600 text-white font-bold border-4 border-white shadow-[6px_6px_0px_#000] active:translate-y-1 active:shadow-none uppercase text-xs">Mission Start</button>
+            </div>
+
+            <!-- Pause Menü -->
+            <div id="pause-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-50 text-white text-center p-6 hidden">
+                <h2 class="text-3xl sm:text-5xl font-bold mb-6 text-yellow-400 uppercase">Pause</h2>
+                <div class="border-2 border-cyan-500 p-6 mb-6 bg-gray-900 shadow-[8px_8px_0px_#000]">
+                    <p class="text-[8px] sm:text-[12px] mb-4 text-gray-300">STEUERUNG:</p>
+                    <p class="text-[7px] sm:text-[10px] leading-relaxed text-left">
+                        <span class="text-cyan-400">↑ / W</span> - SCHUB<br>
+                        <span class="text-cyan-400">← →  / A D</span> - LINKS/RECHTS<br>
+                        <span class="text-cyan-400">ESC / P</span> - PAUSE<br>
+                        <span class="text-cyan-400">R</span> - LEVEL NEUSTART
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <button id="resume-btn" class="px-6 py-3 bg-green-700 hover:bg-green-600 text-white font-bold border-4 border-white shadow-[6px_6px_0px_#000] active:translate-y-1 active:shadow-none uppercase text-xs">Weiter</button>
+                    <button id="restart-from-pause-btn" class="px-6 py-3 bg-orange-700 hover:bg-orange-600 text-white font-bold border-4 border-white shadow-[6px_6px_0px_#000] active:translate-y-1 active:shadow-none uppercase text-xs">Neustart</button>
+                </div>
+            </div>
+
+            <!-- Treibstoff-Warnung -->
+            <div id="fuel-warning" class="absolute inset-0 flex items-center justify-center pointer-events-none z-35 hidden">
+                <div class="bg-red-900/90 border-4 border-red-500 px-8 py-6 shadow-[0_0_30px_rgba(255,0,0,0.5)]">
+                    <p class="text-red-100 text-2xl sm:text-4xl font-bold uppercase animate-pulse">⚠ TANK LEER! ⚠</p>
+                    <p class="text-red-300 text-xs sm:text-sm mt-2">TANKSTELLE ANSTEUERN!</p>
+                </div>
             </div>
 
             <canvas id="gameCanvas"></canvas>
@@ -174,13 +205,15 @@
         const startBtn = document.getElementById('start-btn');
         const overlay = document.getElementById('overlay');
         const overlayMsg = document.getElementById('overlay-msg');
-        
+
         let gameState = 'START';
         let cash = 0, fuel = 100, currentLevelIdx = 0, passengerIndex = 0;
         let animationId, shake = 0, bgmBeat = 0;
         let particles = [], starLayers = [];
         let activePassenger = null;
         let fuelAlertTriggered = false;
+        let levelStartTime = 0, totalGameTime = 0;
+        let isPaused = false;
         
         const WORLD_W = 800, WORLD_H = 600;
         const TAXI_W = 34, TAXI_H = 22, MAX_LANDING_SPD = 1;
@@ -199,6 +232,53 @@
 
         // Audio & Musik Nodes
         let audioCtx, engineGain, engineFilter, noiseBuffer, bgmInterval;
+
+        /** --- HIGHSCORE SYSTEM --- **/
+        function getHighscores() {
+            const stored = localStorage.getItem('spaceTaxiHighscores');
+            return stored ? JSON.parse(stored) : { bestTime: Infinity, bestCash: 0, levelTimes: {} };
+        }
+
+        function saveHighscore(levelIdx, time, cashAmount) {
+            const scores = getHighscores();
+            const levelKey = `level${levelIdx}`;
+
+            if (!scores.levelTimes[levelKey] || time < scores.levelTimes[levelKey]) {
+                scores.levelTimes[levelKey] = time;
+            }
+
+            if (cashAmount > scores.bestCash) {
+                scores.bestCash = cashAmount;
+            }
+
+            if (totalGameTime < scores.bestTime && currentLevelIdx >= levels.length - 1) {
+                scores.bestTime = totalGameTime;
+            }
+
+            localStorage.setItem('spaceTaxiHighscores', JSON.stringify(scores));
+        }
+
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateHighscoreDisplay() {
+            const scores = getHighscores();
+            const bestTimeEl = document.getElementById('best-time-display');
+            const bestCashEl = document.getElementById('best-cash-display');
+
+            if (bestTimeEl) {
+                bestTimeEl.innerText = scores.bestTime === Infinity ?
+                    'Beste Zeit: --:--' :
+                    `Beste Zeit: ${formatTime(scores.bestTime)}`;
+            }
+            if (bestCashEl) {
+                bestCashEl.innerText = `Bestes Konto: $${Math.floor(scores.bestCash)}`;
+            }
+        }
 
         /** --- LEVEL DESIGN --- **/
         const levels = [
@@ -345,7 +425,10 @@
 
         /** --- CORE LOOP --- **/
         function gameLoop() {
-            if (gameState !== 'PLAYING') return;
+            if (gameState !== 'PLAYING' || isPaused) {
+                if (isPaused) animationId = requestAnimationFrame(gameLoop);
+                return;
+            }
             const level = levels[currentLevelIdx];
 
             const thrustUp = keys['ArrowUp'] || keys['KeyW'];
@@ -367,7 +450,13 @@
                     fuelAlertTriggered = true;
                     playSound(350, 2.0, 'sine', 0.4, 10);
                     document.getElementById('message').innerText = "TANK LEER!";
+                    document.getElementById('fuel-warning').classList.remove('hidden');
                 }
+            }
+
+            // Treibstoff-Warnung ausblenden wenn wieder Treibstoff vorhanden
+            if (fuel > 0 && !document.getElementById('fuel-warning').classList.contains('hidden')) {
+                document.getElementById('fuel-warning').classList.add('hidden');
             }
 
             taxi.vy += 0.04; taxi.vx *= 0.98; taxi.vy *= 0.98;
@@ -559,6 +648,7 @@
             const crashMsg = msg || (fuel <= 0 ? "TANK LEER!" : "TOTALSCHADEN!");
             overlayMsg.innerHTML = `<span class="text-red-500 text-xl font-bold">${crashMsg}</span><br><br>DER TAXIRAT IST EMPÖRT.<br>KONSTRUKTION FEHLERHAFT.`;
             startBtn.innerText = "NOCHMAL";
+            updateHighscoreDisplay();
         }
 
         function initPassenger() {
@@ -577,13 +667,25 @@
         }
 
         function nextLevel() {
+            // Speichere Levelzeit
+            const levelTime = Date.now() - levelStartTime;
+            saveHighscore(currentLevelIdx, levelTime, cash);
+            totalGameTime += levelTime;
+
             currentLevelIdx++;
             if (currentLevelIdx >= levels.length) {
                 gameState = 'SUCCESS';
                 overlay.classList.remove('hidden');
-                overlayMsg.innerHTML = `<span class="text-green-500 text-xl font-bold">LEGENDÄR!</span><br><br>GALAXY TAXI TYCOON STATUS ERREICHT.<br>KONTO: $${Math.floor(cash)}`;
+                const scores = getHighscores();
+                const isNewRecord = totalGameTime < scores.bestTime || scores.bestTime === Infinity;
+                overlayMsg.innerHTML = `<span class="text-green-500 text-xl font-bold">LEGENDÄR!</span><br><br>
+                    GALAXY TAXI TYCOON STATUS ERREICHT.<br>
+                    KONTO: $${Math.floor(cash)}<br>
+                    ZEIT: ${formatTime(totalGameTime)}
+                    ${isNewRecord ? '<br><span class="text-yellow-400">🏆 NEUER REKORD! 🏆</span>' : `<br>REKORD: ${formatTime(scores.bestTime)}`}`;
                 startBtn.innerText = "NEUSTART";
                 currentLevelIdx = 0;
+                updateHighscoreDisplay();
             } else {
                 passengerIndex = 0; initLevel();
             }
@@ -594,11 +696,46 @@
             taxi.reset(level.spawn.x, level.spawn.y);
             fuel = 100; initStars(level); initPassenger();
             document.getElementById('level-idx').innerText = currentLevelIdx + 1;
+            levelStartTime = Date.now();
+            document.getElementById('fuel-warning').classList.add('hidden');
         }
 
         const keys = {};
-        window.onkeydown = e => keys[e.code] = true;
+        window.onkeydown = e => {
+            keys[e.code] = true;
+
+            // Pause Toggle (ESC oder P)
+            if ((e.code === 'Escape' || e.code === 'KeyP') && gameState === 'PLAYING') {
+                togglePause();
+                e.preventDefault();
+            }
+
+            // Restart (R-Taste)
+            if (e.code === 'KeyR' && gameState === 'PLAYING' && !isPaused) {
+                restartLevel();
+                e.preventDefault();
+            }
+        };
         window.onkeyup = e => keys[e.code] = false;
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseOverlay = document.getElementById('pause-overlay');
+            if (isPaused) {
+                pauseOverlay.classList.remove('hidden');
+                if (engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+            } else {
+                pauseOverlay.classList.add('hidden');
+            }
+        }
+
+        function restartLevel() {
+            if (gameState !== 'PLAYING') return;
+            passengerIndex = 0;
+            initLevel();
+            document.getElementById('message').innerText = "LEVEL NEUSTART";
+            playSound(400, 0.3, 'square', 0.1);
+        }
 
         function setupTouch(id, code) {
             const el = document.getElementById(id);
@@ -610,8 +747,21 @@
 
         startBtn.onclick = () => {
             setupAudio(); overlay.classList.add('hidden');
-            if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0)) cash = 0;
+            if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0)) {
+                cash = 0;
+                totalGameTime = 0;
+            }
             gameState = 'PLAYING'; initLevel(); gameLoop();
+        };
+
+        // Pause-Menü Buttons
+        document.getElementById('resume-btn').onclick = () => {
+            togglePause();
+        };
+
+        document.getElementById('restart-from-pause-btn').onclick = () => {
+            togglePause();
+            restartLevel();
         };
 
         window.onresize = () => {
@@ -622,6 +772,9 @@
             document.getElementById('game-container').style.height = canvas.style.height;
         };
         window.onresize();
+
+        // Initial Highscore Display
+        updateHighscoreDisplay();
     </script>
 </body>
 </html>
