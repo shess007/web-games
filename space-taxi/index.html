@@ -181,9 +181,10 @@
         let particles = [], starLayers = [];
         let activePassenger = null;
         let fuelAlertTriggered = false;
+        let isTransitioning = false; // Neu: Verhindert Mehrfach-Trigger beim Levelwechsel
         
         const WORLD_W = 800, WORLD_H = 600;
-        const TAXI_W = 34, TAXI_H = 22, MAX_LANDING_SPD = 1;
+        const TAXI_W = 34, TAXI_H = 22, MAX_LANDING_SPD = 0.8;
         const camera = { x: 0, y: 0 };
         const taxi = {
             x: 100, y: 100, vx: 0, vy: 0, angle: 0,
@@ -194,6 +195,7 @@
                 this.landedOn = null;
                 particles = []; shake = 0;
                 fuelAlertTriggered = false;
+                isTransitioning = false;
             }
         };
 
@@ -415,20 +417,24 @@
 
             if (!landed) taxi.landedOn = null;
 
-            // Passenger Logic
-            const pass = level.passengers[passengerIndex];
-            if (taxi.landedOn === pass.f && activePassenger?.state === 'WAITING') {
-                activePassenger.state = 'IN_TAXI'; playSound(600, 0.22, 'sine', 0.1);
-                document.getElementById('passenger-comment').innerText = "[ beeilung! ]";
-                document.getElementById('passenger-comment').style.opacity = 1;
-                document.getElementById('message').innerText = "ZIEL: P" + pass.t;
-            } else if (taxi.landedOn === pass.t && activePassenger?.state === 'IN_TAXI') {
-                activePassenger.state = 'DONE'; cash += 100; playSound(800, 0.35, 'sine', 0.1);
-                passengerIndex++;
-                if (passengerIndex < 3) initPassenger();
-                else {
-                    document.getElementById('message').innerText = "SEKTOR KLAR!";
-                    setTimeout(nextLevel, 1500);
+            // Passenger Logic (Fixed transition bug)
+            if (!isTransitioning && passengerIndex < level.passengers.length) {
+                const pass = level.passengers[passengerIndex];
+                if (taxi.landedOn === pass.f && activePassenger?.state === 'WAITING') {
+                    activePassenger.state = 'IN_TAXI'; playSound(600, 0.22, 'sine', 0.1);
+                    document.getElementById('passenger-comment').innerText = "[ beeilung! ]";
+                    document.getElementById('passenger-comment').style.opacity = 1;
+                    document.getElementById('message').innerText = "ZIEL: P" + pass.t;
+                } else if (taxi.landedOn === pass.t && activePassenger?.state === 'IN_TAXI') {
+                    activePassenger.state = 'DONE'; cash += 100; playSound(800, 0.35, 'sine', 0.1);
+                    passengerIndex++;
+                    if (passengerIndex < level.passengers.length) {
+                        initPassenger();
+                    } else {
+                        isTransitioning = true;
+                        document.getElementById('message').innerText = "SEKTOR KLAR!";
+                        setTimeout(nextLevel, 1500);
+                    }
                 }
             }
 
@@ -445,6 +451,7 @@
         /** --- RENDERER --- **/
         function draw() {
             const level = levels[currentLevelIdx];
+            if (!level) return;
             const shakeX = (Math.random()-0.5) * shake;
             const shakeY = (Math.random()-0.5) * shake;
             ctx.save();
@@ -531,7 +538,6 @@
             const tx = (taxi.x / level.w) * 100, ty = (taxi.y / level.h) * 75;
             let html = `<div style="position:absolute; left:${tx-2}px; top:${ty-2}px; width:4px; height:4px; background:yellow; z-index:5;"></div>`;
             
-            // Fuel stations on minimap
             level.platforms.forEach(p => {
                 if (p.fuel) {
                     const fx = (p.x / level.w) * 100, fy = (p.y / level.h) * 75;
@@ -539,8 +545,8 @@
                 }
             });
 
-            const pass = level.passengers[passengerIndex];
-            if (pass) {
+            if (passengerIndex < level.passengers.length) {
+                const pass = level.passengers[passengerIndex];
                 const goalId = activePassenger?.state === 'WAITING' ? pass.f : pass.t;
                 const goal = level.platforms.find(p => p.id === goalId);
                 if (goal) {
@@ -563,6 +569,8 @@
 
         function initPassenger() {
             const level = levels[currentLevelIdx];
+            if (!level || passengerIndex >= level.passengers.length) return;
+            
             const pass = level.passengers[passengerIndex];
             const startPlat = level.platforms.find(p => p.id === pass.f);
             activePassenger = { state: 'WAITING', x: startPlat.x + startPlat.w/2, y: startPlat.y - 5 };
@@ -585,14 +593,18 @@
                 startBtn.innerText = "NEUSTART";
                 currentLevelIdx = 0;
             } else {
-                passengerIndex = 0; initLevel();
+                passengerIndex = 0;
+                initLevel();
             }
         }
 
         function initLevel() {
             const level = levels[currentLevelIdx];
+            if (!level) return;
             taxi.reset(level.spawn.x, level.spawn.y);
-            fuel = 100; initStars(level); initPassenger();
+            fuel = 100;
+            initStars(level);
+            initPassenger();
             document.getElementById('level-idx').innerText = currentLevelIdx + 1;
         }
 
@@ -611,7 +623,9 @@
         startBtn.onclick = () => {
             setupAudio(); overlay.classList.add('hidden');
             if (gameState === 'SUCCESS' || (gameState === 'CRASHED' && passengerIndex === 0)) cash = 0;
-            gameState = 'PLAYING'; initLevel(); gameLoop();
+            gameState = 'PLAYING';
+            initLevel();
+            gameLoop();
         };
 
         window.onresize = () => {
