@@ -202,3 +202,46 @@ canvas {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0px #000;
 }
+
+/* Developer Menu */
+#dev-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 20, 0, 0.95);
+    border: 2px solid #0f0;
+    color: #0f0;
+    padding: 20px;
+    z-index: 100;
+    font-family: 'Courier New', Courier, monospace;
+    display: none;
+    box-shadow: 0 0 20px #0f0;
+    min-width: 300px;
+}
+
+#dev-menu h2 {
+    color: #0f0;
+    font-size: 14px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #0f0;
+    padding-bottom: 5px;
+}
+
+.dev-option {
+    margin: 10px 0;
+    cursor: pointer;
+    padding: 5px;
+    border: 1px transparent solid;
+}
+
+.dev-option:hover {
+    background: #040;
+    border-color: #0f0;
+}
+
+.dev-hint {
+    font-size: 8px;
+    color: #080;
+    margin-top: 15px;
+}

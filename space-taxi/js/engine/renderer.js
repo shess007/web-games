@@ -105,6 +105,34 @@ class Renderer {
             this.ctx.fillStyle = '#552200'; this.ctx.fillRect(rx - 3, ry - 20, 6, 2);
         }
 
+        // Enemies (Underworld Creatures)
+        if (level.enemies) {
+            level.enemies.forEach(e => {
+                const angle = Date.now() * e.speed;
+                const ex = e.x + Math.cos(angle) * e.r - camera.x;
+                const ey = e.y + Math.sin(angle) * e.r - camera.y;
+
+                if (ex + e.size < 0 || ex - e.size > WORLD_W || ey + e.size < 0 || ey - e.size > WORLD_H) return;
+
+                // Daemon Body (Pulsing)
+                const pulse = Math.sin(Date.now() * 0.01) * 2;
+                this.ctx.fillStyle = '#440000';
+                this.ctx.beginPath();
+                this.ctx.arc(ex, ey, e.size + pulse, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Glowing Eye
+                this.ctx.fillStyle = '#ff0000';
+                this.ctx.beginPath();
+                this.ctx.arc(ex, ey, e.size * 0.4, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Pupils
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(ex - 1, ey - e.size * 0.3, 2, e.size * 0.6);
+            });
+        }
+
         // Particles
         particles.forEach(p => {
             this.ctx.globalAlpha = p.life; this.ctx.fillStyle = p.color;

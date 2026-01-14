@@ -16,8 +16,27 @@ class UIManager {
             overlay: document.getElementById('overlay'),
             overlayMsg: document.getElementById('overlay-msg'),
             startBtn: document.getElementById('start-btn'),
-            minimap: document.getElementById('minimap')
+            minimap: document.getElementById('minimap'),
+            devMenu: document.getElementById('dev-menu'),
+            devOptions: document.getElementById('dev-options')
         };
+    }
+
+    toggleDevMenu(show, levels, onSelect) {
+        this.els.devMenu.style.display = show ? 'block' : 'none';
+        if (show) {
+            this.els.devOptions.innerHTML = '';
+            levels.forEach((l, idx) => {
+                const opt = document.createElement('div');
+                opt.className = 'dev-option';
+                opt.innerText = `> LADE SEKTOR ${idx + 1}`;
+                opt.onclick = () => {
+                    onSelect(idx);
+                    this.toggleDevMenu(false);
+                };
+                this.els.devOptions.appendChild(opt);
+            });
+        }
     }
 
     updateHUD(state, speed) {
@@ -103,6 +122,15 @@ class UIManager {
                 html += `<div class="target-dot" style="position:absolute; left:${gx}%; top:${gy}%; width:8px; height:3px; background:#ff00ff; border:1px solid white; transform:translate(0, 0); z-index:10;"></div>`;
             }
         }
+        if (level.enemies) {
+            level.enemies.forEach(e => {
+                const angle = Date.now() * e.speed;
+                const ex = ((e.x + Math.cos(angle) * e.r) / level.w) * 100;
+                const ey = ((e.y + Math.sin(angle) * e.r) / level.h) * 100;
+                html += `<div style="position:absolute; left:${ex}%; top:${ey}%; width:3px; height:3px; background:red; border-radius:50%; transform:translate(-50%, -50%); z-index:4; animation: blink 0.2s infinite;"></div>`;
+            });
+        }
+
         this.els.minimap.innerHTML = html;
     }
 }

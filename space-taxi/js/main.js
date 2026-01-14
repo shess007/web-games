@@ -33,7 +33,24 @@ class Game {
     }
 
     initEventListeners() {
-        window.onkeydown = e => this.state.keys[e.code] = true;
+        window.onkeydown = e => {
+            this.state.keys[e.code] = true;
+            if (e.code === 'F2') {
+                const isVisible = this.ui.els.devMenu.style.display === 'block';
+                this.ui.toggleDevMenu(!isVisible, levels, (idx) => {
+                    this.state.currentLevelIdx = idx;
+                    this.state.gameState = 'PLAYING';
+                    this.ui.hideOverlay();
+                    this.initLevel();
+                    if (!this.bgmInterval) {
+                        this.bgmInterval = setInterval(() => {
+                            if (this.state.gameState === 'PLAYING') this.audio.playBGMStep();
+                        }, 180);
+                    }
+                    this.gameLoop();
+                });
+            }
+        };
         window.onkeyup = e => this.state.keys[e.code] = false;
         window.onresize = () => this.handleResize();
 
@@ -200,6 +217,21 @@ class Game {
         for (let w of level.walls) {
             if (taxi.x + TAXI_W / 2 > w.x && taxi.x - TAXI_W / 2 < w.x + w.w && taxi.y + TAXI_H / 2 > w.y && taxi.y - TAXI_H / 2 < w.y + w.h) {
                 this.crash(); return;
+            }
+        }
+
+        // Enemies
+        if (level.enemies) {
+            for (let e of level.enemies) {
+                const angle = Date.now() * e.speed;
+                const ex = e.x + Math.cos(angle) * e.r;
+                const ey = e.y + Math.sin(angle) * e.r;
+                const dx = taxi.x - ex;
+                const dy = taxi.y - ey;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < e.size + 10) {
+                    this.crash("DÄMONEN-ATTACKE!"); return;
+                }
             }
         }
 
