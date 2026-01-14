@@ -1,0 +1,204 @@
+:root {
+    --snes-blue: #3e3ab3;
+    --snes-light-blue: #5c59d4;
+    --snes-gray: #c0c0c0;
+    --snes-dark-gray: #404040;
+    --snes-purple: #7a5ba0;
+}
+
+body {
+    background-color: #050505;
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Press Start 2P', cursive;
+    image-rendering: pixelated;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+#game-container {
+    position: relative;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 1);
+    border: 6px solid var(--snes-dark-gray);
+    background: #000;
+    overflow: hidden;
+}
+
+/* CRT Overlay & Scanlines */
+#game-container::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+    z-index: 25;
+    background-size: 100% 3px;
+    pointer-events: none;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+canvas {
+    image-rendering: pixelated;
+    display: block;
+    background: #080812;
+    touch-action: none;
+}
+
+/* Dashboard & Cockpit Elements */
+#ui {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 20px;
+}
+
+.instrument-pod {
+    background: rgba(30, 30, 40, 0.9);
+    border: 3px solid #666;
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 5px 15px rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 120px;
+    position: relative;
+    overflow: hidden;
+}
+
+.instrument-pod::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.label-retro {
+    font-size: 8px;
+    color: #888;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px #000;
+}
+
+/* Fuel Gauge */
+.fuel-gauge-container {
+    width: 80px;
+    height: 12px;
+    background: #111;
+    border: 2px solid #555;
+    padding: 2px;
+    position: relative;
+}
+
+#fuel-bar {
+    height: 100%;
+    transition: width 0.1s linear, background-color 0.3s;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* Speedometer Dial (Retro digital look) */
+.speed-display {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.speed-unit {
+    font-size: 8px;
+    color: #666;
+}
+
+/* Warning Overlays */
+@keyframes pulse-red {
+
+    0%,
+    100% {
+        box-shadow: inset 0 0 30px rgba(255, 0, 0, 0);
+    }
+
+    50% {
+        box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.4);
+    }
+}
+
+.danger-alert {
+    animation: pulse-red 0.5s infinite;
+    border-color: #ff3333 !important;
+}
+
+.gauge-critical {
+    color: #ff3333;
+    animation: blink 0.3s infinite;
+}
+
+.gauge-warning {
+    color: #ffaa00;
+}
+
+.gauge-fine {
+    color: #55ff55;
+}
+
+/* Minimap Cockpit Integration */
+.minimap {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 120px;
+    height: 90px;
+    background: rgba(20, 20, 30, 0.85);
+    border: 3px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1), inset 0 0 10px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 20;
+    overflow: hidden;
+}
+
+.minimap::after {
+    content: "SCANNER";
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 5px;
+    color: #44aaff;
+    letter-spacing: 1px;
+}
+
+.target-dot {
+    animation: blink 0.4s infinite;
+    box-shadow: 0 0 5px #fff;
+}
+
+.mobile-btn {
+    background: #555;
+    border: 3px solid #888;
+    box-shadow: 4px 4px 0px #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+}
+
+.mobile-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+}
