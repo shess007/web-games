@@ -25,10 +25,27 @@ body {
     height: 100vh;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 950px) {
     #game-wrapper {
         justify-content: flex-start;
         padding-top: env(safe-area-inset-top);
+    }
+
+    /* Orientation Logic */
+    @media (orientation: portrait) {
+        #orientation-overlay {
+            display: flex !important;
+        }
+
+        #game-wrapper {
+            display: none;
+        }
+    }
+
+    #fullscreen-btn {
+        display: block;
+        right: env(safe-area-inset-right, 20px);
+        top: env(safe-area-inset-top, 20px);
     }
 }
 
@@ -105,6 +122,38 @@ canvas {
     margin-bottom: 5px;
     letter-spacing: 1px;
     text-shadow: 1px 1px #000;
+}
+
+/* Passenger Avatar Slot */
+#avatar-container {
+    width: 32px;
+    height: 32px;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+#avatar-container::after {
+    content: "USER";
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    font-size: 4px;
+    text-align: center;
+    color: #0ff;
+}
+
+canvas.avatar-canvas {
+    image-rendering: pixelated;
+    width: 24px;
+    height: 24px;
 }
 
 /* Fuel Gauge */
@@ -225,6 +274,80 @@ canvas {
         border-width: 3px;
     }
 
+    /* HUD Optimization for Landscape */
+    @media (orientation: landscape) {
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 5px env(safe-area-inset-right, 10px) 5px env(safe-area-inset-left, 10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 50;
+        }
+
+        .instrument-pod {
+            background: rgba(20, 20, 30, 0.85);
+            border-width: 2px;
+            min-width: 85px;
+            transform: scale(0.8);
+            transform-origin: top;
+        }
+
+        #fuel-pod {
+            transform-origin: top left;
+        }
+
+        #speed-pod {
+            transform-origin: top right;
+        }
+
+        #controls {
+            padding: 0 env(safe-area-inset-right, 30px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 30px);
+            height: 100px;
+        }
+
+        .mobile-btn {
+            width: 55px;
+            height: 55px;
+            font-size: 18px;
+        }
+
+        #btn-up {
+            width: 70px;
+            height: 70px;
+        }
+
+        /* Compact Overlay for small heights */
+        #overlay {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        #overlay h1 {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+        }
+
+        #overlay p {
+            margin-bottom: 5px;
+            font-size: 6px;
+        }
+
+        #overlay .border-2 {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-width: 1px;
+        }
+
+        #overlay #start-btn {
+            padding: 6px 12px;
+            font-size: 8px;
+        }
+    }
+
     /* Gamepad Style Controls */
     #controls {
         display: flex !important;
@@ -274,9 +397,9 @@ canvas {
     display: none;
 }
 
-@media (min-width: 769px) {
+@media (max-width: 950px) {
     #controls {
-        display: none !important;
+        display: flex !important;
     }
 }
 
@@ -321,4 +444,32 @@ canvas {
     font-size: 8px;
     color: #080;
     margin-top: 15px;
+}
+/* Final Mobile Fixes */
+#overlay {
+    overflow-y: auto;
+    max-height: 100vh;
+}
+
+#overlay.hidden {
+    display: none !important;
+}
+
+@media (orientation: landscape) and (max-width: 950px) {
+    #overlay {
+        justify-content: flex-start; /* Start from top to ensure button is visible */
+        padding-top: 10px;
+    }
+}
+
+@media (orientation: landscape) and (max-width: 950px) {
+    #ui .bg-black\/60 {
+        padding: 2px 8px !important;
+    }
+    #ui #message {
+        font-size: 6px !important;
+    }
+    #ui #passenger-comment {
+        font-size: 8px !important;
+    }
 }

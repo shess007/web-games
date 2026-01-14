@@ -44,6 +44,7 @@
             <!-- Right Pod: Speed & Target -->
             <div id="speed-pod" class="instrument-pod">
                 <span class="label-retro">VELOCITY</span>
+                <div id="avatar-container"></div>
                 <div class="flex items-baseline gap-1">
                     <span id="speed-val" class="speed-display speed-safe">0.0</span>
                     <span class="speed-unit">u/s</span>
@@ -58,6 +59,16 @@
                 </div>
             </div>
 
+            <!-- Fullscreen Toggle (Mobile only via CSS) -->
+            <button id="fullscreen-btn"
+                class="hidden fixed top-4 right-4 z-50 p-2 bg-black/50 border border-white/20 rounded-full text-white pointer-events-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                    </path>
+                </svg>
+            </button>
         </div>
 
         <div id="game-container">
@@ -96,6 +107,22 @@
                 <button id="btn-up" class="mobile-btn">FLY</button>
             </div>
         </div>
+    </div>
+
+    <!-- Orientation Overlay -->
+    <div id="orientation-overlay"
+        class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center text-white p-8 text-center hidden">
+        <div class="mb-6 animate-bounce">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                stroke="#eab308" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold mb-4 uppercase tracking-widest text-yellow-500">Bitte Gerät drehen</h2>
+        <p class="text-[10px] leading-relaxed opacity-80 uppercase">
+            Space Taxi erfordert das Querformat für eine optimale Flugkontrolle.
+        </p>
     </div>
 
     <!-- Secret Developer Menu -->

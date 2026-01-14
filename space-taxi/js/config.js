@@ -51,3 +51,15 @@ var levels = [
         ]
     }
 ];
+
+var radioChatter = [
+    "Sektor-Kontrolle: 'Scanner-Verschmutzung in Quadrant 4 gemeldet.'",
+    "Funk: '...habe heute schon 3 VIPs nach Pluto geflogen.'",
+    "Warnung: 'Meteoriten-Warnung für Sektor G-12 aufgehoben.'",
+    "Kontrolle: 'Taxi 42, halten Sie die Landebahnen frei.'",
+    "Funk: 'Jemand Lust auf einen Drink in der Nebula-Bar?'",
+    "System: 'Gravitations-Konstante stabil bei 9.81 u/s.'",
+    "Kontrolle: 'Unidentifiziertes Flugobjekt in Level 2 gesichtet! Vorsicht!'",
+    "Funk: 'Wer hat die Mülltonnen bei PAD 1 stehen lassen?'",
+    "Sektor-Log: 'Sonneneruption erwartet. Schilde prüfen.'"
+];

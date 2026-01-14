@@ -24,10 +24,12 @@ class Game {
                 x: 100, y: 100, vx: 0, vy: 0, angle: 0,
                 landedOn: null
             },
-            keys: {}
+            keys: {},
+            chatterTimer: Math.random() * 500 + 500 // Initial delay for first chatter
         };
 
         this.bgmInterval = null;
+        this.ambienceStarted = false;
         this.initEventListeners();
         this.handleResize();
     }
@@ -56,6 +58,18 @@ class Game {
 
         this.ui.els.startBtn.onclick = () => this.startGame();
 
+        if (this.ui.els.fullscreenBtn) {
+            this.ui.els.fullscreenBtn.onclick = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            };
+        }
+
         this.setupTouch('btn-up', 'ArrowUp');
         this.setupTouch('btn-left', 'ArrowLeft');
         this.setupTouch('btn-right', 'ArrowRight');
@@ -69,12 +83,15 @@ class Game {
     }
 
     handleResize() {
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = window.innerWidth <= 950;
+        const isLandscape = window.innerWidth > window.innerHeight;
         const hud = document.getElementById('ui');
-        const hudHeight = hud ? hud.offsetHeight : 0;
-        const controlsHeight = isMobile ? 160 : 20;
 
-        const availableW = window.innerWidth - 20;
+        // In landscape mobile, HUD is fixed (overlay), so we don't subtract its full height
+        const hudHeight = (isMobile && isLandscape) ? 20 : (hud ? hud.offsetHeight : 0);
+        const controlsHeight = isMobile ? (isLandscape ? 100 : 160) : 20;
+
+        const availableW = window.innerWidth - (isMobile ? 60 : 20);
         const availableH = window.innerHeight - controlsHeight - hudHeight - 20;
 
         const scale = Math.min(availableW / WORLD_W, availableH / WORLD_H);
@@ -218,6 +235,29 @@ class Game {
         }
 
         this.ui.updateHUD(this.state, speed);
+
+        // Ambience & Radio Chatter
+        if (!this.ambienceStarted) {
+            this.ambienceStarted = true;
+            setInterval(() => {
+                if (this.state.gameState === 'PLAYING') this.audio.playSound(50, 1.0, 'sine', 0.05, 0); // Engine hum
+            }, 1000);
+        }
+
+        if (this.state.chatterTimer > 0) {
+            this.state.chatterTimer--;
+        } else {
+            const chat = radioChatter[Math.floor(Math.random() * radioChatter.length)];
+            this.ui.showRadioChatter(chat);
+            this.state.chatterTimer = 600 + Math.random() * 1000;
+        }
+
+        // Update Passenger Avatar in UI
+        if (this.state.activePassenger?.state === 'IN_TAXI') {
+            this.ui.updatePassengerAvatar(this.state.passengerIndex);
+        } else {
+            this.ui.updatePassengerAvatar(null);
+        }
     }
 
     checkCollisions(speed) {

@@ -18,8 +18,55 @@ class UIManager {
             startBtn: document.getElementById('start-btn'),
             minimap: document.getElementById('minimap'),
             devMenu: document.getElementById('dev-menu'),
-            devOptions: document.getElementById('dev-options')
+            devOptions: document.getElementById('dev-options'),
+            avatar: document.getElementById('avatar-container'),
+            fullscreenBtn: document.getElementById('fullscreen-btn')
         };
+        this.currentAvatarId = null;
+    }
+
+    updatePassengerAvatar(passId) {
+        if (this.currentAvatarId === passId) return;
+        this.currentAvatarId = passId;
+        this.els.avatar.innerHTML = '';
+
+        if (passId === null) {
+            this.els.avatar.style.opacity = '0.3';
+            return;
+        }
+
+        this.els.avatar.style.opacity = '1';
+        const canvas = document.createElement('canvas');
+        canvas.className = 'avatar-canvas';
+        canvas.width = 8; canvas.height = 8;
+        const ctx = canvas.getContext('2d');
+
+        // Procedural Retro Face
+        const seed = passId * 12345;
+        const hue = (seed % 360);
+        ctx.fillStyle = `hsl(${hue}, 50%, 40%)`; // Background/Suit
+        ctx.fillRect(0, 0, 8, 8);
+
+        ctx.fillStyle = '#ffccaa'; // Face skin
+        ctx.fillRect(2, 2, 4, 4);
+
+        ctx.fillStyle = '#000'; // Eyes
+        ctx.fillRect(3, 3, 1, 1);
+        ctx.fillRect(5, 3, 1, 1);
+
+        this.els.avatar.appendChild(canvas);
+    }
+
+    showRadioChatter(msg) {
+        if (this.els.message.innerText.includes('SYSTEM')) return; // Don't overwrite system messages
+        this.els.message.innerText = msg;
+        this.els.message.style.color = '#0f0';
+        setTimeout(() => {
+            if (this.els.message.innerText === msg) {
+                this.els.message.innerText = 'System Ready';
+                this.els.message.style.color = '#fff';
+            }
+        }, 4000);
     }
 
     toggleDevMenu(show, levels, onSelect) {
