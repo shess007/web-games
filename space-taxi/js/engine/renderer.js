@@ -6,16 +6,32 @@ class Renderer {
     }
 
     initStars(level) {
-        this.starLayers = [[], [], []];
+        this.starLayers = [[], [], [], []]; // 4 Layers: Far Stars, Medium Stars, Near Stars, Planets/Nebula
+
+        // Stars
         for (let l = 0; l < 3; l++) {
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 120; i++) {
                 this.starLayers[l].push({
                     x: Math.random() * level.w,
                     y: Math.random() * level.h,
-                    s: (l + 1) * 0.8,
-                    c: l === 0 ? '#111122' : (l === 1 ? '#333355' : '#666688')
+                    s: (l + 1) * 0.15, // Travel speed factor
+                    c: l === 0 ? '#111122' : (l === 1 ? '#333355' : '#666688'),
+                    size: Math.random() * (l + 1)
                 });
             }
+        }
+
+        // Deep Space Objects (Planets/Nebulae)
+        const colors = ['#220044', '#002244', '#442200'];
+        for (let i = 0; i < 5; i++) {
+            this.starLayers[3].push({
+                x: Math.random() * level.w,
+                y: Math.random() * level.h,
+                s: 0.05, // Very slow movement
+                c: colors[i % colors.length],
+                size: 20 + Math.random() * 40,
+                type: 'planet'
+            });
         }
     }
 
@@ -30,14 +46,27 @@ class Renderer {
         this.ctx.translate(shakeX, shakeY);
         this.ctx.clearRect(0, 0, WORLD_W, WORLD_H);
 
-        // Stars (Twinkling)
+        // Parallax Layers
         this.starLayers.forEach((layer, idx) => {
-            this.ctx.fillStyle = layer[0].c;
             layer.forEach(s => {
                 const sx = (s.x - camera.x * s.s) % level.w;
                 const sy = (s.y - camera.y * s.s) % level.h;
-                const size = (idx + 1) * (Math.random() > 0.98 ? 1.5 : 1);
-                this.ctx.fillRect(sx < 0 ? sx + level.w : sx, sy < 0 ? sy + level.h : sy, size, size);
+                const rx = sx < 0 ? sx + level.w : sx;
+                const ry = sy < 0 ? sy + level.h : sy;
+
+                // Only draw if within viewport range
+                if (rx > -s.size && rx < WORLD_W + s.size && ry > -s.size && ry < WORLD_H + s.size) {
+                    if (s.type === 'planet') {
+                        const grad = this.ctx.createRadialGradient(rx, ry, 0, rx, ry, s.size);
+                        grad.addColorStop(0, s.c); grad.addColorStop(1, 'transparent');
+                        this.ctx.fillStyle = grad;
+                        this.ctx.beginPath(); this.ctx.arc(rx, ry, s.size, 0, Math.PI * 2); this.ctx.fill();
+                    } else {
+                        this.ctx.fillStyle = s.c;
+                        const twinkle = idx === 2 && Math.random() > 0.98 ? 2 : 1;
+                        this.ctx.fillRect(rx, ry, s.size * twinkle, s.size * twinkle);
+                    }
+                }
             });
         });
 
@@ -170,17 +199,25 @@ class Renderer {
         this.ctx.fillStyle = hullGrad;
         this.ctx.fillRect(-TAXI_W / 2, -TAXI_H / 2, TAXI_W, TAXI_H - 6);
 
-        // Window with Reflection
+        // Window with Enhanced Reflection
         this.ctx.fillStyle = '#0a2a4a'; this.ctx.fillRect(2, -7, 14, 6);
-        this.ctx.fillStyle = 'rgba(255,255,255,0.2)'; this.ctx.fillRect(4, -6, 4, 2);
+        const refX = (Math.sin(Date.now() * 0.002) * 4) + 6;
+        this.ctx.fillStyle = 'rgba(255,255,255,0.3)'; this.ctx.fillRect(refX, -6, 3, 2);
 
-        // Landing Gear/Wheels (Plastical)
+        // Landing Gear Animation
+        const isNearPlatform = level.platforms.some(p =>
+            Math.abs(taxi.x - (p.x + p.w / 2)) < p.w / 2 + 30 &&
+            Math.abs(taxi.y + TAXI_H / 2 - p.y) < 60
+        );
+        const gearExt = isNearPlatform ? 4 : 0;
+
         this.ctx.fillStyle = '#111';
-        this.ctx.fillRect(-14, 4, 8, 4); // Rear wheel shadowed
-        this.ctx.fillRect(6, 4, 8, 4);  // Front wheel shadowed
+        this.ctx.fillRect(-14, 4, 8, 4 + gearExt); // Rear leg shadow
+        this.ctx.fillRect(6, 4, 8, 4 + gearExt);  // Front leg shadow
+
         this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(-15, 5, 8, 4); // Rear wheel
-        this.ctx.fillRect(7, 5, 8, 4);  // Front wheel
+        this.ctx.fillRect(-15, 5 + gearExt, 8, 4); // Rear foot
+        this.ctx.fillRect(7, 5 + gearExt, 8, 4);  // Front foot
 
         // "TAXI" lettering
         this.ctx.fillStyle = state.fuel > 0 ? '#111' : '#333';
@@ -188,6 +225,20 @@ class Renderer {
         this.ctx.fillText("TAXI", -12, 2);
 
         this.ctx.restore();
+
+        // Lighting Engine (Dynamic Thrust Glow on Walls/Platforms)
+        if (state.fuel > 0 && (keys['ArrowUp'] || keys['KeyW'] || keys['ArrowLeft'] || keys['KeyA'] || keys['ArrowRight'] || keys['KeyD'])) {
+            const tx = taxi.x - camera.x;
+            const ty = taxi.y - camera.y;
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'screen';
+            const lightGrad = this.ctx.createRadialGradient(tx, ty, 0, tx, ty, 150);
+            lightGrad.addColorStop(0, 'rgba(255, 150, 50, 0.2)');
+            lightGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            this.ctx.fillStyle = lightGrad;
+            this.ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+            this.ctx.restore();
+        }
 
         this.ctx.restore();
     }
