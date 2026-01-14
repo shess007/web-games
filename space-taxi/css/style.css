@@ -25,6 +25,13 @@ body {
     height: 100vh;
 }
 
+@media (max-width: 768px) {
+    #game-wrapper {
+        justify-content: flex-start;
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
 #game-container {
     position: relative;
     box-shadow: 0 0 100px rgba(0, 0, 0, 1);
@@ -187,20 +194,87 @@ canvas {
     box-shadow: 0 0 5px #fff;
 }
 
-.mobile-btn {
-    background: #555;
-    border: 3px solid #888;
-    box-shadow: 4px 4px 0px #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 20px;
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    #ui {
+        padding: 10px;
+    }
+
+    .instrument-pod {
+        min-width: 90px;
+        padding: 5px;
+    }
+
+    .label-retro {
+        font-size: 6px;
+    }
+
+    .speed-display {
+        font-size: 14px;
+    }
+
+    .fuel-gauge-container {
+        width: 60px;
+        height: 10px;
+    }
+
+    #game-container {
+        border-width: 3px;
+    }
+
+    /* Gamepad Style Controls */
+    #controls {
+        display: flex !important;
+        height: 160px;
+        background: linear-gradient(to top, rgba(20, 20, 30, 0.95), transparent);
+        align-items: center;
+    }
+
+    .mobile-btn {
+        width: 70px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        font-size: 24px;
+        color: rgba(255, 255, 255, 0.8);
+        transition: transform 0.1s, background 0.1s;
+    }
+
+    .mobile-btn:active {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0.9) translate(0, 0);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    }
+
+    #btn-up {
+        width: 90px;
+        height: 90px;
+        background: rgba(122, 91, 160, 0.4);
+        border-color: rgba(122, 91, 160, 0.6);
+        font-weight: bold;
+    }
 }
 
-.mobile-btn:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px #000;
+#controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 40;
+    pointer-events: none;
+    justify-content: space-between;
+    padding: 0 40px 40px 40px;
+    box-sizing: border-box;
+    display: none;
+}
+
+@media (min-width: 769px) {
+    #controls {
+        display: none !important;
+    }
 }
 
 /* Developer Menu */

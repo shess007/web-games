@@ -69,14 +69,24 @@ class Game {
     }
 
     handleResize() {
-        const scale = Math.min(window.innerWidth / WORLD_W, (window.innerHeight - 120) / WORLD_H);
+        const isMobile = window.innerWidth <= 768;
+        const hud = document.getElementById('ui');
+        const hudHeight = hud ? hud.offsetHeight : 0;
+        const controlsHeight = isMobile ? 160 : 20;
+
+        const availableW = window.innerWidth - 20;
+        const availableH = window.innerHeight - controlsHeight - hudHeight - 20;
+
+        const scale = Math.min(availableW / WORLD_W, availableH / WORLD_H);
+
         this.canvas.width = WORLD_W;
         this.canvas.height = WORLD_H;
         this.canvas.style.width = (WORLD_W * scale) + 'px';
         this.canvas.style.height = (WORLD_H * scale) + 'px';
+
         const container = document.getElementById('game-container');
-        container.style.width = this.canvas.style.width;
-        container.style.height = this.canvas.style.height;
+        container.style.width = (WORLD_W * scale) + 'px';
+        container.style.height = (WORLD_H * scale) + 'px';
     }
 
     startGame() {

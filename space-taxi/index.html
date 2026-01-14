@@ -14,52 +14,53 @@
 <body>
 
     <div id="game-wrapper">
-        <div id="game-container">
-            <!-- Redesigned Retro Cockpit HUD -->
-            <div id="ui" class="absolute top-0 left-0 w-full flex justify-between z-30 select-none pointer-events-none">
+        <!-- HUD moved outside for better mobile playability (using the empty space at top) -->
+        <div id="ui" class="w-full flex justify-between z-30 select-none pointer-events-none p-4">
 
-                <!-- Left Pod: Fuel & Status -->
-                <div id="fuel-pod" class="instrument-pod">
-                    <span class="label-retro">FUEL SYSTEM</span>
-                    <div class="fuel-gauge-container">
-                        <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
-                    </div>
-                    <div class="flex justify-between w-full mt-2 text-[6px]">
-                        <span class="text-gray-400">TNK:<span id="fuel-val" class="text-white">100</span>%</span>
-                        <span class="text-gray-400">LVL:<span id="level-idx" class="text-white">1</span></span>
-                    </div>
-                    <div class="mt-2 text-yellow-500 text-[6px] border-t border-gray-700 pt-1 w-full text-center">
-                        CASH: $<span id="cash">0</span>
-                    </div>
+            <!-- Left Pod: Fuel & Status -->
+            <div id="fuel-pod" class="instrument-pod">
+                <span class="label-retro">FUEL SYSTEM</span>
+                <div class="fuel-gauge-container">
+                    <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
                 </div>
-
-                <!-- Center: Flight Computer -->
-                <div class="flex-1 flex flex-col items-center pt-2">
-                    <div class="bg-black/60 border border-gray-700 px-4 py-1 rounded-sm">
-                        <span id="message" class="text-white uppercase text-[8px] tracking-widest">System Ready</span>
-                    </div>
-                    <span id="passenger-comment"
-                        class="text-pink-400 text-[10px] sm:text-[12px] italic mt-1 opacity-0 bg-black/40 px-2"></span>
+                <div class="flex justify-between w-full mt-2 text-[6px]">
+                    <span class="text-gray-400">TNK:<span id="fuel-val" class="text-white">100</span>%</span>
+                    <span class="text-gray-400">LVL:<span id="level-idx" class="text-white">1</span></span>
                 </div>
-
-                <!-- Right Pod: Speed & Target -->
-                <div id="speed-pod" class="instrument-pod">
-                    <span class="label-retro">VELOCITY</span>
-                    <div class="flex items-baseline gap-1">
-                        <span id="speed-val" class="speed-display speed-safe">0.0</span>
-                        <span class="speed-unit">u/s</span>
-                    </div>
-                    <div class="mt-2 w-full border-t border-gray-700 pt-1 flex justify-between text-[6px]">
-                        <span class="text-gray-400">TARGET:</span>
-                        <span id="target" class="text-cyan-400 font-bold">P1</span>
-                    </div>
-                    <div class="text-gray-400 text-[6px] w-full flex justify-between">
-                        <span>PASS:</span>
-                        <span id="pass-count" class="text-white">0/3</span>
-                    </div>
+                <div class="mt-2 text-yellow-500 text-[6px] border-t border-gray-700 pt-1 w-full text-center">
+                    CASH: $<span id="cash">0</span>
                 </div>
-
             </div>
+
+            <!-- Center: Flight Computer -->
+            <div class="flex-1 flex flex-col items-center pt-2">
+                <div class="bg-black/60 border border-gray-700 px-4 py-1 rounded-sm">
+                    <span id="message" class="text-white uppercase text-[8px] tracking-widest">System Ready</span>
+                </div>
+                <span id="passenger-comment"
+                    class="text-pink-400 text-[10px] sm:text-[12px] italic mt-1 opacity-0 bg-black/40 px-2"></span>
+            </div>
+
+            <!-- Right Pod: Speed & Target -->
+            <div id="speed-pod" class="instrument-pod">
+                <span class="label-retro">VELOCITY</span>
+                <div class="flex items-baseline gap-1">
+                    <span id="speed-val" class="speed-display speed-safe">0.0</span>
+                    <span class="speed-unit">u/s</span>
+                </div>
+                <div class="mt-2 w-full border-t border-gray-700 pt-1 flex justify-between text-[6px]">
+                    <span class="text-gray-400">TARGET:</span>
+                    <span id="target" class="text-cyan-400 font-bold">P1</span>
+                </div>
+                <div class="text-gray-400 text-[6px] w-full flex justify-between">
+                    <span>PASS:</span>
+                    <span id="pass-count" class="text-white">0/3</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="game-container">
 
             <!-- Overlays -->
             <div id="overlay"
@@ -85,15 +86,14 @@
             <div class="minimap" id="minimap"></div>
         </div>
 
-        <!-- Mobile UI -->
-        <div id="controls"
-            class="w-full max-w-4xl flex justify-between px-6 py-4 pointer-events-none md:hidden absolute bottom-0 z-40">
-            <div class="flex gap-4 pointer-events-auto">
-                <button id="btn-left" class="mobile-btn w-14 h-14 rounded-lg">←</button>
-                <button id="btn-right" class="mobile-btn w-14 h-14 rounded-lg">→</button>
+        <!-- Mobile UI / Gamepad -->
+        <div id="controls">
+            <div class="flex gap-6 pointer-events-auto items-center">
+                <button id="btn-left" class="mobile-btn">←</button>
+                <button id="btn-right" class="mobile-btn">→</button>
             </div>
             <div class="pointer-events-auto">
-                <button id="btn-up" class="mobile-btn w-16 h-16 rounded-full bg-purple-700">THRUST</button>
+                <button id="btn-up" class="mobile-btn">FLY</button>
             </div>
         </div>
     </div>
