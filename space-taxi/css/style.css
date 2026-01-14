@@ -473,3 +473,96 @@ canvas.avatar-canvas {
         font-size: 8px !important;
     }
 }
+
+/* --- COCKPIT DESIGN SYSTEM --- */
+
+#cockpit-layout {
+    background-color: #080808;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 0.5) 0%, transparent 100%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 20px 20px, 20px 20px;
+}
+
+.cockpit-panel {
+    width: 200px;
+    transition: all 0.3s ease;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 1024px) and (orientation: landscape) {
+    .cockpit-panel {
+        display: flex !important; /* Force on landscape phones */
+        width: 160px;
+        padding: 5px;
+    }
+    
+    #panel-left .scanner-container {
+        transform: scale(0.85);
+        transform-origin: top left;
+    }
+}
+
+.label-retro {
+    font-size: 8px;
+    color: #44aaff;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px rgba(68, 170, 255, 0.5);
+    border-bottom: 1px solid rgba(68, 170, 255, 0.2);
+    padding-bottom: 2px;
+    margin-bottom: 10px;
+}
+
+.scanner-container {
+    background: rgba(0, 20, 40, 0.4);
+    border: 1px solid rgba(0, 100, 255, 0.3);
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(0, 100, 255, 0.1);
+}
+
+#minimap-sidebar {
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 10px 10px;
+}
+
+/* Comm Log Styles */
+.comm-log-container {
+    background: rgba(10, 30, 10, 0.4);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+#radio-log {
+    scrollbar-width: none;
+}
+
+.log-entry {
+    border-left: 2px solid #0f0;
+    padding-left: 5px;
+    margin-bottom: 4px;
+    animation: fade-in-green 0.5s ease-out;
+}
+
+@keyframes fade-in-green {
+    from { color: #fff; opacity: 0; }
+    to { color: #0f0; opacity: 0.8; }
+}
+
+/* Technical Decoration */
+.tech-deco {
+    background-image: 
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 10px);
+}
+
+/* Hide floating HUD when Cockpit is active */
+@media (orientation: landscape) {
+    #ui { display: none !important; }
+}

@@ -85,13 +85,17 @@ class Game {
     handleResize() {
         const isMobile = window.innerWidth <= 950;
         const isLandscape = window.innerWidth > window.innerHeight;
+        const panelLeft = document.getElementById('panel-left');
+        const isCockpit = isLandscape && (window.innerWidth > 1024 || isMobile);
+
         const hud = document.getElementById('ui');
 
-        // In landscape mobile, HUD is fixed (overlay), so we don't subtract its full height
+        // Subtract sidebar widths if they are shown (Cockpit mode)
+        const sidebarWidth = (isCockpit && panelLeft && panelLeft.offsetWidth > 0) ? panelLeft.offsetWidth * 2 : 0;
         const hudHeight = (isMobile && isLandscape) ? 20 : (hud ? hud.offsetHeight : 0);
         const controlsHeight = isMobile ? (isLandscape ? 100 : 160) : 20;
 
-        const availableW = window.innerWidth - (isMobile ? 60 : 20);
+        const availableW = window.innerWidth - sidebarWidth - (isMobile ? 40 : 20);
         const availableH = window.innerHeight - controlsHeight - hudHeight - 20;
 
         const scale = Math.min(availableW / WORLD_W, availableH / WORLD_H);

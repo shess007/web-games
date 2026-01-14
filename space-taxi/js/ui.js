@@ -16,11 +16,13 @@ class UIManager {
             overlay: document.getElementById('overlay'),
             overlayMsg: document.getElementById('overlay-msg'),
             startBtn: document.getElementById('start-btn'),
-            minimap: document.getElementById('minimap'),
+            minimap: document.getElementById('minimap-sidebar') || document.getElementById('minimap'),
+            radioLog: document.getElementById('radio-log'),
             devMenu: document.getElementById('dev-menu'),
             devOptions: document.getElementById('dev-options'),
             avatar: document.getElementById('avatar-container'),
-            fullscreenBtn: document.getElementById('fullscreen-btn')
+            fullscreenBtn: document.getElementById('fullscreen-btn'),
+            uiCenter: document.getElementById('ui-center')
         };
         this.currentAvatarId = null;
     }
@@ -58,9 +60,25 @@ class UIManager {
     }
 
     showRadioChatter(msg) {
-        if (this.els.message.innerText.includes('SYSTEM')) return; // Don't overwrite system messages
+        if (this.els.message.innerText.includes('SYSTEM')) return;
+
+        // Update main message
         this.els.message.innerText = msg;
         this.els.message.style.color = '#0f0';
+
+        // Add to Sidebar Log (Point 3)
+        if (this.els.radioLog) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerText = `[${new Date().toLocaleTimeString([], { hour: '2min', minute: '2-digit', second: '2-digit' })}] ${msg.replace(/'/g, '')}`;
+            this.els.radioLog.prepend(entry);
+
+            // Keep only last 8 entries
+            if (this.els.radioLog.children.length > 8) {
+                this.els.radioLog.lastElementChild.remove();
+            }
+        }
+
         setTimeout(() => {
             if (this.els.message.innerText === msg) {
                 this.els.message.innerText = 'System Ready';
