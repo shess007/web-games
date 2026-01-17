@@ -197,23 +197,23 @@ class Game {
         const thrustRight = keys['ArrowRight'] || keys['KeyD'];
         const anyThrust = (thrustUp || thrustLeft || thrustRight) && this.state.fuel > 0;
 
-        this.audio.updateEngineSound(anyThrust);
+        this.audio.updateEngineSound(anyThrust, thrustUp, thrustLeft || thrustRight);
 
         if (this.state.fuel > 0) {
             if (thrustUp) {
-                taxi.vy -= 0.13;
+                taxi.vy -= 0.24;
                 this.state.fuel -= 0.18;
                 this.createThrustParticles(taxi.x, taxi.y + 10, '#ffff55');
                 this.state.shake = Math.max(this.state.shake, 1.5);
             }
             if (thrustLeft) {
-                taxi.vx -= 0.1;
+                taxi.vx -= 0.19;
                 this.state.fuel -= 0.07;
                 taxi.angle = -0.15;
                 this.createThrustParticles(taxi.x + 15, taxi.y, '#00ffff', true);
             }
             else if (thrustRight) {
-                taxi.vx += 0.1;
+                taxi.vx += 0.19;
                 this.state.fuel -= 0.07;
                 taxi.angle = 0.15;
                 this.createThrustParticles(taxi.x - 15, taxi.y, '#00ffff', true);

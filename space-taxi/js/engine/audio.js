@@ -5,6 +5,8 @@ class AudioEngine {
         this.engineFilter = null;
         this.noiseBuffer = null;
         this.bgmBeat = 0;
+        this.lastThrustState = { up: false, left: false, right: false };
+        this.thrustOscillators = [];
     }
 
     setup() {
@@ -22,8 +24,8 @@ class AudioEngine {
 
         this.engineFilter = this.ctx.createBiquadFilter();
         this.engineFilter.type = 'lowpass';
-        this.engineFilter.frequency.setValueAtTime(100, this.ctx.currentTime);
-        this.engineFilter.Q.setValueAtTime(12, this.ctx.currentTime);
+        this.engineFilter.frequency.setValueAtTime(80, this.ctx.currentTime);
+        this.engineFilter.Q.setValueAtTime(8, this.ctx.currentTime);
 
         this.engineGain = this.ctx.createGain();
         this.engineGain.gain.setValueAtTime(0, this.ctx.currentTime);
@@ -34,10 +36,74 @@ class AudioEngine {
         noiseSource.start();
     }
 
-    updateEngineSound(isThrusting) {
+    updateEngineSound(isThrusting, thrustUp = false, thrustSide = false) {
         if (!this.ctx) return;
-        this.engineGain.gain.setTargetAtTime(isThrusting ? 0.4 : 0, this.ctx.currentTime, 0.05);
-        this.engineFilter.frequency.setTargetAtTime(isThrusting ? 400 : 100, this.ctx.currentTime, 0.1);
+
+        if (thrustUp) {
+            this.engineGain.gain.setTargetAtTime(0.25, this.ctx.currentTime, 0.03);
+            const wobble = 280 + Math.sin(this.ctx.currentTime * 30) * 60;
+            this.engineFilter.frequency.setTargetAtTime(wobble, this.ctx.currentTime, 0.02);
+
+            if (!this.lastThrustState.up) {
+                this.playThrustBurst(120, 0.15, 'sawtooth', 80);
+            }
+        } else {
+            this.engineGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);
+            this.engineFilter.frequency.setTargetAtTime(80, this.ctx.currentTime, 0.1);
+        }
+
+        if (thrustSide && !this.lastThrustState.left && !this.lastThrustState.right) {
+            this.playSideThrust();
+        }
+
+        this.lastThrustState.up = thrustUp;
+        this.lastThrustState.left = thrustSide;
+        this.lastThrustState.right = thrustSide;
+    }
+
+    playThrustBurst(freq, duration, type, slideDown) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(1, freq - slideDown), this.ctx.currentTime + duration);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    playSideThrust() {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.12);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(500, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
     }
 
     playSound(f, d, t, v, slideTo = null) {

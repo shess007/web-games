@@ -6,6 +6,8 @@ class Renderer {
         this.minimapCtx = null;
         this.stars = [];
         this.nebulaGradients = [];
+        this.galaxyClusters = [];
+        this.cosmicDust = [];
         this.particleTrails = [];
         this.speedLines = [];
         this.lastTaxiPos = { x: 0, y: 0 };
@@ -48,7 +50,15 @@ class Renderer {
     initStars(level) {
         this.stars = [];
         this.nebulaGradients = [];
+        this.galaxyClusters = [];
+        this.cosmicDust = [];
         if (!level) return;
+
+        // Generate distant galaxy clusters (very slow parallax - appears very far)
+        this.generateGalaxyClusters(level);
+
+        // Generate cosmic dust particles
+        this.generateCosmicDust(level);
 
         // Create multi-layer parallax stars
         const layers = [
@@ -117,6 +127,77 @@ class Renderer {
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
+    generateGalaxyClusters(level) {
+        // Distant galaxy clusters - very slow parallax (0.02-0.05)
+        const clusterCount = 5 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < clusterCount; i++) {
+            const starCount = 20 + Math.floor(Math.random() * 40);
+            const centerX = Math.random() * level.w * 1.5 - level.w * 0.25;
+            const centerY = Math.random() * level.h * 1.5 - level.h * 0.25;
+            const spread = 50 + Math.random() * 150;
+
+            const cluster = {
+                x: centerX,
+                y: centerY,
+                stars: [],
+                parallaxSpeed: 0.02 + Math.random() * 0.03, // Very slow - appears very distant
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.0001, // Slow rotation
+                coreColor: this.getGalaxyColor()
+            };
+
+            // Generate cluster stars in spiral pattern
+            for (let j = 0; j < starCount; j++) {
+                const angle = (j / starCount) * Math.PI * 4 + Math.random() * 0.5;
+                const dist = (j / starCount) * spread + Math.random() * 20;
+                cluster.stars.push({
+                    offsetX: Math.cos(angle) * dist,
+                    offsetY: Math.sin(angle) * dist * 0.6, // Flatten for perspective
+                    size: 0.5 + Math.random() * 1.5,
+                    brightness: 0.2 + Math.random() * 0.4
+                });
+            }
+
+            this.galaxyClusters.push(cluster);
+        }
+    }
+
+    getGalaxyColor() {
+        const colors = [
+            { r: 180, g: 150, b: 255 }, // Purple
+            { r: 150, g: 180, b: 255 }, // Blue
+            { r: 255, g: 200, b: 150 }, // Orange/yellow
+            { r: 200, g: 255, b: 200 }, // Green tint
+            { r: 255, g: 180, b: 180 }  // Pink/red
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    generateCosmicDust(level) {
+        // Cosmic dust - multiple layers with different parallax
+        const dustLayers = [
+            { count: 100, parallax: 0.05, opacity: 0.15, size: 1 },
+            { count: 80, parallax: 0.1, opacity: 0.2, size: 1.5 },
+            { count: 60, parallax: 0.15, opacity: 0.25, size: 2 }
+        ];
+
+        dustLayers.forEach(layer => {
+            for (let i = 0; i < layer.count; i++) {
+                this.cosmicDust.push({
+                    x: Math.random() * level.w * 1.2 - level.w * 0.1,
+                    y: Math.random() * level.h * 1.2 - level.h * 0.1,
+                    size: layer.size + Math.random() * layer.size,
+                    opacity: layer.opacity * (0.5 + Math.random() * 0.5),
+                    parallax: layer.parallax,
+                    drift: {
+                        x: (Math.random() - 0.5) * 0.02,
+                        y: (Math.random() - 0.5) * 0.02
+                    }
+                });
+            }
+        });
+    }
+
     draw(state) {
         if (!state.level) return;
 
@@ -127,8 +208,8 @@ class Renderer {
         const ctx = this.renderCtx;
         ctx.save();
 
-        // Background with subtle gradient
-        this.drawBackground(ctx);
+        // Background with parallax gradient
+        this.drawBackground(ctx, state.camera, state.level);
 
         // Shake
         if (state.shake > 0) {
@@ -137,6 +218,10 @@ class Renderer {
 
         // Camera Viewport
         ctx.translate(-state.camera.x, -state.camera.y);
+
+        // Deep background parallax layers (drawn first, behind everything)
+        this.drawGalaxyClusters(ctx, state.camera);
+        this.drawCosmicDust(ctx, state.camera);
 
         // Background effects
         this.drawNebulas(ctx, state.camera);
@@ -182,17 +267,122 @@ class Renderer {
         this.updateSpeedLines(state.taxi);
     }
 
-    drawBackground(ctx) {
-        // Deep space gradient
+    drawBackground(ctx, camera, level) {
+        // Parallax factor for the background gradient (very slow - appears infinitely far)
+        const parallaxFactor = 0.02;
+
+        // Calculate parallax offset based on camera position relative to level center
+        const levelCenterX = level ? level.w / 2 : 0;
+        const levelCenterY = level ? level.h / 2 : 0;
+        const offsetX = (camera.x - levelCenterX) * parallaxFactor;
+        const offsetY = (camera.y - levelCenterY) * parallaxFactor;
+
+        // Gradient center shifts slightly with camera movement
+        const gradientCenterX = WORLD_W / 2 - offsetX;
+        const gradientCenterY = WORLD_H / 2 - offsetY;
+
+        // Deep space gradient with parallax
         const gradient = ctx.createRadialGradient(
-            WORLD_W / 2, WORLD_H / 2, 0,
-            WORLD_W / 2, WORLD_H / 2, WORLD_W
+            gradientCenterX, gradientCenterY, 0,
+            gradientCenterX, gradientCenterY, WORLD_W
         );
         gradient.addColorStop(0, '#0a0a15');
         gradient.addColorStop(0.5, '#050510');
         gradient.addColorStop(1, '#020205');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+        // Add subtle vignette that follows the parallax
+        const vignette = ctx.createRadialGradient(
+            gradientCenterX, gradientCenterY, WORLD_W * 0.3,
+            gradientCenterX, gradientCenterY, WORLD_W * 0.8
+        );
+        vignette.addColorStop(0, 'transparent');
+        vignette.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+
+    drawGalaxyClusters(ctx, camera) {
+        ctx.save();
+
+        this.galaxyClusters.forEach(cluster => {
+            // Update rotation over time
+            cluster.rotation += cluster.rotationSpeed;
+
+            // Very slow parallax - these appear extremely distant
+            const parallaxX = cluster.x - camera.x * (1 - cluster.parallaxSpeed);
+            const parallaxY = cluster.y - camera.y * (1 - cluster.parallaxSpeed);
+
+            // Draw galaxy core glow
+            const coreGlow = ctx.createRadialGradient(
+                parallaxX, parallaxY, 0,
+                parallaxX, parallaxY, 80
+            );
+            const color = cluster.coreColor;
+            coreGlow.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.15)`);
+            coreGlow.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, 0.08)`);
+            coreGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = coreGlow;
+            ctx.beginPath();
+            ctx.arc(parallaxX, parallaxY, 80, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw cluster stars with rotation
+            cluster.stars.forEach(star => {
+                // Apply rotation to star position
+                const cos = Math.cos(cluster.rotation);
+                const sin = Math.sin(cluster.rotation);
+                const rotatedX = star.offsetX * cos - star.offsetY * sin;
+                const rotatedY = star.offsetX * sin + star.offsetY * cos;
+
+                const starX = parallaxX + rotatedX;
+                const starY = parallaxY + rotatedY;
+
+                // Twinkle effect
+                const twinkle = 0.6 + Math.sin(this.time * 0.5 + star.offsetX * 0.1) * 0.4;
+
+                ctx.globalAlpha = star.brightness * twinkle;
+                ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                ctx.fillRect(starX - star.size / 2, starY - star.size / 2, star.size, star.size);
+            });
+        });
+
+        ctx.globalAlpha = 1;
+        ctx.restore();
+    }
+
+    drawCosmicDust(ctx, camera) {
+        ctx.save();
+
+        this.cosmicDust.forEach(dust => {
+            // Apply drift over time (very slow movement)
+            dust.x += dust.drift.x;
+            dust.y += dust.drift.y;
+
+            // Parallax effect
+            const parallaxX = dust.x - camera.x * (1 - dust.parallax);
+            const parallaxY = dust.y - camera.y * (1 - dust.parallax);
+
+            // Subtle pulsing
+            const pulse = 0.7 + Math.sin(this.time * 0.3 + dust.x * 0.01) * 0.3;
+
+            ctx.globalAlpha = dust.opacity * pulse;
+            ctx.fillStyle = 'rgba(150, 150, 200, 1)';
+
+            // Draw as small soft circle
+            const gradient = ctx.createRadialGradient(
+                parallaxX, parallaxY, 0,
+                parallaxX, parallaxY, dust.size
+            );
+            gradient.addColorStop(0, 'rgba(180, 180, 220, 0.8)');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(parallaxX - dust.size, parallaxY - dust.size, dust.size * 2, dust.size * 2);
+        });
+
+        ctx.globalAlpha = 1;
+        ctx.restore();
     }
 
     drawNebulas(ctx, camera) {

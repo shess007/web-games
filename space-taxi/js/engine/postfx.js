@@ -16,32 +16,32 @@ class PostFX {
         // Effect settings
         this.settings = {
             // CRT Effects
-            scanlines: true,
+            scanlines: false,
             scanlineIntensity: 0.12,
             scanlineCount: 300,
 
-            curvature: true,
+            curvature: false,
             curvatureAmount: 0.03,
 
-            vignette: true,
+            vignette: false,
             vignetteIntensity: 0.4,
             vignetteRadius: 0.85,
 
             // Chromatic Aberration
-            chromatic: true,
+            chromatic: false,
             chromaticAmount: 1.5,
 
             // Bloom/Glow
-            bloom: true,
+            bloom: false,
             bloomIntensity: 0.35,
             bloomThreshold: 0.6,
 
             // Noise/Static
-            noise: true,
+            noise: false,
             noiseIntensity: 0.03,
 
             // Flicker
-            flicker: true,
+            flicker: false,
             flickerIntensity: 0.01,
 
             // Screen Flash
