@@ -187,10 +187,10 @@ class Renderer {
             ctx.fillRect(p.x, p.y, 3, p.h);
             ctx.fillRect(p.x + p.w - 3, p.y, 3, p.h);
 
-            // Glowing label
-            ctx.shadowColor = '#ffaa00';
-            ctx.shadowBlur = 6;
-            ctx.fillStyle = '#fff';
+            // Glowing label - dark text for readability
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 2;
+            ctx.fillStyle = '#331100';
             ctx.font = 'bold 8px monospace';
             ctx.textAlign = 'center';
             ctx.fillText('▸ AMMO ◂', p.x + p.w / 2, p.y + 10);

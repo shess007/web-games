@@ -274,8 +274,8 @@ class Game {
                         if (Math.random() < 0.1) this.audio.playRefuel();
                     }
                 } else if (platform.type === 'ammo') {
-                    // Reload ammo with continuous sound
-                    if (player.reload(AMMO_REFILL_RATE)) {
+                    // Reload ammo - only play sound if not fully loaded
+                    if (player.ammo < MAX_AMMO && player.reload(AMMO_REFILL_RATE)) {
                         isReloading = true;
                     }
                 }

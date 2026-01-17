@@ -99,6 +99,61 @@ class Player {
             this.vx = 0;
         }
 
+        // Solid collision with ammo platforms
+        Object.values(PLATFORMS).forEach(p => {
+            if (p.type !== 'ammo') return;
+
+            const playerLeft = this.x - PLAYER_W / 2;
+            const playerRight = this.x + PLAYER_W / 2;
+            const playerTop = this.y - PLAYER_H / 2;
+            const playerBottom = this.y + PLAYER_H / 2;
+
+            const platLeft = p.x;
+            const platRight = p.x + p.w;
+            const platTop = p.y;
+            const platBottom = p.y + p.h;
+
+            // Check if overlapping
+            if (playerRight > platLeft && playerLeft < platRight &&
+                playerBottom > platTop && playerTop < platBottom) {
+
+                // Calculate overlap on each axis
+                const overlapLeft = playerRight - platLeft;
+                const overlapRight = platRight - playerLeft;
+                const overlapTop = playerBottom - platTop;
+                const overlapBottom = platBottom - playerTop;
+
+                // Find minimum overlap to determine push direction
+                const minOverlapX = Math.min(overlapLeft, overlapRight);
+                const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+                if (minOverlapY < minOverlapX) {
+                    // Push vertically
+                    if (overlapTop < overlapBottom) {
+                        // Coming from above - allow landing (handled by checkPlatformCollision)
+                        // Just stop at the top surface
+                        this.y = platTop - PLAYER_H / 2;
+                        // Don't zero velocity here - let checkPlatformCollision handle landing
+                    } else {
+                        // Push down (hit from below)
+                        this.y = platBottom + PLAYER_H / 2;
+                        if (this.vy < 0) this.vy = Math.abs(this.vy) * 0.3;
+                    }
+                } else {
+                    // Push horizontally
+                    if (overlapLeft < overlapRight) {
+                        // Push left
+                        this.x = platLeft - PLAYER_W / 2;
+                        this.vx = -Math.abs(this.vx) * 0.3;
+                    } else {
+                        // Push right
+                        this.x = platRight + PLAYER_W / 2;
+                        this.vx = Math.abs(this.vx) * 0.3;
+                    }
+                }
+            }
+        });
+
         // Update cooldown
         if (this.shootCooldown > 0) {
             this.shootCooldown--;
@@ -159,12 +214,14 @@ class Player {
         Object.entries(PLATFORMS).forEach(([id, p]) => {
             if (p.type !== 'ammo') return; // Floor fuel handled above
 
-            if (
+            // Check if player is on top of the platform (within a small margin)
+            const onTopOf = (
                 this.x + PLAYER_W / 2 > p.x &&
                 this.x - PLAYER_W / 2 < p.x + p.w &&
-                this.y + PLAYER_H / 2 > p.y &&
-                this.y - PLAYER_H / 2 < p.y + p.h
-            ) {
+                Math.abs((this.y + PLAYER_H / 2) - p.y) <= 2 // Within 2 pixels of platform top
+            );
+
+            if (onTopOf) {
                 const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
 
                 // Check landing conditions
