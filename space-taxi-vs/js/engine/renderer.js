@@ -113,25 +113,110 @@ class Renderer {
     drawBarrier(ctx, barrier) {
         if (!barrier) return;
 
-        barrier.blocks.forEach(block => {
-            if (block.hp <= 0) return;
+        const asteroids = barrier.getAsteroids();
 
-            const screenY = barrier.getBlockScreenY(block);
-            if (screenY > WORLD_H || screenY + BLOCK_H < 0) return;
+        asteroids.forEach(asteroid => {
+            if (asteroid.hp <= 0) return;
 
-            const damaged = block.hp < BLOCK_HP;
+            const screenY = barrier.getAsteroidScreenY(asteroid);
+            const screenX = barrier.getAsteroidScreenX(asteroid);
 
-            // Simple solid block color
-            ctx.fillStyle = damaged ? '#772211' : '#554433';
-            ctx.fillRect(block.x, screenY, BLOCK_W - 2, BLOCK_H - 2);
+            // Skip if off-screen
+            if (screenY > WORLD_H + asteroid.radius || screenY < -asteroid.radius) return;
 
-            // Highlight edge
-            ctx.fillStyle = damaged ? '#994433' : '#776655';
-            ctx.fillRect(block.x, screenY, BLOCK_W - 2, 2);
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            ctx.rotate(asteroid.rotation);
 
-            // Shadow edge
-            ctx.fillStyle = '#332211';
-            ctx.fillRect(block.x, screenY + BLOCK_H - 4, BLOCK_W - 2, 2);
+            // Calculate damage state
+            const damageRatio = asteroid.hp / asteroid.maxHp;
+
+            // Base colors based on asteroid color seed
+            const hue = 20 + asteroid.colorSeed * 30; // Brown to orange range
+            const baseSat = 30 + asteroid.colorSeed * 20;
+            const baseLit = 25 + asteroid.colorSeed * 15;
+
+            // Darken when damaged
+            const litMod = damageRatio * 0.4 + 0.6;
+
+            // Draw asteroid shadow/glow for depth
+            ctx.fillStyle = `rgba(0, 0, 0, 0.3)`;
+            ctx.beginPath();
+            ctx.moveTo(asteroid.vertices[0].x + 3, asteroid.vertices[0].y + 3);
+            for (let i = 1; i < asteroid.vertices.length; i++) {
+                ctx.lineTo(asteroid.vertices[i].x + 3, asteroid.vertices[i].y + 3);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw main asteroid body
+            const bodyColor = `hsl(${hue}, ${baseSat}%, ${baseLit * litMod}%)`;
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.moveTo(asteroid.vertices[0].x, asteroid.vertices[0].y);
+            for (let i = 1; i < asteroid.vertices.length; i++) {
+                ctx.lineTo(asteroid.vertices[i].x, asteroid.vertices[i].y);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw edge highlight (top-left lit)
+            ctx.strokeStyle = `hsl(${hue}, ${baseSat - 10}%, ${(baseLit + 15) * litMod}%)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Draw only top portion of outline
+            const startIdx = Math.floor(asteroid.vertices.length * 0.6);
+            const endIdx = Math.floor(asteroid.vertices.length * 0.9);
+            ctx.moveTo(asteroid.vertices[startIdx].x, asteroid.vertices[startIdx].y);
+            for (let i = startIdx + 1; i <= endIdx; i++) {
+                const idx = i % asteroid.vertices.length;
+                ctx.lineTo(asteroid.vertices[idx].x, asteroid.vertices[idx].y);
+            }
+            ctx.stroke();
+
+            // Draw craters
+            asteroid.craters.forEach(crater => {
+                // Crater shadow (darker)
+                ctx.fillStyle = `hsl(${hue}, ${baseSat}%, ${(baseLit - 8) * litMod}%)`;
+                ctx.beginPath();
+                ctx.arc(crater.x, crater.y, crater.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Crater highlight rim
+                ctx.strokeStyle = `hsl(${hue}, ${baseSat - 5}%, ${(baseLit + 5) * litMod}%)`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(crater.x - 1, crater.y - 1, crater.radius, Math.PI * 0.8, Math.PI * 1.8);
+                ctx.stroke();
+            });
+
+            // Draw damage cracks when damaged
+            if (damageRatio < 1) {
+                ctx.strokeStyle = `rgba(255, 100, 50, ${0.6 * (1 - damageRatio)})`;
+                ctx.lineWidth = 2;
+
+                // Draw crack lines
+                const numCracks = Math.ceil((1 - damageRatio) * 4);
+                for (let i = 0; i < numCracks; i++) {
+                    const angle = (i / numCracks) * Math.PI * 2 + asteroid.id;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    const len = asteroid.radius * (0.5 + Math.random() * 0.4);
+                    ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+                    ctx.stroke();
+                }
+
+                // Glowing core when critical
+                if (damageRatio <= 0.34) {
+                    const glowIntensity = 0.3 + Math.sin(Date.now() * 0.01) * 0.2;
+                    ctx.fillStyle = `rgba(255, 80, 30, ${glowIntensity})`;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, asteroid.radius * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            ctx.restore();
         });
     }
 
@@ -237,11 +322,40 @@ class Renderer {
         particles.forEach(p => {
             ctx.globalAlpha = p.life;
 
-            // Simple particle - just colored circle
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
+            if (p.isDust) {
+                // Dust particles - soft, blurry circles
+                const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                gradient.addColorStop(0, p.color);
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (p.isRock) {
+                // Rock debris - irregular shapes
+                ctx.fillStyle = p.color;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.life * 5); // Spin as it flies
+                ctx.beginPath();
+                // Draw irregular polygon
+                const sides = 5;
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i / sides) * Math.PI * 2;
+                    const r = p.size * (0.6 + Math.sin(i * 2) * 0.4);
+                    if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            } else {
+                // Default particle - colored circle
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             ctx.globalAlpha = 1;
         });

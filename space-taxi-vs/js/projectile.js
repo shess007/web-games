@@ -46,26 +46,8 @@ class Projectile {
 
     checkBarrierCollision(barrier) {
         if (!this.alive) return null;
-
-        for (const block of barrier.blocks) {
-            if (block.hp <= 0) continue;
-
-            const screenY = barrier.getBlockScreenY(block);
-
-            // Skip if off-screen
-            if (screenY > WORLD_H || screenY + BLOCK_H < 0) continue;
-
-            if (
-                this.x + PROJECTILE_SIZE / 2 > block.x &&
-                this.x - PROJECTILE_SIZE / 2 < block.x + BLOCK_W &&
-                this.y + PROJECTILE_SIZE / 2 > screenY &&
-                this.y - PROJECTILE_SIZE / 2 < screenY + BLOCK_H
-            ) {
-                return block;
-            }
-        }
-
-        return null;
+        // Use barrier's getBlockAt which works with both old blocks and new asteroids
+        return barrier.getBlockAt(this.x, this.y);
     }
 
     die() {
@@ -96,7 +78,7 @@ class ProjectileManager {
         this.projectiles = this.projectiles.filter(p => p.alive);
     }
 
-    checkCollisions(players, barrier, audio, createExplosion) {
+    checkCollisions(players, barrier, audio, createExplosion, createDebris) {
         const hits = [];
 
         this.projectiles.forEach(projectile => {
@@ -113,13 +95,23 @@ class ProjectileManager {
                 }
             });
 
-            // Check barrier hits
-            const hitBlock = projectile.checkBarrierCollision(barrier);
-            if (hitBlock) {
-                hitBlock.hp--;
+            // Check barrier hits (asteroids)
+            const hitAsteroid = projectile.checkBarrierCollision(barrier);
+            if (hitAsteroid) {
+                const wasDestroyed = hitAsteroid.hp === 1;
+                const screenX = barrier.getAsteroidScreenX(hitAsteroid);
+                const screenY = barrier.getAsteroidScreenY(hitAsteroid);
+
+                barrier.damageBlock(hitAsteroid);
                 projectile.die();
                 audio.playHitBarrier();
-                hits.push({ type: 'barrier', block: hitBlock, projectile });
+
+                // Create debris particles
+                if (createDebris) {
+                    createDebris(screenX, screenY, hitAsteroid.radius, wasDestroyed);
+                }
+
+                hits.push({ type: 'barrier', block: hitAsteroid, projectile, destroyed: wasDestroyed });
             }
         });
 

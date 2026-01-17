@@ -305,7 +305,8 @@ class Game {
             this.players,
             this.barrier,
             this.audio,
-            (x, y) => this.createExplosion(x, y)
+            (x, y) => this.createExplosion(x, y),
+            (x, y, radius, destroyed) => this.createAsteroidDebris(x, y, radius, destroyed)
         );
 
         // Check for round end
@@ -359,6 +360,52 @@ class Game {
             });
         }
         this.state.shake = 20;
+    }
+
+    createAsteroidDebris(x, y, radius, destroyed) {
+        // Number of particles based on asteroid size and whether it was destroyed
+        const baseCount = destroyed ? 20 : 8;
+        const count = Math.floor(baseCount * (radius / 25));
+
+        // Rock colors - browns and grays
+        const colors = ['#8b7355', '#6b5344', '#5a4a3a', '#7a6a5a', '#9a8a7a', '#4a3a2a'];
+
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = destroyed ? (2 + Math.random() * 6) : (1 + Math.random() * 3);
+
+            this.state.particles.push({
+                x: x + (Math.random() - 0.5) * radius,
+                y: y + (Math.random() - 0.5) * radius,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1.0,
+                decay: destroyed ? 0.015 : 0.03,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: destroyed ? (2 + Math.random() * 5) : (1 + Math.random() * 3),
+                isRock: true  // Flag for special rendering
+            });
+        }
+
+        // Add dust cloud for destroyed asteroids
+        if (destroyed) {
+            for (let i = 0; i < 10; i++) {
+                this.state.particles.push({
+                    x: x + (Math.random() - 0.5) * radius * 0.5,
+                    y: y + (Math.random() - 0.5) * radius * 0.5,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    life: 0.8,
+                    decay: 0.02,
+                    color: '#aa9988',
+                    size: 6 + Math.random() * 8,
+                    isDust: true
+                });
+            }
+
+            // Small screen shake for destroyed asteroid
+            this.state.shake = Math.max(this.state.shake, radius * 0.2);
+        }
     }
 
     createThrustParticles(player) {
