@@ -10,8 +10,17 @@
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
         <div class="split-line"></div>
-        <div class="player-label p1">Player 1 [WASD]</div>
-        <div class="player-label p2">Player 2 [Arrows]</div>
+        <div class="player-label p1">Player 1 [WASD + Space]</div>
+        <div class="player-label p2">Player 2 [Arrows + Shift]</div>
+
+        <!-- Attack Cooldown Bars -->
+        <div class="cooldown-container p1-cooldown">
+            <div id="p1-cooldown" class="cooldown-bar"></div>
+        </div>
+        <div class="cooldown-container p2-cooldown">
+            <div id="p2-cooldown" class="cooldown-bar"></div>
+        </div>
+
         <div id="phase-indicator">HUNT: <span id="timer">10</span></div>
 
         <div id="map-overlay">
@@ -33,16 +42,18 @@
             <div class="controls-info">
                 <div class="control-box">
                     <h3>Player 1</h3>
-                    <p>W A S D / Gamepad 1</p>
+                    <p>Move: W A S D</p>
+                    <p>Attack: Space / LT</p>
                 </div>
                 <div class="control-box">
                     <h3>Player 2</h3>
-                    <p>Arrows / Gamepad 2</p>
+                    <p>Move: Arrows / Gamepad</p>
+                    <p>Attack: Shift / RT</p>
                 </div>
             </div>
             <div id="gamepad-debug"></div>
             <button id="start-btn">Enter the Bunker</button>
-            <p class="hint">Press A or Start on controller to begin. Touch your opponent to win.</p>
+            <p class="hint">Press A or Start to begin. Attack your opponent to win!</p>
         </div>
     </div>
 

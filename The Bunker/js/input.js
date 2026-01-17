@@ -138,6 +138,20 @@ function getGamepadInput(playerIndex) {
 export let player1Moving = false;
 export let player2Moving = false;
 
+// Attack state
+const ATTACK_COOLDOWN = 0.8; // seconds
+const ATTACK_RANGE = 2.0; // units
+const ATTACK_ANGLE = Math.PI / 3; // 60 degrees cone (30 degrees each side)
+
+export let player1AttackCooldown = 0;
+export let player2AttackCooldown = 0;
+export let player1Attacking = false;
+export let player2Attacking = false;
+
+// Track previous attack button state to detect press (not hold)
+let p1AttackWasPressed = false;
+let p2AttackWasPressed = false;
+
 export function handleInput(delta) {
     if (gameState.phase !== 'gameplay') {
         player1Moving = false;
@@ -216,4 +230,92 @@ function movePlayer(player, forward, turn, delta) {
             player.z = newZ;
         }
     }
+}
+
+/**
+ * Get attack button state for a gamepad
+ */
+function getGamepadAttack(playerIndex) {
+    const connected = getConnectedGamepads();
+    const gamepad = connected[playerIndex];
+
+    if (!gamepad) return false;
+
+    // RT (button 7), LT (button 6), X (button 2), B (button 1)
+    return gamepad.buttons[7]?.pressed ||
+           gamepad.buttons[6]?.pressed ||
+           gamepad.buttons[2]?.pressed ||
+           gamepad.buttons[1]?.pressed;
+}
+
+/**
+ * Handle attack input for both players
+ */
+export function handleAttackInput(delta) {
+    // Update cooldowns
+    if (player1AttackCooldown > 0) {
+        player1AttackCooldown -= delta;
+    }
+    if (player2AttackCooldown > 0) {
+        player2AttackCooldown -= delta;
+    }
+
+    // Reset attack flags
+    player1Attacking = false;
+    player2Attacking = false;
+
+    if (gameState.phase !== 'gameplay') return;
+
+    // Player 1 attack: Space or gamepad
+    const p1AttackPressed = keys['Space'] || getGamepadAttack(0);
+    if (p1AttackPressed && !p1AttackWasPressed && player1AttackCooldown <= 0) {
+        player1Attacking = true;
+        player1AttackCooldown = ATTACK_COOLDOWN;
+    }
+    p1AttackWasPressed = p1AttackPressed;
+
+    // Player 2 attack: Right Shift, Enter, or gamepad
+    const p2AttackPressed = keys['ShiftRight'] || keys['Enter'] || getGamepadAttack(1);
+    if (p2AttackPressed && !p2AttackWasPressed && player2AttackCooldown <= 0) {
+        player2Attacking = true;
+        player2AttackCooldown = ATTACK_COOLDOWN;
+    }
+    p2AttackWasPressed = p2AttackPressed;
+}
+
+/**
+ * Check if an attack from attacker hits the target
+ * Returns true if attack is successful
+ */
+export function checkAttackHit(attacker, target) {
+    // Calculate distance
+    const dx = target.x - attacker.x;
+    const dz = target.z - attacker.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+
+    // Check range
+    if (distance > ATTACK_RANGE) return false;
+
+    // Calculate angle to target
+    const angleToTarget = Math.atan2(-dx, -dz);
+
+    // Normalize angle difference
+    let angleDiff = attacker.rotation - angleToTarget;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    // Check if target is within attack cone
+    return Math.abs(angleDiff) < ATTACK_ANGLE;
+}
+
+/**
+ * Reset attack state (for game restart)
+ */
+export function resetAttackState() {
+    player1AttackCooldown = 0;
+    player2AttackCooldown = 0;
+    player1Attacking = false;
+    player2Attacking = false;
+    p1AttackWasPressed = false;
+    p2AttackWasPressed = false;
 }

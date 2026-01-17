@@ -247,3 +247,31 @@ body {
     font-size: 14px;
     margin-top: 20px;
 }
+
+/* Attack Cooldown Bars */
+.cooldown-container {
+    position: absolute;
+    bottom: 60px;
+    width: 100px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 15;
+}
+
+.cooldown-container.p1-cooldown {
+    left: 20px;
+}
+
+.cooldown-container.p2-cooldown {
+    right: 20px;
+}
+
+.cooldown-bar {
+    height: 100%;
+    width: 100%;
+    background: #4f4;
+    transition: width 0.05s linear;
+}

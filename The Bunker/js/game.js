@@ -3,12 +3,18 @@ import {
     gameState, scene, camera1, camera2,
     player1, player2, player1Mesh, player2Mesh,
     lastTime, phaseTimer,
+    player1LungeOffset, player2LungeOffset,
     setLastTime, setPhaseTimer, setPlayer1BobPhase, setPlayer2BobPhase,
+    setPlayer1LungeOffset, setPlayer2LungeOffset,
     resetWalls, resetLamps
 } from './state.js';
-import { initAudio, updateFootsteps } from './audio.js';
-import { handleInput, player1Moving, player2Moving } from './input.js';
-import { checkPlayerCollision } from './collision.js';
+import { initAudio, updateFootsteps, playAttackSound } from './audio.js';
+import {
+    handleInput, player1Moving, player2Moving,
+    handleAttackInput, checkAttackHit, resetAttackState,
+    player1Attacking, player2Attacking,
+    player1AttackCooldown, player2AttackCooldown
+} from './input.js';
 import { updateLamps } from './lamps.js';
 import { updatePlayerMeshes, createPlayerMeshes } from './creatures.js';
 import { updateCameras, render, createMazeGeometry } from './renderer.js';
@@ -22,9 +28,14 @@ import { updateParticles, resetParticles } from './particles.js';
 // DOM Elements
 let timerDisplay, mapTimerDisplay, phaseIndicator;
 let mapOverlay, gameOverScreen, winnerText, startScreen;
+let p1CooldownBar, p2CooldownBar;
 
 // Track button state to prevent repeated triggers
 let buttonWasPressed = false;
+
+// Camera lunge effect constants
+const LUNGE_SPEED = 8;
+const LUNGE_DISTANCE = 0.3;
 
 export function initGameUI() {
     timerDisplay = document.getElementById('timer');
@@ -34,6 +45,8 @@ export function initGameUI() {
     gameOverScreen = document.getElementById('game-over');
     winnerText = document.getElementById('winner-text');
     startScreen = document.getElementById('start-screen');
+    p1CooldownBar = document.getElementById('p1-cooldown');
+    p2CooldownBar = document.getElementById('p2-cooldown');
 
     // Event listeners
     document.getElementById('start-btn').addEventListener('click', startGame);
@@ -93,14 +106,44 @@ export function gameLoop(currentTime) {
         // Handle input and movement
         handleInput(delta);
 
+        // Handle attack input
+        handleAttackInput(delta);
+
         // Update footstep sounds
         updateFootsteps(delta, player1, player2, player1Moving, player2Moving);
 
-        // Check for catch
-        if (checkPlayerCollision()) {
-            endGame();
-            return;
+        // Check for attacks
+        if (player1Attacking) {
+            playAttackSound(true);
+            setPlayer1LungeOffset(LUNGE_DISTANCE);
+            if (checkAttackHit(player1, player2)) {
+                endGame(1);
+                return;
+            }
         }
+        if (player2Attacking) {
+            playAttackSound(false);
+            setPlayer2LungeOffset(LUNGE_DISTANCE);
+            if (checkAttackHit(player2, player1)) {
+                endGame(2);
+                return;
+            }
+        }
+
+        // Update lunge animations
+        if (player1LungeOffset > 0) {
+            let newOffset = player1LungeOffset - LUNGE_SPEED * delta;
+            if (newOffset < 0) newOffset = 0;
+            setPlayer1LungeOffset(newOffset);
+        }
+        if (player2LungeOffset > 0) {
+            let newOffset = player2LungeOffset - LUNGE_SPEED * delta;
+            if (newOffset < 0) newOffset = 0;
+            setPlayer2LungeOffset(newOffset);
+        }
+
+        // Update cooldown UI
+        updateCooldownUI();
 
         // Update timer display
         const remaining = Math.ceil(CONFIG.GAMEPLAY_DURATION - phaseTimer);
@@ -180,19 +223,10 @@ export function startGame() {
     initAudio();
 }
 
-function endGame() {
+function endGame(winner) {
     gameState.isRunning = false;
 
-    // Determine winner
-    const dx = player2.x - player1.x;
-    const dz = player2.z - player1.z;
-    const angle1 = Math.atan2(-dx, -dz);
-    const angle2 = Math.atan2(dx, dz);
-
-    const diff1 = Math.abs(normalizeAngle(player1.rotation - angle1));
-    const diff2 = Math.abs(normalizeAngle(player2.rotation - angle2));
-
-    if (diff1 < diff2) {
+    if (winner === 1) {
         winnerText.textContent = 'Player 1 Wins!';
         winnerText.style.color = '#4444ff';
     } else {
@@ -203,14 +237,35 @@ function endGame() {
     gameOverScreen.style.display = 'flex';
 }
 
-function normalizeAngle(angle) {
-    while (angle > Math.PI) angle -= Math.PI * 2;
-    while (angle < -Math.PI) angle += Math.PI * 2;
-    return angle;
+/**
+ * Update cooldown bar UI
+ */
+function updateCooldownUI() {
+    const ATTACK_COOLDOWN = 0.8;
+
+    if (p1CooldownBar) {
+        const p1Ready = player1AttackCooldown <= 0;
+        const p1Progress = p1Ready ? 100 : ((ATTACK_COOLDOWN - player1AttackCooldown) / ATTACK_COOLDOWN) * 100;
+        p1CooldownBar.style.width = p1Progress + '%';
+        p1CooldownBar.style.backgroundColor = p1Ready ? '#4f4' : '#44f';
+    }
+
+    if (p2CooldownBar) {
+        const p2Ready = player2AttackCooldown <= 0;
+        const p2Progress = p2Ready ? 100 : ((ATTACK_COOLDOWN - player2AttackCooldown) / ATTACK_COOLDOWN) * 100;
+        p2CooldownBar.style.width = p2Progress + '%';
+        p2CooldownBar.style.backgroundColor = p2Ready ? '#4f4' : '#f44';
+    }
 }
+
 
 function restartGame() {
     gameOverScreen.style.display = 'none';
+
+    // Reset attack state
+    resetAttackState();
+    setPlayer1LungeOffset(0);
+    setPlayer2LungeOffset(0);
 
     // Clear scene and rebuild maze
     while (scene.children.length > 0) {

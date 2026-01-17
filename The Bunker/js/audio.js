@@ -13,6 +13,9 @@ const FOOTSTEP_INTERVAL = 0.35; // Time between footsteps in seconds
 let player1FootstepTimer = 0;
 let player2FootstepTimer = 0;
 
+// Attack sound gain
+let attackGain = null;
+
 export function initAudio() {
     if (isAudioStarted) return;
 
@@ -37,7 +40,83 @@ export function initAudio() {
     footstepGain.gain.value = 0.8;
     footstepGain.connect(audioContext.destination);
 
+    // Initialize attack sound gain
+    attackGain = audioContext.createGain();
+    attackGain.gain.value = 0.6;
+    attackGain.connect(audioContext.destination);
+
     isAudioStarted = true;
+}
+
+/**
+ * Play attack whoosh sound
+ * @param {boolean} isPlayer1 - True for player 1 (left channel), false for player 2 (right channel)
+ */
+export function playAttackSound(isPlayer1) {
+    if (!audioContext || !attackGain) return;
+
+    const now = audioContext.currentTime;
+
+    // Create whoosh sound using filtered noise
+    const bufferSize = audioContext.sampleRate * 0.25;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        // Quick attack, longer decay envelope
+        const t = i / bufferSize;
+        const env = Math.pow(1 - t, 2) * Math.sin(t * Math.PI);
+        data[i] = (Math.random() * 2 - 1) * env;
+    }
+
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+
+    // Bandpass filter for whoosh character
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(200, now + 0.2);
+    filter.Q.value = 2;
+
+    // Gain envelope
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.5, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+    // Pan to player's side
+    const panner = audioContext.createStereoPanner();
+    panner.pan.value = isPlayer1 ? -0.5 : 0.5;
+
+    // Connect
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(panner);
+    panner.connect(attackGain);
+
+    noise.start(now);
+    noise.stop(now + 0.3);
+
+    // Add impact thud
+    const thud = audioContext.createOscillator();
+    const thudGain = audioContext.createGain();
+    const thudPanner = audioContext.createStereoPanner();
+
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(100, now);
+    thud.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+
+    thudGain.gain.setValueAtTime(0.3, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+    thudPanner.pan.value = isPlayer1 ? -0.5 : 0.5;
+
+    thud.connect(thudGain);
+    thudGain.connect(thudPanner);
+    thudPanner.connect(attackGain);
+
+    thud.start(now);
+    thud.stop(now + 0.2);
 }
 
 /**

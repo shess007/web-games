@@ -34,6 +34,10 @@ export const keys = {};
 export let player1BobPhase = 0;
 export let player2BobPhase = 0;
 
+// Attack lunge offsets for camera effect
+export let player1LungeOffset = 0;
+export let player2LungeOffset = 0;
+
 // Timing
 export let lastTime = 0;
 export let phaseTimer = 0;
@@ -52,6 +56,8 @@ export function setWalls(w) { walls = w; }
 export function setLamps(l) { lamps = l; }
 export function setPlayer1BobPhase(p) { player1BobPhase = p; }
 export function setPlayer2BobPhase(p) { player2BobPhase = p; }
+export function setPlayer1LungeOffset(l) { player1LungeOffset = l; }
+export function setPlayer2LungeOffset(l) { player2LungeOffset = l; }
 export function setLastTime(t) { lastTime = t; }
 export function setPhaseTimer(t) { phaseTimer = t; }
 

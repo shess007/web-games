@@ -3,6 +3,7 @@ import {
     scene, renderer, camera1, camera2,
     player1, player2, maze,
     player1BobPhase, player2BobPhase,
+    player1LungeOffset, player2LungeOffset,
     setScene, setRenderer, setCamera1, setCamera2,
     setPlayer1, setPlayer2, setMaze, resetWalls, addWall
 } from './state.js';
@@ -285,13 +286,17 @@ export function updateCameras() {
     const bob1 = Math.sin(player1BobPhase) * CONFIG.BOB_AMOUNT;
     const bob2 = Math.sin(player2BobPhase) * CONFIG.BOB_AMOUNT;
 
-    // Camera 1 follows player 1 with bob
-    camera1.position.set(player1.x, 1.6 + bob1, player1.z);
+    // Camera 1 follows player 1 with bob and lunge
+    const lunge1X = -Math.sin(player1.rotation) * player1LungeOffset;
+    const lunge1Z = -Math.cos(player1.rotation) * player1LungeOffset;
+    camera1.position.set(player1.x + lunge1X, 1.6 + bob1, player1.z + lunge1Z);
     camera1.rotation.y = player1.rotation;
     camera1.rotation.z = Math.sin(player1BobPhase * 0.5) * 0.01;
 
-    // Camera 2 follows player 2 with bob
-    camera2.position.set(player2.x, 1.6 + bob2, player2.z);
+    // Camera 2 follows player 2 with bob and lunge
+    const lunge2X = -Math.sin(player2.rotation) * player2LungeOffset;
+    const lunge2Z = -Math.cos(player2.rotation) * player2LungeOffset;
+    camera2.position.set(player2.x + lunge2X, 1.6 + bob2, player2.z + lunge2Z);
     camera2.rotation.y = player2.rotation;
     camera2.rotation.z = Math.sin(player2BobPhase * 0.5) * 0.01;
 }
