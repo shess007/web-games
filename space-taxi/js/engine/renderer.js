@@ -101,13 +101,13 @@ class Renderer {
     }
 
     generateNebulas(level) {
-        // Create procedural nebula positions
-        const nebulaCount = 3 + Math.floor(Math.random() * 3);
+        // Create procedural nebula positions - more nebulas with larger radius
+        const nebulaCount = 6 + Math.floor(Math.random() * 5);
         for (let i = 0; i < nebulaCount; i++) {
             this.nebulaGradients.push({
                 x: Math.random() * level.w,
                 y: Math.random() * level.h,
-                radius: 200 + Math.random() * 400,
+                radius: 300 + Math.random() * 500,
                 color1: this.getNebulaColor(),
                 color2: this.getNebulaColor(),
                 rotation: Math.random() * Math.PI * 2,
@@ -118,11 +118,13 @@ class Renderer {
 
     getNebulaColor() {
         const colors = [
-            'rgba(100, 50, 150, 0.08)',   // Purple
-            'rgba(50, 100, 150, 0.06)',   // Blue
-            'rgba(150, 50, 100, 0.05)',   // Magenta
-            'rgba(50, 150, 100, 0.04)',   // Teal
-            'rgba(150, 100, 50, 0.05)'    // Orange
+            'rgba(140, 60, 200, 0.25)',   // Vibrant Purple
+            'rgba(60, 140, 220, 0.22)',   // Bright Blue
+            'rgba(200, 60, 140, 0.20)',   // Hot Magenta
+            'rgba(60, 200, 150, 0.18)',   // Cyan Teal
+            'rgba(220, 140, 60, 0.20)',   // Warm Orange
+            'rgba(180, 80, 220, 0.22)',   // Violet
+            'rgba(80, 180, 220, 0.20)'    // Electric Blue
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -164,11 +166,13 @@ class Renderer {
 
     getGalaxyColor() {
         const colors = [
-            { r: 180, g: 150, b: 255 }, // Purple
-            { r: 150, g: 180, b: 255 }, // Blue
-            { r: 255, g: 200, b: 150 }, // Orange/yellow
-            { r: 200, g: 255, b: 200 }, // Green tint
-            { r: 255, g: 180, b: 180 }  // Pink/red
+            { r: 200, g: 140, b: 255 }, // Vibrant Purple
+            { r: 140, g: 200, b: 255 }, // Bright Blue
+            { r: 255, g: 220, b: 140 }, // Golden Yellow
+            { r: 140, g: 255, b: 200 }, // Bright Teal
+            { r: 255, g: 160, b: 200 }, // Hot Pink
+            { r: 255, g: 180, b: 120 }, // Warm Orange
+            { r: 180, g: 255, b: 255 }  // Cyan
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -281,14 +285,15 @@ class Renderer {
         const gradientCenterX = WORLD_W / 2 - offsetX;
         const gradientCenterY = WORLD_H / 2 - offsetY;
 
-        // Deep space gradient with parallax
+        // Deep space gradient with parallax - richer colors
         const gradient = ctx.createRadialGradient(
             gradientCenterX, gradientCenterY, 0,
             gradientCenterX, gradientCenterY, WORLD_W
         );
-        gradient.addColorStop(0, '#0a0a15');
-        gradient.addColorStop(0.5, '#050510');
-        gradient.addColorStop(1, '#020205');
+        gradient.addColorStop(0, '#0f0a1a');    // Deep purple-black center
+        gradient.addColorStop(0.3, '#0a0815');  // Dark purple
+        gradient.addColorStop(0.6, '#060510');  // Near black with hint of blue
+        gradient.addColorStop(1, '#020208');    // Very dark blue-black edge
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
@@ -314,18 +319,19 @@ class Renderer {
             const parallaxX = cluster.x - camera.x * (1 - cluster.parallaxSpeed);
             const parallaxY = cluster.y - camera.y * (1 - cluster.parallaxSpeed);
 
-            // Draw galaxy core glow
+            // Draw galaxy core glow - more visible
             const coreGlow = ctx.createRadialGradient(
                 parallaxX, parallaxY, 0,
-                parallaxX, parallaxY, 80
+                parallaxX, parallaxY, 120
             );
             const color = cluster.coreColor;
-            coreGlow.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.15)`);
-            coreGlow.addColorStop(0.3, `rgba(${color.r}, ${color.g}, ${color.b}, 0.08)`);
+            coreGlow.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.35)`);
+            coreGlow.addColorStop(0.2, `rgba(${color.r}, ${color.g}, ${color.b}, 0.2)`);
+            coreGlow.addColorStop(0.5, `rgba(${color.r}, ${color.g}, ${color.b}, 0.1)`);
             coreGlow.addColorStop(1, 'transparent');
             ctx.fillStyle = coreGlow;
             ctx.beginPath();
-            ctx.arc(parallaxX, parallaxY, 80, 0, Math.PI * 2);
+            ctx.arc(parallaxX, parallaxY, 120, 0, Math.PI * 2);
             ctx.fill();
 
             // Draw cluster stars with rotation

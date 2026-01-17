@@ -56,7 +56,7 @@ class Game {
         this.renderMenu();
 
         const waitForStart = () => {
-            if (this.input.isKeyPressed('Space') || this.input.isKeyPressed('Enter')) {
+            if (this.input.isKeyPressed('Space') || this.input.isKeyPressed('Enter') || this.input.isGamepadStartPressed()) {
                 this.input.clearKey('Space');
                 this.input.clearKey('Enter');
                 this.startMatch();
@@ -97,9 +97,11 @@ class Game {
 
         ctx.fillStyle = '#666';
         ctx.font = '12px monospace';
-        ctx.fillText('PLAYER 1: WASD + SPACE', WORLD_W / 2, 340);
-        ctx.fillText('PLAYER 2: ARROWS + ENTER', WORLD_W / 2, 360);
-        ctx.fillText('GAMEPAD SUPPORTED', WORLD_W / 2, 380);
+        ctx.fillText('PLAYER 1: WASD + SPACE', WORLD_W / 2, 330);
+        ctx.fillText('PLAYER 2: ARROWS + ENTER', WORLD_W / 2, 350);
+
+        ctx.fillStyle = '#555';
+        ctx.fillText('GAMEPAD: STICK/DPAD + A=THRUST  B/RT=SHOOT', WORLD_W / 2, 380);
 
         ctx.fillStyle = '#aaa';
         ctx.font = '16px monospace';
@@ -107,7 +109,7 @@ class Game {
 
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px monospace';
-        ctx.fillText('PRESS SPACE OR ENTER TO START', WORLD_W / 2, 500);
+        ctx.fillText('PRESS START OR A TO BEGIN', WORLD_W / 2, 500);
 
         // Draw sample ships
         ctx.save();
@@ -188,7 +190,7 @@ class Game {
         } else if (this.state.roundState === 'MATCH_END') {
             // Wait for restart
             const waitForRestart = () => {
-                if (this.input.isKeyPressed('Space') || this.input.isKeyPressed('Enter')) {
+                if (this.input.isKeyPressed('Space') || this.input.isKeyPressed('Enter') || this.input.isGamepadStartPressed()) {
                     this.input.clearKey('Space');
                     this.input.clearKey('Enter');
                     this.startMatch();

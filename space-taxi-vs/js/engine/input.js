@@ -72,6 +72,11 @@ class InputManager {
             if (pad.axes[0] < -this.gamepadDeadzone) input.left = true;
             if (pad.axes[0] > this.gamepadDeadzone) input.right = true;
 
+            // D-pad (buttons 12-15: up, down, left, right)
+            if (pad.buttons[14]?.pressed) input.left = true;
+            if (pad.buttons[15]?.pressed) input.right = true;
+            if (pad.buttons[12]?.pressed) input.up = true;
+
             // A button (button 0) or left stick up for thrust
             if (pad.buttons[0]?.pressed) input.up = true;
             if (pad.axes[1] < -this.gamepadDeadzone) input.up = true;
@@ -93,5 +98,19 @@ class InputManager {
 
     clearKey(code) {
         this.keys[code] = false;
+    }
+
+    // Check if any gamepad has a start/confirm button pressed (for menus)
+    isGamepadStartPressed() {
+        this.updateGamepads();
+        for (const pad of this.gamepads) {
+            if (pad) {
+                // A button (0), Start button (9)
+                if (pad.buttons[0]?.pressed || pad.buttons[9]?.pressed) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
