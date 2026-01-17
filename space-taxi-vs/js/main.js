@@ -247,6 +247,7 @@ class Game {
                 const projectileData = player.shoot();
                 this.projectiles.add(projectileData);
                 this.audio.playShoot(index);
+                this.input.vibrateShoot(index + 1);
 
                 // Directional recoil shake (opposite to shot direction)
                 const recoilDir = player.x < WORLD_W / 2 ? -1 : 1;
@@ -268,18 +269,30 @@ class Game {
                     // Crashed into floor too fast
                     player.die();
                     this.audio.playExplosion();
+                    this.input.vibrateExplosion(index + 1);
                     this.createExplosion(player.x, player.y);
                 } else if (platform.type === 'fuel') {
+                    // Vibrate on first landing
+                    if (!player._wasLanded) {
+                        this.input.vibrateLanding(index + 1);
+                    }
                     if (player.refuel(FUEL_REFILL_RATE)) {
                         if (Math.random() < 0.1) this.audio.playRefuel();
                     }
                 } else if (platform.type === 'ammo') {
+                    // Vibrate on first landing
+                    if (!player._wasLanded) {
+                        this.input.vibrateLanding(index + 1);
+                    }
                     // Reload ammo - only play sound if not fully loaded
                     if (player.ammo < MAX_AMMO && player.reload(AMMO_REFILL_RATE)) {
                         isReloading = true;
                     }
                 }
             }
+
+            // Track landing state for vibration
+            player._wasLanded = player.landedOn !== null;
 
             // Update reload sound (continuous tone while on ammo platform)
             this.audio.updateReloadSound(index, isReloading);
@@ -293,6 +306,7 @@ class Game {
             if (this.barrier.checkPlayerCollision(player)) {
                 player.die();
                 this.audio.playExplosion();
+                this.input.vibrateExplosion(index + 1);
                 this.createExplosion(player.x, player.y);
             }
         });
@@ -305,7 +319,10 @@ class Game {
             this.players,
             this.barrier,
             this.audio,
-            (x, y) => this.createExplosion(x, y),
+            (x, y, playerNum) => {
+                this.createExplosion(x, y);
+                if (playerNum) this.input.vibrateExplosion(playerNum);
+            },
             (x, y, radius, destroyed) => this.createAsteroidDebris(x, y, radius, destroyed)
         );
 

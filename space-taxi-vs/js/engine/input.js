@@ -113,4 +113,67 @@ class InputManager {
         }
         return false;
     }
+
+    /**
+     * Vibrate a gamepad controller
+     * @param {number} playerNum - Player number (1 or 2)
+     * @param {Object} options - Vibration options
+     * @param {number} options.duration - Duration in ms (default: 200)
+     * @param {number} options.strongMagnitude - Left motor intensity 0-1 (default: 0.5)
+     * @param {number} options.weakMagnitude - Right motor intensity 0-1 (default: 0.5)
+     */
+    vibrate(playerNum, options = {}) {
+        this.updateGamepads();
+        const pad = this.gamepads[playerNum - 1];
+        if (!pad || !pad.vibrationActuator) return;
+
+        const duration = options.duration ?? 200;
+        const strongMagnitude = options.strongMagnitude ?? 0.5;
+        const weakMagnitude = options.weakMagnitude ?? 0.5;
+
+        pad.vibrationActuator.playEffect('dual-rumble', {
+            startDelay: 0,
+            duration: duration,
+            strongMagnitude: strongMagnitude,
+            weakMagnitude: weakMagnitude
+        }).catch(() => {
+            // Silently ignore vibration errors (unsupported, etc.)
+        });
+    }
+
+    // Vibrate on collision/damage
+    vibrateHit(playerNum) {
+        this.vibrate(playerNum, {
+            duration: 150,
+            strongMagnitude: 0.6,
+            weakMagnitude: 0.3
+        });
+    }
+
+    // Vibrate on explosion/death
+    vibrateExplosion(playerNum) {
+        this.vibrate(playerNum, {
+            duration: 400,
+            strongMagnitude: 1.0,
+            weakMagnitude: 0.8
+        });
+    }
+
+    // Light vibration for landing/pickup
+    vibrateLanding(playerNum) {
+        this.vibrate(playerNum, {
+            duration: 100,
+            strongMagnitude: 0.3,
+            weakMagnitude: 0.1
+        });
+    }
+
+    // Vibrate on shooting
+    vibrateShoot(playerNum) {
+        this.vibrate(playerNum, {
+            duration: 50,
+            strongMagnitude: 0.2,
+            weakMagnitude: 0.4
+        });
+    }
 }

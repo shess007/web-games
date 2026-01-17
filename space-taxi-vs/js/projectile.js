@@ -90,7 +90,7 @@ class ProjectileManager {
                     player.die();
                     projectile.die();
                     audio.playExplosion();
-                    createExplosion(player.x, player.y);
+                    createExplosion(player.x, player.y, player.playerNum);
                     hits.push({ type: 'player', player, projectile });
                 }
             });
