@@ -231,3 +231,19 @@ body {
     font-size: 12px;
     letter-spacing: 2px;
 }
+
+/* Gamepad Debug */
+#gamepad-debug {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 30px;
+    text-align: center;
+    min-height: 50px;
+}
+
+/* Gamepad hint on game over */
+.gamepad-hint {
+    color: #555;
+    font-size: 14px;
+    margin-top: 20px;
+}

@@ -7,6 +7,12 @@ let audioContext = null;
 let ambientGain = null;
 let isAudioStarted = false;
 
+// Footstep system
+let footstepGain = null;
+const FOOTSTEP_INTERVAL = 0.35; // Time between footsteps in seconds
+let player1FootstepTimer = 0;
+let player2FootstepTimer = 0;
+
 export function initAudio() {
     if (isAudioStarted) return;
 
@@ -26,7 +32,161 @@ export function initAudio() {
     // Random creepy sounds
     scheduleCreepySounds();
 
+    // Initialize footstep audio
+    footstepGain = audioContext.createGain();
+    footstepGain.gain.value = 0.8;
+    footstepGain.connect(audioContext.destination);
+
     isAudioStarted = true;
+}
+
+/**
+ * Play a footstep sound with 3D positioning
+ * @param {number} sourceX - X position of the sound source
+ * @param {number} sourceZ - Z position of the sound source
+ * @param {number} listenerX - X position of the listener
+ * @param {number} listenerZ - Z position of the listener
+ * @param {number} listenerRotation - Rotation of the listener (radians)
+ * @param {boolean} isOwnFootstep - Whether this is the listener's own footstep
+ */
+function playFootstep(sourceX, sourceZ, listenerX, listenerZ, listenerRotation, isOwnFootstep) {
+    if (!audioContext || !footstepGain) return;
+
+    // Calculate distance and relative position
+    const dx = sourceX - listenerX;
+    const dz = sourceZ - listenerZ;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+
+    // Calculate volume based on distance (louder when closer)
+    const maxDistance = 25;
+    let volume = isOwnFootstep ? 0.15 : Math.max(0, 1 - (distance / maxDistance));
+
+    // Own footsteps are quieter but always audible
+    if (isOwnFootstep) {
+        volume = 0.12 + Math.random() * 0.05;
+    }
+
+    if (volume <= 0) return;
+
+    // Calculate stereo panning based on relative angle
+    let pan = 0;
+    if (!isOwnFootstep && distance > 0.5) {
+        // Calculate angle to source relative to listener's facing direction
+        const angleToSource = Math.atan2(dx, dz);
+        const relativeAngle = angleToSource - listenerRotation;
+        pan = Math.sin(relativeAngle) * Math.min(1, distance / 5);
+    }
+
+    // Create footstep sound
+    createFootstepSound(volume, pan, isOwnFootstep);
+}
+
+function createFootstepSound(volume, pan, isOwnFootstep) {
+    const now = audioContext.currentTime;
+
+    // Create noise burst for footstep
+    const bufferSize = audioContext.sampleRate * 0.08;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        // Envelope: quick attack, quick decay
+        const env = Math.exp(-i / (bufferSize * 0.15));
+        data[i] = (Math.random() * 2 - 1) * env;
+    }
+
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+
+    // Low-pass filter for muffled concrete footstep
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = isOwnFootstep ? 800 : 600 + Math.random() * 400;
+    filter.Q.value = 1;
+
+    // Add slight resonance for impact
+    const resonance = audioContext.createBiquadFilter();
+    resonance.type = 'peaking';
+    resonance.frequency.value = 100 + Math.random() * 50;
+    resonance.gain.value = 6;
+    resonance.Q.value = 2;
+
+    // Gain node for volume
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(volume * (0.8 + Math.random() * 0.4), now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    // Stereo panner
+    const panner = audioContext.createStereoPanner();
+    panner.pan.value = pan;
+
+    // Connect nodes
+    noise.connect(filter);
+    filter.connect(resonance);
+    resonance.connect(gain);
+    gain.connect(panner);
+    panner.connect(footstepGain);
+
+    noise.start(now);
+    noise.stop(now + 0.15);
+
+    // Add subtle low thud for weight
+    const thud = audioContext.createOscillator();
+    const thudGain = audioContext.createGain();
+    const thudPanner = audioContext.createStereoPanner();
+
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(60 + Math.random() * 20, now);
+    thud.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+
+    thudGain.gain.setValueAtTime(volume * 0.5, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    thudPanner.pan.value = pan;
+
+    thud.connect(thudGain);
+    thudGain.connect(thudPanner);
+    thudPanner.connect(footstepGain);
+
+    thud.start(now);
+    thud.stop(now + 0.15);
+}
+
+/**
+ * Update footstep sounds based on player movement
+ * Call this every frame from the game loop
+ */
+export function updateFootsteps(delta, p1, p2, p1Moving, p2Moving) {
+    if (!audioContext || !isAudioStarted) return;
+
+    // Player 1 footsteps
+    if (p1Moving) {
+        player1FootstepTimer += delta;
+        if (player1FootstepTimer >= FOOTSTEP_INTERVAL) {
+            player1FootstepTimer = 0;
+            // Play footstep for both listeners
+            // P1 hears their own footstep (quiet)
+            playFootstep(p1.x, p1.z, p1.x, p1.z, p1.rotation, true);
+            // P2 hears P1's footstep (3D positioned)
+            playFootstep(p1.x, p1.z, p2.x, p2.z, p2.rotation, false);
+        }
+    } else {
+        player1FootstepTimer = FOOTSTEP_INTERVAL * 0.8; // Ready to play soon when moving again
+    }
+
+    // Player 2 footsteps
+    if (p2Moving) {
+        player2FootstepTimer += delta;
+        if (player2FootstepTimer >= FOOTSTEP_INTERVAL) {
+            player2FootstepTimer = 0;
+            // P2 hears their own footstep (quiet)
+            playFootstep(p2.x, p2.z, p2.x, p2.z, p2.rotation, true);
+            // P1 hears P2's footstep (3D positioned)
+            playFootstep(p2.x, p2.z, p1.x, p1.z, p1.rotation, false);
+        }
+    } else {
+        player2FootstepTimer = FOOTSTEP_INTERVAL * 0.8;
+    }
 }
 
 function createDrone(frequency, volume) {

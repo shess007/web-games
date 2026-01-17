@@ -6,8 +6,8 @@ import {
     setLastTime, setPhaseTimer, setPlayer1BobPhase, setPlayer2BobPhase,
     resetWalls, resetLamps
 } from './state.js';
-import { initAudio } from './audio.js';
-import { handleInput } from './input.js';
+import { initAudio, updateFootsteps } from './audio.js';
+import { handleInput, player1Moving, player2Moving } from './input.js';
 import { checkPlayerCollision } from './collision.js';
 import { updateLamps } from './lamps.js';
 import { updatePlayerMeshes, createPlayerMeshes } from './creatures.js';
@@ -22,6 +22,9 @@ import { drawMap } from './map.js';
 let timerDisplay, mapTimerDisplay, phaseIndicator;
 let mapOverlay, gameOverScreen, winnerText, startScreen;
 
+// Track button state to prevent repeated triggers
+let buttonWasPressed = false;
+
 export function initGameUI() {
     timerDisplay = document.getElementById('timer');
     mapTimerDisplay = document.getElementById('map-timer');
@@ -34,6 +37,44 @@ export function initGameUI() {
     // Event listeners
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+    // Start gamepad button polling for menu navigation
+    setInterval(checkGamepadButtons, 100);
+}
+
+/**
+ * Check for gamepad button presses to start/restart game
+ */
+function checkGamepadButtons() {
+    const gamepads = navigator.getGamepads();
+    let anyButtonPressed = false;
+
+    for (const gamepad of gamepads) {
+        if (!gamepad) continue;
+
+        // Check A button (0), B button (1), Start button (9)
+        const aButton = gamepad.buttons[0]?.pressed;
+        const startButton = gamepad.buttons[9]?.pressed;
+
+        if (aButton || startButton) {
+            anyButtonPressed = true;
+            break;
+        }
+    }
+
+    // Only trigger on button press (not hold)
+    if (anyButtonPressed && !buttonWasPressed) {
+        // Check if we're on start screen
+        if (startScreen.style.display !== 'none') {
+            startGame();
+        }
+        // Check if we're on game over screen
+        else if (gameOverScreen.style.display === 'flex') {
+            restartGame();
+        }
+    }
+
+    buttonWasPressed = anyButtonPressed;
 }
 
 export function gameLoop(currentTime) {
@@ -50,6 +91,9 @@ export function gameLoop(currentTime) {
     if (gameState.phase === 'gameplay') {
         // Handle input and movement
         handleInput(delta);
+
+        // Update footstep sounds
+        updateFootsteps(delta, player1, player2, player1Moving, player2Moving);
 
         // Check for catch
         if (checkPlayerCollision()) {
