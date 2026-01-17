@@ -13,6 +13,7 @@ import { updateLamps } from './lamps.js';
 import { updatePlayerMeshes, createPlayerMeshes } from './creatures.js';
 import { updateCameras, render, createMazeGeometry } from './renderer.js';
 import { drawMap } from './map.js';
+import { updateParticles, resetParticles } from './particles.js';
 
 /**
  * Game Loop and State Management
@@ -125,6 +126,9 @@ export function gameLoop(currentTime) {
     // Update lamps (flickering effect)
     updateLamps(delta);
 
+    // Update particle effects
+    updateParticles(delta);
+
     // Update player creature meshes
     updatePlayerMeshes();
 
@@ -214,6 +218,7 @@ function restartGame() {
     }
     resetWalls();
     resetLamps();
+    resetParticles();
 
     // Reinitialize
     scene.fog = new THREE.FogExp2(0x000000, CONFIG.FOG_DENSITY);

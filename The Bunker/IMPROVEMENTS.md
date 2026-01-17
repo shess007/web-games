@@ -31,9 +31,9 @@ A collection of potential improvements and features to enhance the game experien
 - [ ] **Motion blur** - Subtle blur when turning quickly
 
 ### Particle Effects
-- [ ] **Dust particles** - Floating dust visible in light beams
-- [ ] **Lamp sparks** - Sparks from broken/flickering lamps
-- [ ] **Fog wisps** - Low-lying fog that moves slowly
+- [x] **Dust particles** - Floating dust visible in light beams
+- [x] **Lamp sparks** - Sparks from broken/flickering lamps
+- [x] **Fog wisps** - Low-lying fog that moves slowly
 
 ### Dynamic Elements
 - [ ] **Screen shake** - On collisions or when opponent is very close

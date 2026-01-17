@@ -10,6 +10,7 @@ import { generateMaze } from './maze.js';
 import { createWallTexture, createFloorTexture, createCeilingTexture, createNormalMap } from './textures.js';
 import { createLamps } from './lamps.js';
 import { createPlayerMeshes } from './creatures.js';
+import { initParticles } from './particles.js';
 
 /**
  * Three.js Renderer Setup and Rendering
@@ -182,6 +183,9 @@ export function createMazeGeometry() {
 
     // Add ceiling lamps
     createLamps();
+
+    // Initialize particle effects
+    initParticles();
 }
 
 function addBoundaryWalls(material) {
