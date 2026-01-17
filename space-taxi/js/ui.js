@@ -6,7 +6,6 @@ class UIManager {
             fuelBar: document.getElementById('fuel-bar'),
             levelIdx: document.getElementById('level-idx'),
             speedVal: document.getElementById('speed-val'),
-            fuelContainer: document.getElementById('fuel-container'),
             fuelPod: document.getElementById('fuel-pod'),
             speedPod: document.getElementById('speed-pod'),
             message: document.getElementById('message'),
@@ -16,186 +15,122 @@ class UIManager {
             overlay: document.getElementById('overlay'),
             overlayMsg: document.getElementById('overlay-msg'),
             startBtn: document.getElementById('start-btn'),
-            minimap: document.getElementById('minimap-sidebar') || document.getElementById('minimap'),
+            minimap: document.getElementById('minimap-sidebar'),
             radioLog: document.getElementById('radio-log'),
-            devMenu: document.getElementById('dev-menu'),
-            devOptions: document.getElementById('dev-options'),
             avatar: document.getElementById('avatar-container'),
             fullscreenBtn: document.getElementById('fullscreen-btn'),
-            uiCenter: document.getElementById('ui-center')
+            devMenu: document.getElementById('dev-menu'),
+            devOptions: document.getElementById('dev-options')
         };
-        this.currentAvatarId = null;
+        this.avatars = ['🧑‍🚀', '👾', '🤖', '🕵️', '🧙', '🥷'];
     }
 
-    updatePassengerAvatar(passId) {
-        if (this.currentAvatarId === passId) return;
-        this.currentAvatarId = passId;
-        this.els.avatar.innerHTML = '';
-
-        if (passId === null) {
-            this.els.avatar.style.opacity = '0.3';
-            return;
+    updateHUD(state, speed) {
+        if (this.els.cash) this.els.cash.innerText = Math.floor(state.cash);
+        if (this.els.fuelVal) this.els.fuelVal.innerText = Math.floor(state.fuel);
+        if (this.els.fuelBar) {
+            this.els.fuelBar.style.width = Math.max(0, state.fuel) + '%';
+            this.els.fuelBar.style.backgroundColor = state.fuel < 25 ? '#ff3e3e' : (state.fuel < 50 ? '#ffdf00' : '#00ff41');
+        }
+        if (this.els.levelIdx) this.els.levelIdx.innerText = state.currentLevelIdx + 1;
+        if (this.els.speedVal) {
+            this.els.speedVal.innerText = speed.toFixed(1);
+            this.els.speedVal.style.color = (speed <= (typeof MAX_LANDING_SPD !== 'undefined' ? MAX_LANDING_SPD : 1.0)) ? '#00ff41' : '#ff3e3e';
         }
 
-        this.els.avatar.style.opacity = '1';
-        const canvas = document.createElement('canvas');
-        canvas.className = 'avatar-canvas';
-        canvas.width = 8; canvas.height = 8;
-        const ctx = canvas.getContext('2d');
+        if (state.fuel < 25) this.els.fuelPod?.classList.add('danger-alert');
+        else this.els.fuelPod?.classList.remove('danger-alert');
 
-        // Procedural Retro Face
-        const seed = passId * 12345;
-        const hue = (seed % 360);
-        ctx.fillStyle = `hsl(${hue}, 50%, 40%)`; // Background/Suit
-        ctx.fillRect(0, 0, 8, 8);
+        if (speed > 3) this.els.speedPod?.classList.add('danger-alert');
+        else this.els.speedPod?.classList.remove('danger-alert');
+    }
 
-        ctx.fillStyle = '#ffccaa'; // Face skin
-        ctx.fillRect(2, 2, 4, 4);
+    updatePassCount(current, total) {
+        if (this.els.passCount) this.els.passCount.innerText = `${current}/${total}`;
+    }
 
-        ctx.fillStyle = '#000'; // Eyes
-        ctx.fillRect(3, 3, 1, 1);
-        ctx.fillRect(5, 3, 1, 1);
+    setTarget(tgt) {
+        if (this.els.target) this.els.target.innerText = tgt;
+    }
 
-        this.els.avatar.appendChild(canvas);
+    setMessage(msg) {
+        if (this.els.message) {
+            this.els.message.innerText = msg;
+        }
     }
 
     showRadioChatter(msg) {
-        if (this.els.message.innerText.includes('SYSTEM')) return;
-
-        // Update main message
-        this.els.message.innerText = msg;
-        this.els.message.style.color = '#0f0';
-
-        // Add to Sidebar Log (Point 3)
+        this.setMessage(msg);
         if (this.els.radioLog) {
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.innerText = `[${new Date().toLocaleTimeString([], { hour: '2min', minute: '2-digit', second: '2-digit' })}] ${msg.replace(/'/g, '')}`;
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            entry.innerText = `[${time}] ${msg}`;
             this.els.radioLog.prepend(entry);
-
-            // Keep only last 8 entries
-            if (this.els.radioLog.children.length > 8) {
+            if (this.els.radioLog.children.length > 10) {
                 this.els.radioLog.lastElementChild.remove();
             }
         }
-
         setTimeout(() => {
-            if (this.els.message.innerText === msg) {
-                this.els.message.innerText = 'System Ready';
-                this.els.message.style.color = '#fff';
+            if (this.els.message?.innerText === msg) {
+                this.setMessage("SYSTEM READY");
+            }
+        }, 5000);
+    }
+
+    setPassengerComment(msg, speakerIdx) {
+        if (!this.els.passengerComment) return;
+        this.els.passengerComment.innerText = msg;
+        this.els.passengerComment.style.opacity = '1';
+        setTimeout(() => {
+            if (this.els.passengerComment.innerText === msg) {
+                this.els.passengerComment.style.opacity = '0';
             }
         }, 4000);
     }
 
-    toggleDevMenu(show, levels, onSelect) {
-        this.els.devMenu.style.display = show ? 'block' : 'none';
-        if (show) {
-            this.els.devOptions.innerHTML = '';
-            levels.forEach((l, idx) => {
-                const opt = document.createElement('div');
-                opt.className = 'dev-option';
-                opt.innerText = `> LADE SEKTOR ${idx + 1}`;
-                opt.onclick = () => {
-                    onSelect(idx);
-                    this.toggleDevMenu(false);
-                };
-                this.els.devOptions.appendChild(opt);
-            });
-        }
-    }
-
-    updateHUD(state, speed) {
-        // Update Values
-        this.els.cash.innerText = Math.floor(state.cash);
-        this.els.fuelVal.innerText = Math.floor(state.fuel);
-        this.els.fuelBar.style.width = state.fuel + '%';
-        this.els.levelIdx.innerText = state.currentLevelIdx + 1;
-        this.els.speedVal.innerText = speed.toFixed(1);
-
-        // Fuel Color & Alert Logic
-        if (state.fuel < 20) {
-            this.els.fuelBar.style.backgroundColor = '#ff3333';
-            this.els.fuelPod.classList.add('danger-alert');
-            this.els.fuelVal.className = 'gauge-critical';
-        } else if (state.fuel < 50) {
-            this.els.fuelBar.style.backgroundColor = '#ffaa00';
-            this.els.fuelPod.classList.remove('danger-alert');
-            this.els.fuelVal.className = 'gauge-warning';
+    updatePassengerAvatar(idx) {
+        if (!this.els.avatar) return;
+        if (idx === null) {
+            this.els.avatar.innerText = '';
+            this.els.avatar.style.borderColor = 'rgba(255,255,255,0.05)';
         } else {
-            this.els.fuelBar.style.backgroundColor = '#55ff55';
-            this.els.fuelPod.classList.remove('danger-alert');
-            this.els.fuelVal.className = 'text-white';
+            const avatar = this.avatars[idx % this.avatars.length];
+            this.els.avatar.innerText = avatar;
+            this.els.avatar.style.fontSize = '24px';
+            this.els.avatar.style.borderColor = '#00d2ff';
         }
-
-        // Speed Color & Alert Logic
-        if (speed > MAX_LANDING_SPD) {
-            this.els.speedVal.className = 'speed-display gauge-critical';
-            this.els.speedPod.classList.add('danger-alert');
-        } else {
-            this.els.speedVal.className = 'speed-display gauge-fine';
-            this.els.speedPod.classList.remove('danger-alert');
-        }
-    }
-
-    setMessage(msg) {
-        this.els.message.innerText = msg;
-    }
-
-    setPassengerComment(comment, opacity) {
-        this.els.passengerComment.innerText = comment;
-        this.els.passengerComment.style.opacity = opacity;
-    }
-
-    updatePassCount(current, total) {
-        this.els.passCount.innerText = `${current}/${total}`;
-    }
-
-    setTarget(target) {
-        this.els.target.innerText = target;
-    }
-
-    showOverlay(msg, buttonText) {
-        this.els.overlay.classList.remove('hidden');
-        this.els.overlayMsg.innerHTML = msg;
-        this.els.startBtn.innerText = buttonText;
-    }
-
-    hideOverlay() {
-        this.els.overlay.classList.add('hidden');
     }
 
     updateMinimap(state) {
-        const { taxi, level, passengerIndex, activePassenger } = state;
-        if (!level) return;
+        // Handled by renderer.draw()
+    }
 
-        const tx = (taxi.x / level.w) * 100, ty = (taxi.y / level.h) * 100;
-        let html = `<div style="position:absolute; left:${tx}%; top:${ty}%; width:4px; height:4px; background:yellow; transform:translate(-50%, -50%); z-index:5;"></div>`;
+    showOverlay(msg, isGameOver = false) {
+        if (this.els.overlayMsg) this.els.overlayMsg.innerHTML = msg;
+        this.els.overlay?.classList.remove('hidden');
+        if (this.els.startBtn) this.els.startBtn.innerText = isGameOver ? 'RESTART MISSION' : 'START MISSION';
+    }
 
-        level.platforms.forEach(p => {
-            if (p.fuel) {
-                const fx = (p.x / level.w) * 100, fy = (p.y / level.h) * 100;
-                html += `<div style="position:absolute; left:${fx}%; top:${fy}%; width:6px; height:2px; background:#00ff00; transform:translate(0, 0); z-index:1;"></div>`;
-            }
-        });
+    hideOverlay() {
+        this.els.overlay?.classList.add('hidden');
+    }
 
-        if (passengerIndex < level.passengers.length) {
-            const pass = level.passengers[passengerIndex];
-            const goalId = activePassenger?.state === 'WAITING' ? pass.f : pass.t;
-            const goal = level.platforms.find(p => p.id === goalId);
-            if (goal) {
-                const gx = (goal.x / level.w) * 100, gy = (goal.y / level.h) * 100;
-                html += `<div class="target-dot" style="position:absolute; left:${gx}%; top:${gy}%; width:8px; height:3px; background:#ff00ff; border:1px solid white; transform:translate(0, 0); z-index:10;"></div>`;
-            }
-        }
-        if (level.enemies) {
-            level.enemies.forEach(e => {
-                const angle = Date.now() * e.speed;
-                const ex = ((e.x + Math.cos(angle) * e.r) / level.w) * 100;
-                const ey = ((e.y + Math.sin(angle) * e.r) / level.h) * 100;
-                html += `<div style="position:absolute; left:${ex}%; top:${ey}%; width:3px; height:3px; background:red; border-radius:50%; transform:translate(-50%, -50%); z-index:4; animation: blink 0.2s infinite;"></div>`;
+    toggleDevMenu(show, levels = [], onSelect = null) {
+        if (!this.els.devMenu) return;
+        this.els.devMenu.classList.toggle('hidden', !show);
+        if (show && levels.length > 0 && this.els.devOptions) {
+            this.els.devOptions.innerHTML = '';
+            levels.forEach((l, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'text-left hover:bg-green-900 p-2 border border-green-900 mb-1 font-mono text-green-500';
+                btn.innerText = `LEVEL ${i + 1}`;
+                btn.onclick = () => {
+                    if (onSelect) onSelect(i);
+                    this.toggleDevMenu(false);
+                };
+                this.els.devOptions.appendChild(btn);
             });
         }
-
-        this.els.minimap.innerHTML = html;
     }
 }

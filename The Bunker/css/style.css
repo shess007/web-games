@@ -1,0 +1,233 @@
+/**
+ * The Bunker - Styles
+ */
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background: #000;
+    font-family: 'Courier New', monospace;
+}
+
+/* Game Container */
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#game-canvas {
+    display: block;
+}
+
+/* Split Screen Divider */
+.split-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 4px;
+    height: 100%;
+    background: #333;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* Player Labels */
+.player-label {
+    position: absolute;
+    top: 10px;
+    color: #666;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    z-index: 10;
+}
+
+.player-label.p1 {
+    left: 20px;
+}
+
+.player-label.p2 {
+    right: 20px;
+}
+
+/* Phase Indicator */
+#phase-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #555;
+    font-size: 18px;
+    z-index: 10;
+}
+
+/* Map Overlay */
+#map-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 100;
+}
+
+#map-canvas {
+    border: 2px solid #333;
+    box-shadow: 0 0 50px rgba(100, 100, 100, 0.3);
+}
+
+#map-title {
+    color: #888;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+}
+
+#map-timer {
+    color: #ff4444;
+    font-size: 48px;
+    margin-top: 20px;
+}
+
+/* Game Over Screen */
+#game-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 200;
+}
+
+#game-over h1 {
+    color: #ff0000;
+    font-size: 64px;
+    text-transform: uppercase;
+    letter-spacing: 10px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+#game-over p {
+    color: #888;
+    font-size: 24px;
+    margin-bottom: 40px;
+}
+
+#restart-btn {
+    padding: 15px 40px;
+    font-size: 20px;
+    background: #333;
+    color: #fff;
+    border: 2px solid #666;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    transition: all 0.3s;
+}
+
+#restart-btn:hover {
+    background: #555;
+    border-color: #888;
+}
+
+/* Start Screen */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 300;
+}
+
+#start-screen h1 {
+    color: #444;
+    font-size: 72px;
+    text-transform: uppercase;
+    letter-spacing: 15px;
+    margin-bottom: 10px;
+}
+
+#start-screen .subtitle {
+    color: #333;
+    font-size: 18px;
+    letter-spacing: 5px;
+    margin-bottom: 60px;
+}
+
+/* Controls Info */
+.controls-info {
+    display: flex;
+    gap: 100px;
+    margin-bottom: 60px;
+}
+
+.control-box {
+    text-align: center;
+}
+
+.control-box h3 {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 15px;
+    letter-spacing: 3px;
+}
+
+.control-box p {
+    color: #444;
+    font-size: 14px;
+}
+
+/* Start Button */
+#start-btn {
+    padding: 20px 60px;
+    font-size: 24px;
+    background: transparent;
+    color: #666;
+    border: 2px solid #444;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    transition: all 0.3s;
+}
+
+#start-btn:hover {
+    color: #fff;
+    border-color: #888;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* Hint Text */
+.hint {
+    position: absolute;
+    bottom: 30px;
+    color: #333;
+    font-size: 12px;
+    letter-spacing: 2px;
+}

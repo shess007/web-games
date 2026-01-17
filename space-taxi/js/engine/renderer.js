@@ -2,244 +2,227 @@ class Renderer {
     constructor(canvas, ctx) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.starLayers = [[], [], []];
+        this.minimapCanvas = null;
+        this.minimapCtx = null;
+        this.stars = [];
+    }
+
+    setMinimapContainer(container) {
+        if (!container) return;
+        this.minimapCanvas = document.createElement('canvas');
+        this.minimapCanvas.width = 160; 
+        this.minimapCanvas.height = 120;
+        this.minimapCanvas.style.width = '100%';
+        this.minimapCanvas.style.height = '100%';
+        this.minimapCtx = this.minimapCanvas.getContext('2d');
+        container.innerHTML = '';
+        container.appendChild(this.minimapCanvas);
     }
 
     initStars(level) {
-        this.starLayers = [[], [], [], []]; // 4 Layers: Far Stars, Medium Stars, Near Stars, Planets/Nebula
-
-        // Stars
-        for (let l = 0; l < 3; l++) {
-            for (let i = 0; i < 120; i++) {
-                this.starLayers[l].push({
-                    x: Math.random() * level.w,
-                    y: Math.random() * level.h,
-                    s: (l + 1) * 0.15, // Travel speed factor
-                    c: l === 0 ? '#111122' : (l === 1 ? '#333355' : '#666688'),
-                    size: Math.random() * (l + 1)
-                });
-            }
-        }
-
-        // Deep Space Objects (Planets/Nebulae)
-        const colors = ['#220044', '#002244', '#442200'];
-        for (let i = 0; i < 5; i++) {
-            this.starLayers[3].push({
+        this.stars = [];
+        if (!level) return;
+        const count = 150;
+        for (let i = 0; i < count; i++) {
+            this.stars.push({
                 x: Math.random() * level.w,
                 y: Math.random() * level.h,
-                s: 0.05, // Very slow movement
-                c: colors[i % colors.length],
-                size: 20 + Math.random() * 40,
-                type: 'planet'
+                s: Math.random() * 2,
+                o: Math.random() * 0.5 + 0.5
             });
         }
     }
 
     draw(state) {
-        const { level, taxi, camera, particles, shake, activePassenger, passengerIndex, keys } = state;
-        if (!level) return;
-
-        const shakeX = (Math.random() - 0.5) * shake;
-        const shakeY = (Math.random() - 0.5) * shake;
-
+        if (!state.level) return;
+        
         this.ctx.save();
-        this.ctx.translate(shakeX, shakeY);
-        this.ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+        
+        // Background
+        this.ctx.fillStyle = '#020205';
+        this.ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-        // Parallax Layers
-        this.starLayers.forEach((layer, idx) => {
-            layer.forEach(s => {
-                const sx = (s.x - camera.x * s.s) % level.w;
-                const sy = (s.y - camera.y * s.s) % level.h;
-                const rx = sx < 0 ? sx + level.w : sx;
-                const ry = sy < 0 ? sy + level.h : sy;
+        // Shake
+        if (state.shake > 0) {
+            this.ctx.translate((Math.random()-0.5)*state.shake, (Math.random()-0.5)*state.shake);
+        }
+        
+        // Camera Viewport
+        this.ctx.translate(-state.camera.x, -state.camera.y);
 
-                // Only draw if within viewport range
-                if (rx > -s.size && rx < WORLD_W + s.size && ry > -s.size && ry < WORLD_H + s.size) {
-                    if (s.type === 'planet') {
-                        const grad = this.ctx.createRadialGradient(rx, ry, 0, rx, ry, s.size);
-                        grad.addColorStop(0, s.c); grad.addColorStop(1, 'transparent');
-                        this.ctx.fillStyle = grad;
-                        this.ctx.beginPath(); this.ctx.arc(rx, ry, s.size, 0, Math.PI * 2); this.ctx.fill();
-                    } else {
-                        this.ctx.fillStyle = s.c;
-                        const twinkle = idx === 2 && Math.random() > 0.98 ? 2 : 1;
-                        this.ctx.fillRect(rx, ry, s.size * twinkle, s.size * twinkle);
-                    }
-                }
-            });
+        this.drawStars();
+        this.drawWalls(state.level.walls);
+        this.drawPlatforms(state.level.platforms);
+        this.drawEnemies(state.level.enemies);
+        this.drawActivePassenger(state.activePassenger);
+        this.drawParticles(state.particles);
+        this.drawTaxi(state.taxi);
+        
+        this.ctx.restore();
+
+        // Minimap
+        if (this.minimapCtx) {
+            this.drawMinimap(state);
+        }
+    }
+
+    drawStars() {
+        this.stars.forEach(s => {
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${s.o})`;
+            this.ctx.fillRect(s.x, s.y, s.s, s.s);
         });
+    }
 
-        // Walls (Industrial look with highlights)
-        level.walls.forEach(w => {
-            const rx = w.x - camera.x, ry = w.y - camera.y;
-            if (rx + w.w < 0 || rx > WORLD_W || ry + w.h < 0 || ry > WORLD_H) return;
-
-            // Base wall structure
-            const wallGrad = this.ctx.createLinearGradient(rx, ry, rx + w.w, ry + w.h);
-            wallGrad.addColorStop(0, '#2a2a3a');
-            wallGrad.addColorStop(1, '#1a1a2a');
-            this.ctx.fillStyle = wallGrad;
-            this.ctx.fillRect(rx, ry, w.w, w.h);
-
-            // Bevel edges
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    drawWalls(walls) {
+        if (!walls) return;
+        this.ctx.fillStyle = '#1a1a25';
+        walls.forEach(w => {
+            this.ctx.fillRect(w.x, w.y, w.w, w.h);
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
             this.ctx.lineWidth = 1;
-            this.ctx.strokeRect(rx + 1, ry + 1, w.w - 2, w.h - 2);
-
-            // Industrial texture (grid)
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            for (let x = 10; x < w.w; x += 20) this.ctx.fillRect(rx + x, ry, 1, w.h);
-            for (let y = 10; y < w.h; y += 20) this.ctx.fillRect(rx, ry + y, w.w, 1);
+            this.ctx.strokeRect(w.x, w.y, w.w, w.h);
         });
+    }
 
-        // Platforms (Technical pad look)
-        level.platforms.forEach(p => {
-            const rx = p.x - camera.x, ry = p.y - camera.y;
-            if (p.fuel) {
-                const grad = this.ctx.createRadialGradient(rx + p.w / 2, ry, 0, rx + p.w / 2, ry, 40);
-                grad.addColorStop(0, 'rgba(0, 255, 0, 0.3)'); grad.addColorStop(1, 'rgba(0, 255, 0, 0)');
-                this.ctx.fillStyle = grad; this.ctx.fillRect(rx - 20, ry - 40, p.w + 40, 80);
-            }
-
-            // Platform base with gradient
-            const pGrad = this.ctx.createLinearGradient(rx, ry, rx, ry + p.h);
-            pGrad.addColorStop(0, '#444455');
-            pGrad.addColorStop(1, '#222233');
-            this.ctx.fillStyle = pGrad;
-            this.ctx.fillRect(rx, ry, p.w, p.h);
-
-            // Landing pad markings
-            this.ctx.fillStyle = p.fuel ? '#00aa00' : '#888899';
-            this.ctx.fillRect(rx, ry, 4, p.h); // Left bar
-            this.ctx.fillRect(rx + p.w - 4, ry, 4, p.h); // Right bar
-
-            // Label
-            this.ctx.fillStyle = '#fff';
-            this.ctx.font = '6px "Press Start 2P"';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(p.fuel ? 'FUEL' : 'PAD ' + p.id, rx + p.w / 2, ry + 15);
-            this.ctx.textAlign = 'left';
+    drawPlatforms(platforms) {
+        if (!platforms) return;
+        platforms.forEach(p => {
+            this.ctx.fillStyle = '#111';
+            this.ctx.fillRect(p.x, p.y, p.w, p.h);
+            this.ctx.fillStyle = p.isFuel ? '#00d2ff' : '#00ff41';
+            this.ctx.fillRect(p.x, p.y, p.w, 4);
+            this.ctx.fillStyle = '#aaa';
+            this.ctx.font = '14px "VT323"';
+            const label = p.fuel ? 'FUEL' : 'PAD ' + p.id;
+            this.ctx.fillText(label, p.x + 5, p.y + 16);
         });
+    }
 
-        // Passenger
-        if (activePassenger?.state === 'WAITING') {
-            const rx = activePassenger.x - camera.x, ry = activePassenger.y - camera.y;
-            // Body with depth
-            this.ctx.fillStyle = '#cc00cc'; this.ctx.fillRect(rx - 5, ry - 12, 10, 12);
-            this.ctx.fillStyle = '#ff00ff'; this.ctx.fillRect(rx - 5, ry - 14, 10, 2);
-            // Face
-            this.ctx.fillStyle = '#ffccaa'; this.ctx.fillRect(rx - 3, ry - 19, 6, 6);
-            // Cap/Hair highlight
-            this.ctx.fillStyle = '#552200'; this.ctx.fillRect(rx - 3, ry - 20, 6, 2);
-        }
-
-        // Enemies (Underworld Creatures)
-        if (level.enemies) {
-            level.enemies.forEach(e => {
-                const angle = Date.now() * e.speed;
-                const ex = e.x + Math.cos(angle) * e.r - camera.x;
-                const ey = e.y + Math.sin(angle) * e.r - camera.y;
-
-                if (ex + e.size < 0 || ex - e.size > WORLD_W || ey + e.size < 0 || ey - e.size > WORLD_H) return;
-
-                // Daemon Body (Pulsing)
-                const pulse = Math.sin(Date.now() * 0.01) * 2;
-                this.ctx.fillStyle = '#440000';
-                this.ctx.beginPath();
-                this.ctx.arc(ex, ey, e.size + pulse, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Glowing Eye
-                this.ctx.fillStyle = '#ff0000';
-                this.ctx.beginPath();
-                this.ctx.arc(ex, ey, e.size * 0.4, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // Pupils
-                this.ctx.fillStyle = '#000';
-                this.ctx.fillRect(ex - 1, ey - e.size * 0.3, 2, e.size * 0.6);
-            });
-        }
-
-        // Particles
-        particles.forEach(p => {
-            this.ctx.globalAlpha = p.life; this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(p.x - camera.x - p.size / 2, p.y - camera.y - p.size / 2, p.size, p.size);
-        });
-        this.ctx.globalAlpha = 1.0;
-
-        // Taxi (Advanced plastic/metallic look)
-        this.ctx.save();
-        this.ctx.translate(taxi.x - camera.x, taxi.y - camera.y);
-        this.ctx.rotate(taxi.angle);
-
-        // Engine Glow
-        if (state.fuel > 0 && (keys['ArrowUp'] || keys['KeyW'])) {
-            const glow = this.ctx.createRadialGradient(0, 12, 0, 0, 12, 35);
-            glow.addColorStop(0, 'rgba(255, 255, 100, 0.6)');
-            glow.addColorStop(0.4, 'rgba(255, 100, 0, 0.4)');
-            glow.addColorStop(1, 'rgba(255, 0, 0, 0)');
-            this.ctx.fillStyle = glow; this.ctx.fillRect(-30, 0, 60, 60);
-        }
-
-        // Taxi Hull Gradient
-        const hullGrad = this.ctx.createLinearGradient(-TAXI_W / 2, -TAXI_H / 2, -TAXI_W / 2, TAXI_H / 2);
-        if (state.fuel > 0) {
-            hullGrad.addColorStop(0, '#ffee55'); // Highlight
-            hullGrad.addColorStop(0.5, '#ccaa00'); // Base
-            hullGrad.addColorStop(1, '#886600'); // Shadow
-        } else {
-            hullGrad.addColorStop(0, '#888');
-            hullGrad.addColorStop(0.5, '#444');
-            hullGrad.addColorStop(1, '#222');
-        }
-
-        // Hull
-        this.ctx.fillStyle = hullGrad;
-        this.ctx.fillRect(-TAXI_W / 2, -TAXI_H / 2, TAXI_W, TAXI_H - 6);
-
-        // Window with Enhanced Reflection
-        this.ctx.fillStyle = '#0a2a4a'; this.ctx.fillRect(2, -7, 14, 6);
-        const refX = (Math.sin(Date.now() * 0.002) * 4) + 6;
-        this.ctx.fillStyle = 'rgba(255,255,255,0.3)'; this.ctx.fillRect(refX, -6, 3, 2);
-
-        // Landing Gear Animation
-        const isNearPlatform = level.platforms.some(p =>
-            Math.abs(taxi.x - (p.x + p.w / 2)) < p.w / 2 + 30 &&
-            Math.abs(taxi.y + TAXI_H / 2 - p.y) < 60
-        );
-        const gearExt = isNearPlatform ? 4 : 0;
-
-        this.ctx.fillStyle = '#111';
-        this.ctx.fillRect(-14, 4, 8, 4 + gearExt); // Rear leg shadow
-        this.ctx.fillRect(6, 4, 8, 4 + gearExt);  // Front leg shadow
-
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(-15, 5 + gearExt, 8, 4); // Rear foot
-        this.ctx.fillRect(7, 5 + gearExt, 8, 4);  // Front foot
-
-        // "TAXI" lettering
-        this.ctx.fillStyle = state.fuel > 0 ? '#111' : '#333';
-        this.ctx.font = '6px Arial';
-        this.ctx.fillText("TAXI", -12, 2);
-
-        this.ctx.restore();
-
-        // Lighting Engine (Dynamic Thrust Glow on Walls/Platforms)
-        if (state.fuel > 0 && (keys['ArrowUp'] || keys['KeyW'] || keys['ArrowLeft'] || keys['KeyA'] || keys['ArrowRight'] || keys['KeyD'])) {
-            const tx = taxi.x - camera.x;
-            const ty = taxi.y - camera.y;
+    drawEnemies(enemies) {
+        if (!enemies) return;
+        enemies.forEach(e => {
+            // Draw Underworld Creature
             this.ctx.save();
-            this.ctx.globalCompositeOperation = 'screen';
-            const lightGrad = this.ctx.createRadialGradient(tx, ty, 0, tx, ty, 150);
-            lightGrad.addColorStop(0, 'rgba(255, 150, 50, 0.2)');
-            lightGrad.addColorStop(1, 'rgba(0,0,0,0)');
-            this.ctx.fillStyle = lightGrad;
-            this.ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-            this.ctx.restore();
-        }
+            this.ctx.translate(e.x, e.y);
+            
+            // Glow
+            const pulse = 0.5 + Math.sin(Date.now() / 200) * 0.5;
+            const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, e.size * 2);
+            grad.addColorStop(0, `rgba(255, 0, 0, ${0.3 * pulse})`);
+            grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            this.ctx.fillStyle = grad;
+            this.ctx.fillRect(-e.size * 2, -e.size * 2, e.size * 4, e.size * 4);
 
+            // Body
+            this.ctx.fillStyle = '#ff3300';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, e.size / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Eyes
+            this.ctx.fillStyle = '#fff';
+            this.ctx.fillRect(-4, -2, 2, 2);
+            this.ctx.fillRect(2, -2, 2, 2);
+            
+            // Tentacles/Artifacts
+            this.ctx.strokeStyle = '#ff3300';
+            this.ctx.lineWidth = 2;
+            for(let i=0; i<4; i++) {
+                const a = (i/4) * Math.PI * 2 + Date.now()/300;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0,0);
+                this.ctx.lineTo(Math.cos(a)*e.size, Math.sin(a)*e.size);
+                this.ctx.stroke();
+            }
+            
+            this.ctx.restore();
+        });
+    }
+
+    drawActivePassenger(p) {
+        if (!p || p.state !== 'WAITING') return;
+        this.ctx.fillStyle = '#f472b6';
+        this.ctx.fillRect(p.x - 4, p.y - 12, 8, 12);
+        this.ctx.fillStyle = '#fbcfe8';
+        this.ctx.fillRect(p.x - 3, p.y - 18, 6, 6);
+        const bounce = Math.sin(Date.now() / 200) * 5;
+        this.ctx.fillStyle = '#fff';
+        this.ctx.beginPath();
+        this.ctx.moveTo(p.x, p.y - 25 + bounce);
+        this.ctx.lineTo(p.x - 4, p.y - 32 + bounce);
+        this.ctx.lineTo(p.x + 4, p.y - 32 + bounce);
+        this.ctx.fill();
+    }
+
+    drawParticles(particles) {
+        if (!particles) return;
+        this.ctx.save();
+        particles.forEach(p => {
+            // Particle Light Illumination effect
+            const glowSize = p.size * 4;
+            const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowSize);
+            grad.addColorStop(0, p.color.replace(')', ', 0.3)').replace('rgb', 'rgba').replace('#ffff55', 'rgba(255,255,85,0.3)').replace('#00ffff', 'rgba(0,255,255,0.3)'));
+            grad.addColorStop(1, 'transparent');
+            
+            this.ctx.fillStyle = grad;
+            this.ctx.globalAlpha = p.life * 0.5;
+            this.ctx.fillRect(p.x - glowSize, p.y - glowSize, glowSize * 2, glowSize * 2);
+
+            // Core Particle
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+        });
         this.ctx.restore();
+    }
+
+    drawTaxi(taxi) {
+        this.ctx.save();
+        this.ctx.translate(taxi.x, taxi.y);
+        this.ctx.rotate(taxi.angle || 0);
+        this.ctx.fillStyle = '#fbbf24';
+        this.ctx.fillRect(-15, -10, 30, 16);
+        this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        this.ctx.fillRect(-15, 0, 30, 6);
+        this.ctx.fillStyle = '#00d2ff';
+        this.ctx.fillRect(2, -7, 10, 5);
+        const gearOut = (typeof taxi.gearOut === 'undefined') ? true : taxi.gearOut;
+        this.ctx.fillStyle = gearOut ? '#444' : '#111';
+        this.ctx.fillRect(-12, 6, 6, 4);
+        this.ctx.fillRect(6, 6, 6, 4);
+        this.ctx.restore();
+    }
+
+    drawMinimap(state) {
+        const mCtx = this.minimapCtx;
+        const level = state.level;
+        if (!level || !mCtx) return;
+        const scaleW = 160 / level.w;
+        const scaleH = 120 / level.h;
+        mCtx.fillStyle = '#000';
+        mCtx.fillRect(0, 0, 160, 120);
+        mCtx.fillStyle = '#22232a';
+        level.walls?.forEach(w => {
+            mCtx.fillRect(w.x * scaleW, w.y * scaleH, w.w * scaleW, w.h * scaleH);
+        });
+        level.platforms?.forEach(p => {
+            const isTarget = state.activePassenger && (
+                (state.activePassenger.state === 'WAITING' && p.id === levels[state.currentLevelIdx].passengers[state.passengerIndex].f) ||
+                (state.activePassenger.state === 'IN_TAXI' && p.id === levels[state.currentLevelIdx].passengers[state.passengerIndex].t)
+            );
+            mCtx.fillStyle = isTarget ? '#fff' : '#444';
+            mCtx.fillRect(p.x * scaleW, p.y * scaleH, p.w * scaleW, p.h * scaleH);
+            if (isTarget) {
+                mCtx.strokeStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(Date.now() / 150) * 0.5})`;
+                mCtx.strokeRect(p.x * scaleW - 1, p.y * scaleH - 1, p.w * scaleW + 2, p.h * scaleH + 2);
+            }
+        });
+        // Enemies on minimap
+        mCtx.fillStyle = '#ff0000';
+        level.enemies?.forEach(e => {
+            mCtx.fillRect(e.x * scaleW - 1, e.y * scaleH - 1, 2, 2);
+        });
+        mCtx.fillStyle = '#fbbf24';
+        mCtx.fillRect(state.taxi.x * scaleW - 2, state.taxi.y * scaleH - 2, 4, 4);
     }
 }

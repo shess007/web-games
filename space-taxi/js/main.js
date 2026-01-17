@@ -6,6 +6,7 @@ class Game {
         this.audio = new AudioEngine();
         this.renderer = new Renderer(this.canvas, this.ctx);
         this.ui = new UIManager();
+        this.renderer.setMinimapContainer(this.ui.els.minimap);
 
         this.state = {
             gameState: 'START',
@@ -83,20 +84,18 @@ class Game {
     }
 
     handleResize() {
-        const isMobile = window.innerWidth <= 950;
         const isLandscape = window.innerWidth > window.innerHeight;
         const panelLeft = document.getElementById('panel-left');
-        const isCockpit = isLandscape && (window.innerWidth > 1024 || isMobile);
+        const panelRight = document.getElementById('panel-right');
 
-        const hud = document.getElementById('ui');
+        let sidebarsWidth = 0;
+        if (isLandscape) {
+            sidebarsWidth += panelLeft ? panelLeft.offsetWidth : 0;
+            sidebarsWidth += panelRight ? panelRight.offsetWidth : 0;
+        }
 
-        // Subtract sidebar widths if they are shown (Cockpit mode)
-        const sidebarWidth = (isCockpit && panelLeft && panelLeft.offsetWidth > 0) ? panelLeft.offsetWidth * 2 : 0;
-        const hudHeight = (isMobile && isLandscape) ? 20 : (hud ? hud.offsetHeight : 0);
-        const controlsHeight = isMobile ? (isLandscape ? 100 : 160) : 20;
-
-        const availableW = window.innerWidth - sidebarWidth - (isMobile ? 40 : 20);
-        const availableH = window.innerHeight - controlsHeight - hudHeight - 20;
+        const availableW = window.innerWidth - sidebarsWidth;
+        const availableH = window.innerHeight;
 
         const scale = Math.min(availableW / WORLD_W, availableH / WORLD_H);
 
@@ -106,8 +105,10 @@ class Game {
         this.canvas.style.height = (WORLD_H * scale) + 'px';
 
         const container = document.getElementById('game-container');
-        container.style.width = (WORLD_W * scale) + 'px';
-        container.style.height = (WORLD_H * scale) + 'px';
+        if (container) {
+            container.style.width = (WORLD_W * scale) + 'px';
+            container.style.height = (WORLD_H * scale) + 'px';
+        }
     }
 
     startGame() {
@@ -140,6 +141,14 @@ class Game {
         this.state.fuelAlertTriggered = false;
         this.state.isTransitioning = false;
         this.state.passengerIndex = 0;
+
+        if (level.enemies) {
+            level.enemies.forEach(e => {
+                e.centerX = e.x;
+                e.centerY = e.y;
+                e.angle = Math.random() * Math.PI * 2;
+            });
+        }
 
         this.renderer.initStars(level);
         this.initPassenger();
@@ -228,6 +237,26 @@ class Game {
 
         const speed = Math.sqrt(taxi.vx * taxi.vx + taxi.vy * taxi.vy);
 
+        // Automatic Landing Gear Logic
+        let nearPlatform = false;
+        for (let p of level.platforms) {
+            const dist = Math.sqrt(Math.pow(taxi.x - (p.x + p.w / 2), 2) + Math.pow(taxi.y - p.y, 2));
+            if (dist < 100) {
+                nearPlatform = true;
+                break;
+            }
+        }
+        taxi.gearOut = nearPlatform;
+
+        // Update Enemies (Level 2 specific)
+        if (level.enemies) {
+            level.enemies.forEach(e => {
+                e.angle = (e.angle || 0) + e.speed;
+                e.x = e.centerX + Math.cos(e.angle) * e.r;
+                e.y = e.centerY + Math.sin(e.angle) * e.r;
+            });
+        }
+
         // Collisions
         this.checkCollisions(speed);
 
@@ -277,11 +306,8 @@ class Game {
         // Enemies
         if (level.enemies) {
             for (let e of level.enemies) {
-                const angle = Date.now() * e.speed;
-                const ex = e.x + Math.cos(angle) * e.r;
-                const ey = e.y + Math.sin(angle) * e.r;
-                const dx = taxi.x - ex;
-                const dy = taxi.y - ey;
+                const dx = taxi.x - e.x;
+                const dy = taxi.y - e.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < e.size + 10) {
                     this.crash("DÄMONEN-ATTACKE!"); return;

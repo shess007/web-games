@@ -11,171 +11,129 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="bg-black text-white selection:bg-yellow-500 selection:text-black">
 
-    <div id="game-wrapper">
-        <div id="cockpit-layout"
-            class="w-full h-full flex flex-col lg:flex-row items-stretch justify-center overflow-hidden">
+    <div id="game-wrapper" class="flex flex-row w-screen h-screen overflow-hidden">
 
-            <!-- Left Sidebar (Cockpit Panel A) -->
-            <aside id="panel-left"
-                class="cockpit-panel hidden lg:flex flex-col justify-between p-4 border-r border-gray-800 bg-black/40">
-                <div class="flex flex-col gap-6">
-                    <!-- Fuel & Status Pod -->
-                    <div id="fuel-pod" class="instrument-pod w-full">
-                        <span class="label-retro">FUEL SYSTEM</span>
-                        <div class="fuel-gauge-container">
-                            <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
-                        </div>
-                        <div class="flex justify-between w-full mt-2 text-[6px]">
-                            <span class="text-gray-400">TNK:<span id="fuel-val" class="text-white">100</span>%</span>
-                            <span class="text-gray-400">LVL:<span id="level-idx" class="text-white">1</span></span>
-                        </div>
-                        <div class="mt-2 text-yellow-500 text-[6px] border-t border-gray-700 pt-1 w-full text-center">
-                            CASH: $<span id="cash">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Technical Scanner (Moved here) -->
-                    <div class="scanner-container">
-                        <span class="label-retro block mb-2">SCANNER</span>
-                        <div id="minimap-sidebar"
-                            class="relative w-full aspect-[4/3] bg-blue-900/20 border border-blue-500/30"></div>
-                    </div>
+        <!-- LEFT DASHBOARD -->
+        <aside id="panel-left"
+            class="cockpit-panel sidebar-left flex flex-col justify-between p-2 border-r border-yellow-600/10">
+            <div id="fuel-pod" class="instrument-pod">
+                <span class="label-retro">FUEL SYSTEM</span>
+                <div class="fuel-gauge-container">
+                    <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
                 </div>
-
-                <div class="tech-deco h-20 border-t border-gray-800 mt-4 opacity-30"></div>
-            </aside>
-
-            <!-- Main Flight View -->
-            <main id="flight-view" class="flex-1 flex flex-col items-center justify-center relative">
-
-                <!-- Floating Top HUD (For smaller screens/standard mode) -->
-                <div id="ui" class="w-full flex justify-between z-30 select-none pointer-events-none p-4 lg:hidden">
-                    <!-- Elements will be rearranged via CSS for mobile -->
+                <div class="flex justify-between w-full mt-1 px-1">
+                    <span class="text-[5px] text-gray-400">TNK:<span id="fuel-val" class="text-white">100</span>%</span>
+                    <span class="text-[5px] text-gray-400">LVL:<span id="level-idx" class="text-white">1</span></span>
                 </div>
-
-                <!-- Center Display (Always visible) -->
-                <div id="ui-center"
-                    class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none">
-                    <div class="bg-black/60 border border-gray-700 px-4 py-1 rounded-sm">
-                        <span id="message" class="text-white uppercase text-[8px] tracking-widest">System Ready</span>
-                    </div>
-                    <span id="passenger-comment"
-                        class="text-pink-400 text-[10px] sm:text-[12px] italic mt-1 opacity-0 bg-black/40 px-2"></span>
+                <div class="mt-1 text-yellow-500 text-[6px] text-center border-t border-white/5 pt-1">
+                    CASH: $<span id="cash">0</span>
                 </div>
-
-                <div id="game-container" class="relative">
-                    <canvas id="gameCanvas"></canvas>
-                    <div id="minimap" class="minimap lg:hidden"></div> <!-- Kept for mobile/non-cockpit -->
-
-                    <!-- Overlays -->
-                    <div id="overlay"
-                        class="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-40 text-white text-center p-6">
-                        <h1
-                            class="text-2xl sm:text-4xl font-bold mb-2 text-yellow-500 italic uppercase tracking-widest text-shadow">
-                            Space Taxi</h1>
-                        <p class="text-[6px] sm:text-[8px] mb-6 text-gray-400">Entwickelt von Chuck Heß</p>
-                        <div class="border-2 border-yellow-600 p-4 mb-6 bg-gray-900 shadow-[8px_8px_0px_#000]">
-                            <p id="overlay-msg" class="text-[7px] sm:text-[10px] leading-relaxed uppercase">
-                                Sektor-Kontrolle aktiviert.<br><br>
-                                - Bringe 3 Passagiere ans Ziel<br>
-                                - Tanke rechtzeitig auf<br>
-                                - Lande vorsichtig (Tacho <span class="text-green-400">GRÜN</span>)
-                            </p>
-                        </div>
-                        <button id="start-btn"
-                            class="px-8 py-4 bg-blue-700 hover:bg-blue-600 text-white font-bold border-4 border-white shadow-[6px_6px_0px_#000] active:translate-y-1 active:shadow-none uppercase text-xs">Mission
-                            Start</button>
-                    </div>
-
-                    <!-- Fullscreen Toggle moved here to be persistent -->
-                    <button id="fullscreen-btn"
-                        class="hidden fixed top-4 right-4 z-50 p-2 bg-black/50 border border-white/20 rounded-full text-white pointer-events-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
-                            </path>
-                        </svg>
-                    </button>
-                </div>
-            </main>
-
-            <!-- Right Sidebar (Cockpit Panel B) -->
-            <aside id="panel-right"
-                class="cockpit-panel hidden lg:flex flex-col justify-between p-4 border-l border-gray-800 bg-black/40">
-                <div class="flex flex-col gap-6">
-                    <!-- Velocity & Target Pod -->
-                    <div id="speed-pod" class="instrument-pod w-full">
-                        <span class="label-retro">VELOCITY</span>
-                        <div id="avatar-container" class="mx-auto"></div>
-                        <div class="flex items-baseline justify-center gap-1">
-                            <span id="speed-val" class="speed-display speed-safe">0.0</span>
-                            <span class="speed-unit">u/s</span>
-                        </div>
-                        <div class="mt-2 w-full border-t border-gray-700 pt-1 flex justify-between text-[6px]">
-                            <span class="text-gray-400">TARGET:</span>
-                            <span id="target" class="text-cyan-400 font-bold">P1</span>
-                        </div>
-                        <div class="text-gray-400 text-[6px] w-full flex justify-between">
-                            <span>PASS:</span>
-                            <span id="pass-count" class="text-white">0/3</span>
-                        </div>
-                    </div>
-
-                    <!-- Communications Log (New) -->
-                    <div class="comm-log-container flex-1">
-                        <span class="label-retro block mb-2">COMMUNICATIONS</span>
-                        <div id="radio-log"
-                            class="text-[6px] text-green-400/80 leading-relaxed font-mono h-32 overflow-hidden flex flex-col-reverse justify-start">
-                            <!-- Radio entries appear here -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tech-deco h-20 border-t border-gray-800 mt-4 opacity-30"></div>
-            </aside>
-        </div>
-
-        <!-- Mobile UI / Gamepad -->
-        <div id="controls">
-            <div class="flex gap-6 pointer-events-auto items-center">
-                <button id="btn-left" class="mobile-btn">←</button>
-                <button id="btn-right" class="mobile-btn">→</button>
             </div>
-            <div class="pointer-events-auto">
-                <button id="btn-up" class="mobile-btn">FLY</button>
+
+            <div class="scanner-box mt-4 p-1 bg-blue-900/10 border border-blue-500/20">
+                <span class="text-[5px] text-blue-400 block mb-1">SCAN-RADAR</span>
+                <div id="minimap-sidebar" class="w-full aspect-square relative"></div>
             </div>
-        </div>
+
+            <div id="controls-left" class="mt-auto flex gap-2 justify-center pb-4">
+                <button id="btn-left" class="mobile-btn-rect">←</button>
+                <button id="btn-right" class="mobile-btn-rect">→</button>
+            </div>
+        </aside>
+
+        <!-- CENTER VIEW -->
+        <main id="flight-deck" class="flex-1 flex flex-col items-center justify-center relative bg-[#050508]">
+            <div id="ui-center" class="absolute top-2 z-30 flex flex-col items-center pointer-events-none w-full">
+                <div class="bg-black/80 border border-gray-700 px-3 py-1 shadow-lg">
+                    <span id="message" class="text-white uppercase text-[7px] tracking-widest">System Ready</span>
+                </div>
+                <span id="passenger-comment"
+                    class="text-pink-400 text-[9px] italic mt-1 bg-black/60 px-2 opacity-0 rounded-sm"></span>
+            </div>
+
+            <div id="game-container" class="relative">
+                <canvas id="gameCanvas"></canvas>
+
+                <!-- Overlay Container -->
+                <div id="overlay"
+                    class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-40 text-center p-4">
+                    <h1 class="text-xl sm:text-3xl font-bold mb-2 text-yellow-500 italic uppercase tracking-tighter">
+                        Space Taxi</h1>
+                    <div class="border border-yellow-600/30 p-4 bg-gray-900 shadow-2xl max-w-xs">
+                        <p id="overlay-msg" class="text-[7px] sm:text-[9px] uppercase leading-relaxed text-gray-300">
+                            Sektor-Kontrolle aktiviert.<br><br>
+                            - Bringe 3 Passagiere ans Ziel<br>
+                            - Tanke rechtzeitig auf
+                        </p>
+                    </div>
+                    <button id="start-btn"
+                        class="mt-6 px-10 py-4 bg-blue-700 text-white font-bold border-2 border-white uppercase text-[10px] active:scale-95 transition-transform">Start
+                        Mission</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT DASHBOARD -->
+        <aside id="panel-right"
+            class="cockpit-panel sidebar-right flex flex-col justify-between p-2 border-l border-yellow-600/10">
+            <div id="speed-pod" class="instrument-pod">
+                <span class="label-retro">VELOCITY</span>
+                <div id="avatar-container"
+                    class="mb-2 bg-black/50 border border-white/5 w-10 h-10 mx-auto flex items-center justify-center">
+                </div>
+                <div class="flex items-baseline justify-center gap-1">
+                    <span id="speed-val" class="text-[14px] font-bold text-green-400">0.0</span>
+                    <span class="text-[6px] text-gray-600">u/s</span>
+                </div>
+                <div class="text-[5px] text-gray-500 flex justify-between mt-2 border-t border-white/5 pt-1">
+                    <span>TGT: <span id="target" class="text-cyan-400 font-bold">P1</span></span>
+                    <span>PASS: <span id="pass-count" class="text-white">0/3</span></span>
+                </div>
+            </div>
+
+            <div id="comm-container" class="flex-1 mt-4 overflow-hidden flex flex-col border-t border-white/5 pt-2">
+                <span class="label-retro text-green-500/30">COMMS LOG</span>
+                <div id="radio-log"
+                    class="flex-1 text-[5px] text-green-500/60 font-mono flex flex-col-reverse justify-start gap-1 overflow-hidden">
+                    <!-- Entries entries -->
+                </div>
+            </div>
+
+            <div id="controls-right" class="mt-auto flex justify-center pb-4">
+                <button id="btn-up" class="mobile-btn-up">FLY</button>
+            </div>
+        </aside>
+
+        <!-- Tooltip/Fullscreen -->
+        <button id="fullscreen-btn"
+            class="fixed top-2 right-2 z-50 p-2 bg-black/40 border border-white/10 rounded-full text-white backdrop-blur-sm">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                </path>
+            </svg>
+        </button>
     </div>
 
-    <!-- Orientation Overlay -->
+    <!-- Rotation Warning -->
     <div id="orientation-overlay"
-        class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center text-white p-8 text-center hidden">
-        <div class="mb-6 animate-bounce">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
-                stroke="#eab308" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-            </svg>
-        </div>
-        <h2 class="text-xl font-bold mb-4 uppercase tracking-widest text-yellow-500">Bitte Gerät drehen</h2>
-        <p class="text-[10px] leading-relaxed opacity-80 uppercase">
-            Space Taxi erfordert das Querformat für eine optimale Flugkontrolle.
-        </p>
+        class="fixed inset-0 z-[1000] bg-[#0a0a0c] flex flex-col items-center justify-center text-white p-10 text-center hidden">
+        <div class="text-5xl mb-6 animate-pulse">📱</div>
+        <h2 class="text-xl font-bold uppercase text-yellow-500 mb-2">Bitte Gerät drehen</h2>
+        <p class="text-[8px] opacity-60 uppercase tracking-widest">Querformat erforderlich</p>
     </div>
 
     <!-- Secret Developer Menu -->
-    <div id="dev-menu">
-        <h2>DEVELOPER TERMINAL v1.0</h2>
-        <div id="dev-options">
+    <div id="dev-menu" class="hidden fixed inset-0 z-[2000] bg-black/90 p-10 font-mono text-green-500 overflow-y-auto">
+        <h2 class="text-2xl mb-4">DEVELOPER TERMINAL v1.0</h2>
+        <div id="dev-options" class="flex flex-col gap-2 mb-8">
             <!-- Dynamically filled -->
         </div>
-        <div class="dev-hint">Drücke 'F2' zum Schließen</div>
+        <div class="text-xs opacity-50">Drücke 'F2' zum Schließen</div>
     </div>
 
-    <!-- Core Logic -->
+    <!-- Core Scripts -->
     <script src="js/config.js"></script>
     <script src="js/engine/audio.js"></script>
     <script src="js/engine/renderer.js"></script>

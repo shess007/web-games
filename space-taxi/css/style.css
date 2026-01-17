@@ -1,568 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 :root {
-    --snes-blue: #3e3ab3;
-    --snes-light-blue: #5c59d4;
-    --snes-gray: #c0c0c0;
-    --snes-dark-gray: #404040;
-    --snes-purple: #7a5ba0;
+    --cockpit-bg: #09090b;
+    --terminal-green: #00ff41;
+    --neon-blue: #00d2ff;
+    --alert-red: #ff3e3e;
+    --warn-yellow: #ffdf00;
 }
 
-body {
-    background-color: #050505;
+* {
+    box-sizing: border-box;
     margin: 0;
-    overflow: hidden;
-    font-family: 'Press Start 2P', cursive;
-    image-rendering: pixelated;
-    user-select: none;
+    padding: 0;
     -webkit-tap-highlight-color: transparent;
 }
 
+body {
+    background-color: #000;
+    overflow: hidden;
+    font-family: 'VT323', monospace;
+    color: #fff;
+    user-select: none;
+    touch-action: none;
+}
+
 #game-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     width: 100vw;
     height: 100vh;
-}
-
-@media (max-width: 950px) {
-    #game-wrapper {
-        justify-content: flex-start;
-        padding-top: env(safe-area-inset-top);
-    }
-
-    /* Orientation Logic */
-    @media (orientation: portrait) {
-        #orientation-overlay {
-            display: flex !important;
-        }
-
-        #game-wrapper {
-            display: none;
-        }
-    }
-
-    #fullscreen-btn {
-        display: block;
-        right: env(safe-area-inset-right, 20px);
-        top: env(safe-area-inset-top, 20px);
-    }
-}
-
-#game-container {
-    position: relative;
-    box-shadow: 0 0 100px rgba(0, 0, 0, 1);
-    border: 6px solid var(--snes-dark-gray);
+    display: flex;
     background: #000;
-    overflow: hidden;
 }
 
-/* CRT Overlay & Scanlines with Curvature Effect */
-#game-container::after {
-    content: " ";
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background:
-        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
-        radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%);
-    z-index: 25;
-    background-size: 100% 3px, 100% 100%;
-    pointer-events: none;
-    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.7);
-}
-
-canvas {
-    image-rendering: pixelated;
-    display: block;
-    background: #080812;
-    touch-action: none;
-    filter: contrast(1.1) brightness(1.1) saturate(1.2);
-}
-
-/* Dashboard & Cockpit Elements */
-#ui {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 20px;
-}
-
-.instrument-pod {
-    background: rgba(30, 30, 40, 0.9);
-    border: 3px solid #666;
-    border-radius: 12px;
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 5px 15px rgba(0, 0, 0, 0.5);
-    padding: 10px;
+/* SIDEBARS */
+.cockpit-panel {
+    width: 160px;
+    background: var(--cockpit-bg);
+    border-color: rgba(0, 255, 65, 0.1);
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    min-width: 120px;
-    position: relative;
-    overflow: hidden;
+    padding: 10px;
+    z-index: 100;
+    box-shadow: inset 0 0 30px rgba(0,0,0,1);
 }
 
-.instrument-pod::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
-    pointer-events: none;
+.sidebar-left { border-right: 1px solid rgba(0, 255, 65, 0.1); }
+.sidebar-right { border-left: 1px solid rgba(0, 255, 65, 0.1); }
+
+/* INSTRUMENTS */
+.instrument-pod {
+    background: rgba(0, 255, 65, 0.02);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 2px;
 }
 
 .label-retro {
-    font-size: 8px;
-    color: #888;
+    font-size: 14px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 5px var(--neon-blue);
     margin-bottom: 5px;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px #000;
+    display: block;
 }
 
-/* Passenger Avatar Slot */
-#avatar-container {
-    width: 32px;
-    height: 32px;
-    background: #1a1a1a;
-    border: 1px solid #444;
-    margin: 5px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-}
-
-#avatar-container::after {
-    content: "USER";
-    position: absolute;
-    bottom: 0px;
-    left: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    font-size: 4px;
-    text-align: center;
-    color: #0ff;
-}
-
-canvas.avatar-canvas {
-    image-rendering: pixelated;
-    width: 24px;
-    height: 24px;
-}
-
-/* Fuel Gauge */
 .fuel-gauge-container {
-    width: 80px;
-    height: 12px;
-    background: #111;
-    border: 2px solid #555;
-    padding: 2px;
-    position: relative;
+    height: 10px;
+    background: #000;
+    border: 1px solid #222;
 }
 
 #fuel-bar {
     height: 100%;
-    transition: width 0.1s linear, background-color 0.3s;
-    box-shadow: 0 0 8px currentColor;
 }
 
-/* Speedometer Dial (Retro digital look) */
-.speed-display {
-    font-size: 20px;
-    font-weight: bold;
-    font-family: 'Press Start 2P', cursive;
+/* SCANNER */
+.scanner-box {
+    border: 1px solid rgba(0, 210, 255, 0.2);
+    background: rgba(0, 210, 255, 0.05);
 }
 
-.speed-unit {
-    font-size: 8px;
-    color: #666;
-}
-
-/* Warning Overlays */
-@keyframes pulse-red {
-
-    0%,
-    100% {
-        box-shadow: inset 0 0 30px rgba(255, 0, 0, 0);
-    }
-
-    50% {
-        box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.4);
-    }
-}
-
-.danger-alert {
-    animation: pulse-red 0.5s infinite;
-    border-color: #ff3333 !important;
-}
-
-.gauge-critical {
-    color: #ff3333;
-    animation: blink 0.3s infinite;
-}
-
-.gauge-warning {
-    color: #ffaa00;
-}
-
-.gauge-fine {
-    color: #55ff55;
-}
-
-/* Minimap Cockpit Integration */
-.minimap {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 120px;
-    height: 90px;
-    background: rgba(20, 20, 30, 0.85);
-    border: 3px solid #555;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1), inset 0 0 10px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    z-index: 20;
+/* LOG */
+.comm-log {
+    font-size: 12px;
+    line-height: 1.1;
+    color: var(--terminal-green);
+    text-shadow: 0 0 3px var(--terminal-green);
     overflow: hidden;
 }
 
-.minimap::after {
-    content: "SCANNER";
-    position: absolute;
-    top: 2px;
-    left: 4px;
-    font-size: 5px;
-    color: #44aaff;
-    letter-spacing: 1px;
+.log-entry {
+    margin-bottom: 5px;
+    opacity: 0.9;
 }
 
-.target-dot {
-    animation: blink 0.4s infinite;
-    box-shadow: 0 0 5px #fff;
+/* BUTTONS */
+.mobile-btn-rect {
+    width: 60px;
+    height: 50px;
+    background: rgba(0, 255, 65, 0.05);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    color: var(--terminal-green);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
 }
 
-/* Mobile Optimization */
-@media (max-width: 768px) {
-    #ui {
-        padding: 10px;
-    }
-
-    .instrument-pod {
-        min-width: 90px;
-        padding: 5px;
-    }
-
-    .label-retro {
-        font-size: 6px;
-    }
-
-    .speed-display {
-        font-size: 14px;
-    }
-
-    .fuel-gauge-container {
-        width: 60px;
-        height: 10px;
-    }
-
-    #game-container {
-        border-width: 3px;
-    }
-
-    /* HUD Optimization for Landscape */
-    @media (orientation: landscape) {
-        #ui {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 5px env(safe-area-inset-right, 10px) 5px env(safe-area-inset-left, 10px);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            z-index: 50;
-        }
-
-        .instrument-pod {
-            background: rgba(20, 20, 30, 0.85);
-            border-width: 2px;
-            min-width: 85px;
-            transform: scale(0.8);
-            transform-origin: top;
-        }
-
-        #fuel-pod {
-            transform-origin: top left;
-        }
-
-        #speed-pod {
-            transform-origin: top right;
-        }
-
-        #controls {
-            padding: 0 env(safe-area-inset-right, 30px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 30px);
-            height: 100px;
-        }
-
-        .mobile-btn {
-            width: 55px;
-            height: 55px;
-            font-size: 18px;
-        }
-
-        #btn-up {
-            width: 70px;
-            height: 70px;
-        }
-
-        /* Compact Overlay for small heights */
-        #overlay {
-            padding-top: 20px;
-            padding-bottom: 20px;
-        }
-
-        #overlay h1 {
-            font-size: 1.2rem;
-            margin-bottom: 2px;
-        }
-
-        #overlay p {
-            margin-bottom: 5px;
-            font-size: 6px;
-        }
-
-        #overlay .border-2 {
-            padding: 8px;
-            margin-bottom: 8px;
-            border-width: 1px;
-        }
-
-        #overlay #start-btn {
-            padding: 6px 12px;
-            font-size: 8px;
-        }
-    }
-
-    /* Gamepad Style Controls */
-    #controls {
-        display: flex !important;
-        height: 160px;
-        background: linear-gradient(to top, rgba(20, 20, 30, 0.95), transparent);
-        align-items: center;
-    }
-
-    .mobile-btn {
-        width: 70px;
-        height: 70px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(5px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        font-size: 24px;
-        color: rgba(255, 255, 255, 0.8);
-        transition: transform 0.1s, background 0.1s;
-    }
-
-    .mobile-btn:active {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(0.9) translate(0, 0);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
-    }
-
-    #btn-up {
-        width: 90px;
-        height: 90px;
-        background: rgba(122, 91, 160, 0.4);
-        border-color: rgba(122, 91, 160, 0.6);
-        font-weight: bold;
-    }
+.mobile-btn-up {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 210, 255, 0.1);
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-size: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
 }
 
-#controls {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 40;
-    pointer-events: none;
-    justify-content: space-between;
-    padding: 0 40px 40px 40px;
-    box-sizing: border-box;
-    display: none;
+.mobile-btn-rect:active, .mobile-btn-up:active {
+    background: rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 950px) {
-    #controls {
-        display: flex !important;
-    }
+/* FLIGHT DECK */
+#flight-deck {
+    flex: 1;
+    background: #020204;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Developer Menu */
-#dev-menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 20, 0, 0.95);
-    border: 2px solid #0f0;
-    color: #0f0;
-    padding: 20px;
-    z-index: 100;
-    font-family: 'Courier New', Courier, monospace;
-    display: none;
-    box-shadow: 0 0 20px #0f0;
-    min-width: 300px;
+canvas {
+    background: #000;
+    max-width: 100%;
+    max-height: 100%;
 }
 
-#dev-menu h2 {
-    color: #0f0;
-    font-size: 14px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #0f0;
-    padding-bottom: 5px;
-}
-
-.dev-option {
-    margin: 10px 0;
-    cursor: pointer;
-    padding: 5px;
-    border: 1px transparent solid;
-}
-
-.dev-option:hover {
-    background: #040;
-    border-color: #0f0;
-}
-
-.dev-hint {
-    font-size: 8px;
-    color: #080;
-    margin-top: 15px;
-}
-/* Final Mobile Fixes */
-#overlay {
-    overflow-y: auto;
-    max-height: 100vh;
-}
-
-#overlay.hidden {
+/* CRITICAL: HIDDEN CLASS */
+.hidden {
     display: none !important;
 }
 
-@media (orientation: landscape) and (max-width: 950px) {
-    #overlay {
-        justify-content: flex-start; /* Start from top to ensure button is visible */
-        padding-top: 10px;
-    }
-}
-
-@media (orientation: landscape) and (max-width: 950px) {
-    #ui .bg-black\/60 {
-        padding: 2px 8px !important;
-    }
-    #ui #message {
-        font-size: 6px !important;
-    }
-    #ui #passenger-comment {
-        font-size: 8px !important;
-    }
-}
-
-/* --- COCKPIT DESIGN SYSTEM --- */
-
-#cockpit-layout {
-    background-color: #080808;
-    background-image: 
-        radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 0.5) 0%, transparent 100%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 20px 20px, 20px 20px;
-}
-
-.cockpit-panel {
-    width: 200px;
-    transition: all 0.3s ease;
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
-}
-
-@media (max-width: 1024px) and (orientation: landscape) {
-    .cockpit-panel {
-        display: flex !important; /* Force on landscape phones */
-        width: 160px;
-        padding: 5px;
-    }
-    
-    #panel-left .scanner-container {
-        transform: scale(0.85);
-        transform-origin: top left;
-    }
-}
-
-.label-retro {
-    font-size: 8px;
-    color: #44aaff;
-    letter-spacing: 2px;
-    text-shadow: 0 0 5px rgba(68, 170, 255, 0.5);
-    border-bottom: 1px solid rgba(68, 170, 255, 0.2);
-    padding-bottom: 2px;
-    margin-bottom: 10px;
-}
-
-.scanner-container {
-    background: rgba(0, 20, 40, 0.4);
-    border: 1px solid rgba(0, 100, 255, 0.3);
-    padding: 10px;
-    border-radius: 4px;
-    box-shadow: 0 0 15px rgba(0, 100, 255, 0.1);
-}
-
-#minimap-sidebar {
-    background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 10px 10px;
-}
-
-/* Comm Log Styles */
-.comm-log-container {
-    background: rgba(10, 30, 10, 0.4);
-    border: 1px solid rgba(0, 255, 0, 0.2);
-    padding: 8px;
-    border-radius: 4px;
+#overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 500;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-#radio-log {
-    scrollbar-width: none;
+#overlay h1 {
+    font-size: 48px;
+    color: var(--warn-yellow);
+    text-shadow: 0 0 20px var(--warn-yellow);
+    margin-bottom: 20px;
 }
 
-.log-entry {
-    border-left: 2px solid #0f0;
-    padding-left: 5px;
-    margin-bottom: 4px;
-    animation: fade-in-green 0.5s ease-out;
+#start-btn {
+    padding: 15px 40px;
+    background: #003300;
+    border: 2px solid var(--terminal-green);
+    color: var(--terminal-green);
+    font-size: 24px;
+    cursor: pointer;
+    font-family: 'VT323', monospace;
+    transition: all 0.2s;
 }
 
-@keyframes fade-in-green {
-    from { color: #fff; opacity: 0; }
-    to { color: #0f0; opacity: 0.8; }
+#start-btn:active {
+    background: var(--terminal-green);
+    color: #000;
 }
 
-/* Technical Decoration */
-.tech-deco {
-    background-image: 
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 10px);
+/* ALERTS */
+.danger-alert {
+    animation: flash-red 0.5s infinite alternate;
 }
 
-/* Hide floating HUD when Cockpit is active */
-@media (orientation: landscape) {
-    #ui { display: none !important; }
+@keyframes flash-red {
+    from { border-color: rgba(255, 62, 62, 0.2); }
+    to { border-color: var(--alert-red); background: rgba(255, 62, 62, 0.1); }
+}
+
+@media (orientation: portrait) {
+    #game-wrapper { display: none; }
+    #orientation-overlay { display: flex !important; }
+}
+
+#orientation-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }

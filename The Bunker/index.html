@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bunker - Split-Screen Tag</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div class="split-line"></div>
+        <div class="player-label p1">Player 1 [WASD]</div>
+        <div class="player-label p2">Player 2 [Arrows]</div>
+        <div id="phase-indicator">HUNT: <span id="timer">10</span></div>
+
+        <div id="map-overlay">
+            <div id="map-title">SURVEILLANCE FEED</div>
+            <canvas id="map-canvas"></canvas>
+            <div id="map-timer">5</div>
+        </div>
+
+        <div id="game-over">
+            <h1>CAUGHT</h1>
+            <p id="winner-text">Player 1 Wins!</p>
+            <button id="restart-btn">Play Again</button>
+        </div>
+
+        <div id="start-screen">
+            <h1>THE BUNKER</h1>
+            <p class="subtitle">A Game of Cat and Mouse</p>
+            <div class="controls-info">
+                <div class="control-box">
+                    <h3>Player 1</h3>
+                    <p>W A S D to move</p>
+                </div>
+                <div class="control-box">
+                    <h3>Player 2</h3>
+                    <p>Arrow Keys to move</p>
+                </div>
+            </div>
+            <button id="start-btn">Enter the Bunker</button>
+            <p class="hint">Touch your opponent to win. Map reveals every 10 seconds.</p>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Game Modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

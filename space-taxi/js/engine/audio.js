@@ -46,7 +46,11 @@ class AudioEngine {
         const g = this.ctx.createGain();
         osc.type = t;
         osc.frequency.setValueAtTime(f, this.ctx.currentTime);
-        if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(slideTo, this.ctx.currentTime + d);
+        if (slideTo !== null) {
+            // exponentialRampToValueAtTime cannot ramp to 0
+            const targetFreq = Math.max(0.0001, slideTo);
+            osc.frequency.exponentialRampToValueAtTime(targetFreq, this.ctx.currentTime + d);
+        }
         g.gain.setValueAtTime(v, this.ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + d);
         osc.connect(g);
