@@ -106,9 +106,9 @@ class ProjectileManager {
                 projectile.die();
                 audio.playHitBarrier();
 
-                // Create debris particles
+                // Create debris particles (pass shooter for dangerous debris)
                 if (createDebris) {
-                    createDebris(screenX, screenY, hitAsteroid.radius, wasDestroyed);
+                    createDebris(screenX, screenY, hitAsteroid.radius, wasDestroyed, projectile.owner);
                 }
 
                 hits.push({ type: 'barrier', block: hitAsteroid, projectile, destroyed: wasDestroyed });

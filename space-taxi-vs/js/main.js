@@ -26,7 +26,8 @@ class Game {
             shake: 0,
             shakeX: 0,  // Directional shake X
             shakeY: 0,  // Directional shake Y
-            particles: []
+            particles: [],
+            debris: []  // Dangerous debris that can kill players
         };
 
         this.handleResize();
@@ -161,9 +162,10 @@ class Game {
         // Reset barrier
         this.barrier.reset();
 
-        // Clear projectiles and particles
+        // Clear projectiles, particles, and debris
         this.projectiles.clear();
         this.state.particles = [];
+        this.state.debris = [];
         this.state.shake = 0;
         this.state.shakeX = 0;
         this.state.shakeY = 0;
@@ -323,13 +325,73 @@ class Game {
                 this.createExplosion(x, y);
                 if (playerNum) this.input.vibrateExplosion(playerNum);
             },
-            (x, y, radius, destroyed) => this.createAsteroidDebris(x, y, radius, destroyed)
+            (x, y, radius, destroyed, shooterNum) => this.createAsteroidDebris(x, y, radius, destroyed, shooterNum)
         );
+
+        // Update and check debris collisions
+        this.updateDebris();
 
         // Check for round end
         const alivePlayers = this.players.filter(p => p.alive);
         if (alivePlayers.length <= 1) {
             this.endRound();
+        }
+    }
+
+    updateDebris() {
+        for (let i = this.state.debris.length - 1; i >= 0; i--) {
+            const d = this.state.debris[i];
+
+            // Update position
+            d.x += d.vx;
+            d.y += d.vy;
+
+            // Apply slight gravity
+            d.vy += GRAVITY * 0.3;
+
+            // Update rotation
+            d.rotation += d.rotationSpeed;
+
+            // Decay life
+            d.life -= d.decay;
+
+            // Remove if dead or off screen
+            if (d.life <= 0 || d.x < -50 || d.x > WORLD_W + 50 || d.y > WORLD_H + 50) {
+                this.state.debris.splice(i, 1);
+                continue;
+            }
+
+            // Screen wrap vertically (like projectiles)
+            if (d.y < -20) {
+                d.y = WORLD_H + 20;
+            }
+
+            // Check collision with players
+            for (const player of this.players) {
+                if (!player.alive) continue;
+                if (player.playerNum === d.owner) continue;  // Can't kill yourself with your own debris
+
+                const box = player.getBoundingBox();
+                const playerCenterX = box.x + box.w / 2;
+                const playerCenterY = box.y + box.h / 2;
+
+                const dx = d.x - playerCenterX;
+                const dy = d.y - playerCenterY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // Collision check
+                if (dist < d.size / 2 + Math.min(box.w, box.h) / 2) {
+                    // Kill the player
+                    player.die();
+                    this.audio.playExplosion();
+                    this.input.vibrateExplosion(player.playerNum);
+                    this.createExplosion(player.x, player.y);
+
+                    // Remove the debris
+                    this.state.debris.splice(i, 1);
+                    break;
+                }
+            }
         }
     }
 
@@ -379,7 +441,7 @@ class Game {
         this.state.shake = 20;
     }
 
-    createAsteroidDebris(x, y, radius, destroyed) {
+    createAsteroidDebris(x, y, radius, destroyed, shooterNum) {
         // Number of particles based on asteroid size and whether it was destroyed
         const baseCount = destroyed ? 20 : 8;
         const count = Math.floor(baseCount * (radius / 25));
@@ -420,6 +482,26 @@ class Game {
                 });
             }
 
+            // Create dangerous debris pieces that can kill players
+            const debrisCount = 3 + Math.floor(radius / 15);
+            for (let i = 0; i < debrisCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 3 + Math.random() * 5;
+
+                this.state.debris.push({
+                    x: x + (Math.random() - 0.5) * radius * 0.5,
+                    y: y + (Math.random() - 0.5) * radius * 0.5,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 6 + Math.random() * 6,
+                    life: 1.0,
+                    decay: 0.008,  // Lasts longer than visual particles
+                    owner: shooterNum,  // Player who destroyed the asteroid gets credit
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.3
+                });
+            }
+
             // Small screen shake for destroyed asteroid
             this.state.shake = Math.max(this.state.shake, radius * 0.2);
         }
@@ -457,6 +539,7 @@ class Game {
             projectiles: this.projectiles.getAll(),
             barrier: this.barrier,
             particles: this.state.particles,
+            debris: this.state.debris,
             score: this.state.score,
             roundState: this.state.roundState,
             countdown: this.state.countdown,

@@ -48,6 +48,7 @@ class Renderer {
         this.drawPlatforms(ctx);
         this.drawBarrier(ctx, state.barrier);
         this.drawProjectiles(ctx, state.projectiles);
+        this.drawDebris(ctx, state.debris);
         this.drawPlayers(ctx, state.players);
         this.drawParticles(ctx, state.particles);
 
@@ -511,6 +512,52 @@ class Renderer {
             ctx.textAlign = 'center';
             ctx.fillText(`P${index + 1}`, player.x, player.y - 22);
             ctx.shadowBlur = 0;
+        });
+    }
+
+    drawDebris(ctx, debris) {
+        if (!debris) return;
+
+        debris.forEach(d => {
+            ctx.save();
+            ctx.translate(d.x, d.y);
+            ctx.rotate(d.rotation);
+            ctx.globalAlpha = Math.min(1, d.life * 1.5);
+
+            // Outer glow (danger indicator)
+            ctx.shadowColor = '#ff6644';
+            ctx.shadowBlur = 8;
+
+            // Rock colors
+            const colors = ['#8b7355', '#6b5344', '#5a4a3a'];
+            ctx.fillStyle = colors[Math.floor(d.owner) % colors.length];
+
+            // Draw irregular rock shape
+            ctx.beginPath();
+            const sides = 6;
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * Math.PI * 2;
+                const r = d.size * (0.6 + Math.sin(i * 3 + d.rotation) * 0.4);
+                if (i === 0) ctx.moveTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                else ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Highlight edge
+            ctx.strokeStyle = '#aa9977';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Hot glow from explosion
+            ctx.fillStyle = `rgba(255, 100, 50, ${d.life * 0.4})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, d.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+            ctx.restore();
         });
     }
 
