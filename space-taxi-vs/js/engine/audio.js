@@ -51,25 +51,70 @@ class AudioEngine {
     }
 
     createReloadNode() {
-        // Simple charging tone
-        const osc = this.ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 200;
+        // Sci-fi energy charging sound with multiple oscillators
+        // Base pulse oscillator
+        const osc1 = this.ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = 80;
 
+        // Harmonic overtone
+        const osc2 = this.ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.value = 160;
+
+        // High shimmer
+        const osc3 = this.ctx.createOscillator();
+        osc3.type = 'sine';
+        osc3.frequency.value = 1200;
+
+        // LFO for pulsing effect
+        const lfo = this.ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 8; // 8 Hz pulse
+
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.value = 0.3;
+
+        // Filters
         const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
+        filter.type = 'bandpass';
         filter.frequency.value = 400;
+        filter.Q.value = 2;
 
-        const gain = this.ctx.createGain();
-        gain.gain.value = 0;
+        // Individual gains
+        const gain1 = this.ctx.createGain();
+        gain1.gain.value = 0;
+        const gain2 = this.ctx.createGain();
+        gain2.gain.value = 0;
+        const gain3 = this.ctx.createGain();
+        gain3.gain.value = 0;
 
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.masterGain);
+        // Master gain for this effect
+        const masterGain = this.ctx.createGain();
+        masterGain.gain.value = 0;
 
-        osc.start();
+        // LFO modulates the filter
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
 
-        return { osc, filter, gain };
+        // Connect oscillators
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+
+        gain1.connect(filter);
+        gain2.connect(filter);
+        gain3.connect(masterGain); // High shimmer bypasses filter
+
+        filter.connect(masterGain);
+        masterGain.connect(this.masterGain);
+
+        osc1.start();
+        osc2.start();
+        osc3.start();
+        lfo.start();
+
+        return { osc1, osc2, osc3, lfo, gain1, gain2, gain3, filter, masterGain };
     }
 
     updateReloadSound(playerIndex, isReloading) {
@@ -81,13 +126,41 @@ class AudioEngine {
         const time = this.ctx.currentTime;
 
         if (isReloading) {
-            reload.gain.gain.setTargetAtTime(0.08, time, 0.05);
+            // Ramp up the energy charging sound
+            reload.masterGain.gain.setTargetAtTime(0.12, time, 0.08);
+
+            // Base pulse
+            reload.gain1.gain.setTargetAtTime(0.4, time, 0.1);
+            reload.osc1.frequency.setTargetAtTime(120, time, 0.3);
+
+            // Harmonic
+            reload.gain2.gain.setTargetAtTime(0.25, time, 0.1);
+            reload.osc2.frequency.setTargetAtTime(240, time, 0.3);
+
+            // High shimmer - subtle
+            reload.gain3.gain.setTargetAtTime(0.08, time, 0.15);
+            reload.osc3.frequency.setTargetAtTime(2400, time, 0.5);
+
+            // Filter sweep up
             reload.filter.frequency.setTargetAtTime(800, time, 0.2);
-            reload.osc.frequency.setTargetAtTime(400, time, 0.3);
+            reload.filter.Q.setTargetAtTime(4, time, 0.3);
+
+            // Speed up LFO pulse
+            reload.lfo.frequency.setTargetAtTime(12, time, 0.2);
         } else {
-            reload.gain.gain.setTargetAtTime(0, time, 0.1);
+            // Fade out
+            reload.masterGain.gain.setTargetAtTime(0, time, 0.15);
+            reload.gain1.gain.setTargetAtTime(0, time, 0.1);
+            reload.gain2.gain.setTargetAtTime(0, time, 0.1);
+            reload.gain3.gain.setTargetAtTime(0, time, 0.1);
+
+            // Reset frequencies
+            reload.osc1.frequency.setTargetAtTime(80, time, 0.2);
+            reload.osc2.frequency.setTargetAtTime(160, time, 0.2);
+            reload.osc3.frequency.setTargetAtTime(1200, time, 0.2);
             reload.filter.frequency.setTargetAtTime(400, time, 0.2);
-            reload.osc.frequency.setTargetAtTime(200, time, 0.2);
+            reload.filter.Q.setTargetAtTime(2, time, 0.2);
+            reload.lfo.frequency.setTargetAtTime(8, time, 0.2);
         }
     }
 

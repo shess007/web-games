@@ -67,46 +67,141 @@ class Renderer {
     }
 
     drawCeilingAndFloor(ctx) {
-        // Ceiling - simple solid
-        ctx.fillStyle = '#1a1a2e';
+        const time = Date.now() * 0.001;
+
+        // Ceiling - metallic gradient
+        const ceilGrad = ctx.createLinearGradient(0, CEILING_Y, 0, CEILING_Y + CEILING_H);
+        ceilGrad.addColorStop(0, '#2a2a3e');
+        ceilGrad.addColorStop(0.5, '#1a1a2e');
+        ceilGrad.addColorStop(1, '#0a0a1e');
+        ctx.fillStyle = ceilGrad;
         ctx.fillRect(0, CEILING_Y, BARRIER_X, CEILING_H);
         ctx.fillRect(BARRIER_X + BARRIER_W, CEILING_Y, WORLD_W - BARRIER_X - BARRIER_W, CEILING_H);
 
-        // Floor - simple solid
-        ctx.fillStyle = '#151520';
+        // Floor - metallic gradient
+        const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + FLOOR_H);
+        floorGrad.addColorStop(0, '#252530');
+        floorGrad.addColorStop(0.3, '#151520');
+        floorGrad.addColorStop(1, '#0a0a10');
+        ctx.fillStyle = floorGrad;
         ctx.fillRect(0, FLOOR_Y, BARRIER_X, FLOOR_H);
         ctx.fillRect(BARRIER_X + BARRIER_W, FLOOR_Y, WORLD_W - BARRIER_X - BARRIER_W, FLOOR_H);
 
-        // Fuel strip
-        ctx.fillStyle = COLORS.platform.fuel;
-        ctx.fillRect(0, FLOOR_Y, BARRIER_X, 4);
-        ctx.fillRect(BARRIER_X + BARRIER_W, FLOOR_Y, WORLD_W - BARRIER_X - BARRIER_W, 4);
+        // Animated fuel strip with energy pulse
+        const pulseOffset = (time * 50) % 30;
 
-        // Labels
-        ctx.fillStyle = '#888';
+        // Left fuel platform
+        this.drawFuelStrip(ctx, 0, FLOOR_Y, BARRIER_X, pulseOffset, time);
+        // Right fuel platform
+        this.drawFuelStrip(ctx, BARRIER_X + BARRIER_W, FLOOR_Y, WORLD_W - BARRIER_X - BARRIER_W, pulseOffset, time);
+
+        // Floor grid lines for tech feel
+        ctx.strokeStyle = 'rgba(0, 255, 68, 0.1)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < WORLD_W; x += 20) {
+            if (x > BARRIER_X - 10 && x < BARRIER_X + BARRIER_W + 10) continue;
+            ctx.beginPath();
+            ctx.moveTo(x, FLOOR_Y);
+            ctx.lineTo(x, FLOOR_Y + FLOOR_H);
+            ctx.stroke();
+        }
+
+        // Labels with glow
+        ctx.shadowColor = '#00ff44';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#00ff88';
         ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('FUEL', BARRIER_X / 2, FLOOR_Y + 18);
-        ctx.fillText('FUEL', BARRIER_X + BARRIER_W + (WORLD_W - BARRIER_X - BARRIER_W) / 2, FLOOR_Y + 18);
+        ctx.fillText('◆ FUEL ◆', BARRIER_X / 2, FLOOR_Y + 18);
+        ctx.fillText('◆ FUEL ◆', BARRIER_X + BARRIER_W + (WORLD_W - BARRIER_X - BARRIER_W) / 2, FLOOR_Y + 18);
+        ctx.shadowBlur = 0;
+    }
+
+    drawFuelStrip(ctx, x, y, width, pulseOffset, time) {
+        // Base strip
+        const stripGrad = ctx.createLinearGradient(x, y, x, y + 6);
+        stripGrad.addColorStop(0, '#00ff66');
+        stripGrad.addColorStop(0.5, '#00cc44');
+        stripGrad.addColorStop(1, '#009933');
+        ctx.fillStyle = stripGrad;
+        ctx.fillRect(x, y, width, 6);
+
+        // Animated energy pulses
+        ctx.fillStyle = 'rgba(150, 255, 200, 0.6)';
+        for (let px = x - pulseOffset; px < x + width; px += 30) {
+            if (px >= x && px + 15 <= x + width) {
+                ctx.fillRect(px, y + 1, 15, 4);
+            }
+        }
+
+        // Top shine
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x, y, width, 2);
+
+        // Glow effect
+        ctx.shadowColor = '#00ff44';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = 'rgba(0, 255, 68, 0.3)';
+        ctx.fillRect(x, y - 2, width, 2);
+        ctx.shadowBlur = 0;
     }
 
     drawPlatforms(ctx) {
+        const time = Date.now() * 0.001;
+
         Object.values(PLATFORMS).forEach(p => {
             if (p.type !== 'ammo') return;
 
-            // Simple platform
-            ctx.fillStyle = COLORS.platform.ammo;
+            // Platform base with gradient
+            const platGrad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+            platGrad.addColorStop(0, '#ffcc44');
+            platGrad.addColorStop(0.3, '#ff9900');
+            platGrad.addColorStop(1, '#cc6600');
+            ctx.fillStyle = platGrad;
             ctx.fillRect(p.x, p.y, p.w, p.h);
 
+            // Animated energy field on top
+            const fieldGrad = ctx.createLinearGradient(p.x, p.y - 8, p.x, p.y);
+            fieldGrad.addColorStop(0, 'rgba(255, 200, 50, 0)');
+            fieldGrad.addColorStop(1, `rgba(255, 200, 50, ${0.3 + Math.sin(time * 4) * 0.15})`);
+            ctx.fillStyle = fieldGrad;
+            ctx.fillRect(p.x, p.y - 8, p.w, 8);
+
+            // Energy particles floating up
+            ctx.fillStyle = 'rgba(255, 220, 100, 0.8)';
+            for (let i = 0; i < 3; i++) {
+                const particleX = p.x + 10 + (i * 30) + Math.sin(time * 2 + i) * 5;
+                const particleY = p.y - 3 - ((time * 20 + i * 10) % 15);
+                const particleSize = 2 + Math.sin(time * 3 + i) * 1;
+                ctx.beginPath();
+                ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             // Top highlight
-            ctx.fillStyle = '#ffdd88';
+            ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
             ctx.fillRect(p.x, p.y, p.w, 2);
 
-            // Label
+            // Side accents
+            ctx.fillStyle = '#ff6600';
+            ctx.fillRect(p.x, p.y, 3, p.h);
+            ctx.fillRect(p.x + p.w - 3, p.y, 3, p.h);
+
+            // Glowing label
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 6;
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 8px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('AMMO', p.x + p.w / 2, p.y + 10);
+            ctx.fillText('▸ AMMO ◂', p.x + p.w / 2, p.y + 10);
+            ctx.shadowBlur = 0;
+
+            // Bottom glow
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = 'rgba(255, 170, 0, 0.2)';
+            ctx.fillRect(p.x, p.y + p.h, p.w, 3);
+            ctx.shadowBlur = 0;
         });
     }
 
@@ -274,47 +369,148 @@ class Renderer {
     }
 
     drawPlayers(ctx, players) {
+        const time = Date.now() * 0.001;
+
         players.forEach((player, index) => {
             if (!player.alive) return;
 
             const colors = index === 0 ? COLORS.p1 : COLORS.p2;
 
-            // Simple thrust indicator
-            if (player.thrusting) {
-                ctx.fillStyle = 'rgba(255, 200, 50, 0.4)';
+            // Enhanced thrust effect
+            if (player.thrusting && player.fuel > 0) {
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                ctx.rotate(player.angle || 0);
+
+                // Flame flicker parameters
+                const flicker = 0.8 + Math.random() * 0.4;
+                const flameLength = 18 + Math.random() * 8;
+
+                // Outer glow
+                const glowGrad = ctx.createRadialGradient(0, 15, 0, 0, 15, 25);
+                glowGrad.addColorStop(0, 'rgba(255, 150, 50, 0.6)');
+                glowGrad.addColorStop(0.5, 'rgba(255, 100, 30, 0.3)');
+                glowGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+                ctx.fillStyle = glowGrad;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y + 12, 15, 0, Math.PI * 2);
+                ctx.arc(0, 15, 25, 0, Math.PI * 2);
                 ctx.fill();
+
+                // Main flame - orange/red outer
+                ctx.fillStyle = `rgba(255, ${Math.floor(80 + Math.random() * 40)}, 0, ${0.9 * flicker})`;
+                ctx.beginPath();
+                ctx.moveTo(-8, 8);
+                ctx.quadraticCurveTo(-10 + Math.random() * 4, 8 + flameLength * 0.5, -3 + Math.random() * 2, 8 + flameLength);
+                ctx.quadraticCurveTo(0, 8 + flameLength * 0.7, 3 + Math.random() * 2, 8 + flameLength);
+                ctx.quadraticCurveTo(10 - Math.random() * 4, 8 + flameLength * 0.5, 8, 8);
+                ctx.closePath();
+                ctx.fill();
+
+                // Middle flame - yellow
+                ctx.fillStyle = `rgba(255, ${Math.floor(200 + Math.random() * 55)}, 50, ${0.95 * flicker})`;
+                ctx.beginPath();
+                ctx.moveTo(-5, 8);
+                ctx.quadraticCurveTo(-6 + Math.random() * 2, 8 + flameLength * 0.4, -1 + Math.random() * 2, 8 + flameLength * 0.75);
+                ctx.quadraticCurveTo(0, 8 + flameLength * 0.6, 1 + Math.random() * 2, 8 + flameLength * 0.75);
+                ctx.quadraticCurveTo(6 - Math.random() * 2, 8 + flameLength * 0.4, 5, 8);
+                ctx.closePath();
+                ctx.fill();
+
+                // Inner flame - white hot core
+                ctx.fillStyle = `rgba(255, 255, ${Math.floor(200 + Math.random() * 55)}, ${flicker})`;
+                ctx.beginPath();
+                ctx.moveTo(-3, 8);
+                ctx.quadraticCurveTo(-2 + Math.random() * 2, 8 + flameLength * 0.3, 0, 8 + flameLength * 0.5);
+                ctx.quadraticCurveTo(2 - Math.random() * 2, 8 + flameLength * 0.3, 3, 8);
+                ctx.closePath();
+                ctx.fill();
+
+                // Engine exhaust ports glow
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#ffaa44';
+                ctx.fillRect(-10, 6, 6, 3);
+                ctx.fillRect(4, 6, 6, 3);
+                ctx.shadowBlur = 0;
+
+                // Heat distortion lines
+                ctx.strokeStyle = `rgba(255, 200, 100, ${0.2 + Math.random() * 0.2})`;
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 3; i++) {
+                    const heatY = 12 + i * 6 + Math.random() * 4;
+                    ctx.beginPath();
+                    ctx.moveTo(-6 + Math.random() * 4, heatY);
+                    ctx.lineTo(6 - Math.random() * 4, heatY);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
             }
 
             ctx.save();
             ctx.translate(player.x, player.y);
             ctx.rotate(player.angle || 0);
 
-            // Main body - simple solid color
-            ctx.fillStyle = colors.body;
+            // Ship shadow/depth
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(-14, -8, 30, 16);
+
+            // Main body with gradient
+            const bodyGrad = ctx.createLinearGradient(-15, -10, -15, 6);
+            bodyGrad.addColorStop(0, '#ffe566');
+            bodyGrad.addColorStop(0.3, colors.body);
+            bodyGrad.addColorStop(1, '#cc9900');
+            ctx.fillStyle = bodyGrad;
             ctx.fillRect(-15, -10, 30, 16);
 
-            // Body highlight
-            ctx.fillStyle = '#ffe066';
+            // Body top highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillRect(-15, -10, 30, 3);
 
-            // Cockpit window
-            ctx.fillStyle = colors.cockpit;
+            // Body panel lines
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-5, -10);
+            ctx.lineTo(-5, 6);
+            ctx.moveTo(12, -10);
+            ctx.lineTo(12, 6);
+            ctx.stroke();
+
+            // Cockpit window with reflection
+            const cockpitGrad = ctx.createLinearGradient(2, -7, 2, -2);
+            cockpitGrad.addColorStop(0, colors.cockpit);
+            cockpitGrad.addColorStop(1, index === 0 ? '#004422' : '#442200');
+            ctx.fillStyle = cockpitGrad;
             ctx.fillRect(2, -7, 10, 5);
 
-            // Landing gear
-            ctx.fillStyle = player.gearOut ? colors.gear : '#111';
+            // Cockpit shine
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fillRect(3, -6, 4, 2);
+
+            // Landing gear with detail
+            const gearColor = player.gearOut ? colors.gear : '#222';
+            ctx.fillStyle = gearColor;
             ctx.fillRect(-12, 6, 6, 5);
             ctx.fillRect(6, 6, 6, 5);
 
+            if (player.gearOut) {
+                // Gear pads
+                ctx.fillStyle = '#666';
+                ctx.fillRect(-13, 10, 8, 2);
+                ctx.fillRect(5, 10, 8, 2);
+            }
+
             ctx.restore();
 
-            // Player indicator
+            // Player indicator with glow
+            ctx.shadowColor = colors.cockpit;
+            ctx.shadowBlur = 6;
             ctx.fillStyle = colors.cockpit;
             ctx.font = 'bold 10px monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`P${index + 1}`, player.x, player.y - 22);
+            ctx.shadowBlur = 0;
         });
     }
 
@@ -364,14 +560,51 @@ class Renderer {
     drawHUD(ctx, state) {
         const { players, score, roundState, countdown } = state;
 
-        // Score display
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 28px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${score[0]} - ${score[1]}`, WORLD_W / 2, 38);
+        // Score panel background
+        const panelWidth = 140;
+        const panelX = WORLD_W / 2 - panelWidth / 2;
+        const panelGrad = ctx.createLinearGradient(panelX, 8, panelX, 55);
+        panelGrad.addColorStop(0, 'rgba(20, 25, 40, 0.85)');
+        panelGrad.addColorStop(1, 'rgba(10, 12, 20, 0.9)');
+        ctx.fillStyle = panelGrad;
+        this.roundRect(ctx, panelX, 8, panelWidth, 47, 8);
+        ctx.fill();
 
-        ctx.fillStyle = '#666';
-        ctx.font = '10px monospace';
+        // Panel border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, panelX, 8, panelWidth, 47, 8);
+        ctx.stroke();
+
+        // Player 1 score with glow
+        ctx.shadowColor = COLORS.p1.cockpit;
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = COLORS.p1.cockpit;
+        ctx.font = 'bold 28px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(score[0], WORLD_W / 2 - 15, 40);
+
+        // VS divider
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 5;
+        ctx.fillStyle = '#888';
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(':', WORLD_W / 2, 38);
+
+        // Player 2 score with glow
+        ctx.shadowColor = COLORS.p2.cockpit;
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = COLORS.p2.cockpit;
+        ctx.font = 'bold 28px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(score[1], WORLD_W / 2 + 15, 40);
+        ctx.shadowBlur = 0;
+
+        // First to X label
+        ctx.fillStyle = '#555';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'center';
         ctx.fillText(`FIRST TO ${ROUNDS_TO_WIN}`, WORLD_W / 2, 52);
 
         // Player HUDs
@@ -437,54 +670,144 @@ class Renderer {
     drawPlayerHUD(ctx, player, index, x) {
         const colors = index === 0 ? COLORS.p1 : COLORS.p2;
         const y = 60;
+        const time = Date.now() * 0.001;
 
-        // HUD background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(x, y, 100, 52);
+        // HUD background with gradient
+        const bgGrad = ctx.createLinearGradient(x, y, x, y + 58);
+        bgGrad.addColorStop(0, 'rgba(20, 25, 40, 0.9)');
+        bgGrad.addColorStop(1, 'rgba(10, 12, 20, 0.95)');
+        ctx.fillStyle = bgGrad;
 
-        // Border with player color
+        // Rounded rectangle background
+        this.roundRect(ctx, x, y, 100, 58, 6);
+        ctx.fill();
+
+        // Glowing border with player color
+        ctx.shadowColor = colors.cockpit;
+        ctx.shadowBlur = 8;
         ctx.strokeStyle = colors.cockpit;
         ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, 100, 52);
+        this.roundRect(ctx, x, y, 100, 58, 6);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
 
-        // Player label
+        // Player icon and label
         ctx.fillStyle = colors.cockpit;
-        ctx.font = 'bold 11px monospace';
+        ctx.font = 'bold 12px monospace';
         ctx.textAlign = 'left';
-        ctx.fillText(`P${index + 1}`, x + 5, y + 13);
 
-        // Fuel bar background
-        ctx.fillStyle = '#222';
-        ctx.fillRect(x + 5, y + 19, 90, 10);
+        // Draw mini ship icon
+        ctx.save();
+        ctx.translate(x + 12, y + 12);
+        ctx.fillStyle = colors.body;
+        ctx.fillRect(-6, -3, 12, 6);
+        ctx.fillStyle = colors.cockpit;
+        ctx.fillRect(1, -2, 4, 3);
+        ctx.restore();
 
-        // Fuel bar - solid color
+        ctx.fillStyle = colors.cockpit;
+        ctx.fillText(`P${index + 1}`, x + 22, y + 15);
+
+        // Fuel bar background with inner shadow
+        ctx.fillStyle = '#111';
+        this.roundRect(ctx, x + 5, y + 21, 90, 12, 3);
+        ctx.fill();
+
+        // Fuel bar inner border
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, x + 5, y + 21, 90, 12, 3);
+        ctx.stroke();
+
+        // Fuel bar with gradient
         const fuelPercent = player.fuel / MAX_FUEL;
-        const fuelColor = player.fuel > 30 ? '#00ff44' : player.fuel > 15 ? '#ffaa00' : '#ff3333';
-        ctx.fillStyle = fuelColor;
-        ctx.fillRect(x + 5, y + 19, 90 * fuelPercent, 10);
+        const fuelLow = player.fuel <= 15;
+        const fuelMed = player.fuel <= 30;
 
-        // Fuel label
-        ctx.fillStyle = '#888';
-        ctx.font = '7px monospace';
-        ctx.fillText('FUEL', x + 5, y + 38);
-        ctx.fillStyle = fuelColor;
-        ctx.fillText(Math.floor(player.fuel) + '%', x + 70, y + 38);
+        if (fuelPercent > 0) {
+            const fuelGrad = ctx.createLinearGradient(x + 5, y + 21, x + 5, y + 33);
+            if (fuelLow) {
+                // Pulsing red for low fuel
+                const pulse = 0.7 + Math.sin(time * 8) * 0.3;
+                fuelGrad.addColorStop(0, `rgba(255, ${Math.floor(80 * pulse)}, ${Math.floor(50 * pulse)}, 1)`);
+                fuelGrad.addColorStop(0.5, `rgba(255, ${Math.floor(50 * pulse)}, ${Math.floor(30 * pulse)}, 1)`);
+                fuelGrad.addColorStop(1, `rgba(180, ${Math.floor(30 * pulse)}, ${Math.floor(20 * pulse)}, 1)`);
+            } else if (fuelMed) {
+                fuelGrad.addColorStop(0, '#ffdd44');
+                fuelGrad.addColorStop(0.5, '#ffaa00');
+                fuelGrad.addColorStop(1, '#cc8800');
+            } else {
+                fuelGrad.addColorStop(0, '#44ff88');
+                fuelGrad.addColorStop(0.5, '#00ff44');
+                fuelGrad.addColorStop(1, '#00cc33');
+            }
 
-        // Ammo display - simple dots
+            ctx.fillStyle = fuelGrad;
+            this.roundRect(ctx, x + 6, y + 22, 88 * fuelPercent, 10, 2);
+            ctx.fill();
+
+            // Fuel bar shine
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            this.roundRect(ctx, x + 6, y + 22, 88 * fuelPercent, 4, 2);
+            ctx.fill();
+        }
+
+        // Fuel icon and text
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 8px monospace';
+        ctx.fillText('⛽', x + 6, y + 44);
+
+        const fuelColor = fuelLow ? '#ff4444' : fuelMed ? '#ffaa00' : '#44ff88';
+        ctx.fillStyle = fuelColor;
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.floor(player.fuel) + '%', x + 94, y + 44);
+        ctx.textAlign = 'left';
+
+        // Ammo display - energy cells style
         const fullAmmo = Math.floor(player.ammo);
-        ctx.font = '9px monospace';
-        let ammoX = x + 5;
+        const ammoY = y + 50;
 
-        // Full ammo
-        ctx.fillStyle = '#ffcc00';
-        for (let i = 0; i < Math.min(fullAmmo, 10); i++) {
-            ctx.fillText('●', ammoX + i * 8, y + 49);
-        }
+        for (let i = 0; i < 10; i++) {
+            const cellX = x + 6 + i * 9;
+            const isFull = i < fullAmmo;
 
-        // Empty ammo
-        ctx.fillStyle = '#333';
-        for (let i = fullAmmo; i < 10; i++) {
-            ctx.fillText('○', ammoX + i * 8, y + 49);
+            // Cell background
+            ctx.fillStyle = '#181818';
+            ctx.fillRect(cellX, ammoY, 7, 6);
+
+            if (isFull) {
+                // Glowing ammo cell
+                const cellGrad = ctx.createLinearGradient(cellX, ammoY, cellX, ammoY + 6);
+                cellGrad.addColorStop(0, '#ffe066');
+                cellGrad.addColorStop(0.5, '#ffcc00');
+                cellGrad.addColorStop(1, '#cc9900');
+                ctx.fillStyle = cellGrad;
+                ctx.fillRect(cellX + 1, ammoY + 1, 5, 4);
+
+                // Cell shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.fillRect(cellX + 1, ammoY + 1, 5, 1);
+            } else {
+                // Empty cell
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(cellX + 1, ammoY + 1, 5, 4);
+            }
         }
+    }
+
+    // Helper function for rounded rectangles
+    roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
     }
 }
