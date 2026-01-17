@@ -11,7 +11,13 @@ export const CONFIG = {
     PLAYER_RADIUS: 0.4,
     PLAYER_SPEED: 8,
     TURN_SPEED: 3,
-    CATCH_DISTANCE: 1.0,
+
+    // Attack settings (button press required to attack)
+    ATTACK_RANGE: 2.0,           // Distance in units
+    ATTACK_ANGLE: Math.PI / 3,   // 60 degree cone (30 each side)
+    ATTACK_COOLDOWN: 0.8,        // Seconds between attacks
+    ATTACK_LUNGE_DISTANCE: 0.3,  // Camera lunge distance
+    ATTACK_LUNGE_SPEED: 8,       // Camera lunge recovery speed
 
     // Game timing
     GAMEPLAY_DURATION: 10,

@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { walls, player1, player2 } from './state.js';
+import { walls } from './state.js';
 
 /**
  * Collision Detection System
@@ -28,11 +28,4 @@ export function checkWallCollision(x, z, radius) {
     }
 
     return false;
-}
-
-export function checkPlayerCollision() {
-    const dx = player1.x - player2.x;
-    const dz = player1.z - player2.z;
-    const distance = Math.sqrt(dx * dx + dz * dz);
-    return distance < CONFIG.CATCH_DISTANCE;
 }

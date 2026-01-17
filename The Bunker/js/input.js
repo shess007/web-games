@@ -139,10 +139,6 @@ export let player1Moving = false;
 export let player2Moving = false;
 
 // Attack state
-const ATTACK_COOLDOWN = 0.8; // seconds
-const ATTACK_RANGE = 2.0; // units
-const ATTACK_ANGLE = Math.PI / 3; // 60 degrees cone (30 degrees each side)
-
 export let player1AttackCooldown = 0;
 export let player2AttackCooldown = 0;
 export let player1Attacking = false;
@@ -270,7 +266,7 @@ export function handleAttackInput(delta) {
     const p1AttackPressed = keys['Space'] || getGamepadAttack(0);
     if (p1AttackPressed && !p1AttackWasPressed && player1AttackCooldown <= 0) {
         player1Attacking = true;
-        player1AttackCooldown = ATTACK_COOLDOWN;
+        player1AttackCooldown = CONFIG.ATTACK_COOLDOWN;
     }
     p1AttackWasPressed = p1AttackPressed;
 
@@ -278,7 +274,7 @@ export function handleAttackInput(delta) {
     const p2AttackPressed = keys['ShiftRight'] || keys['Enter'] || getGamepadAttack(1);
     if (p2AttackPressed && !p2AttackWasPressed && player2AttackCooldown <= 0) {
         player2Attacking = true;
-        player2AttackCooldown = ATTACK_COOLDOWN;
+        player2AttackCooldown = CONFIG.ATTACK_COOLDOWN;
     }
     p2AttackWasPressed = p2AttackPressed;
 }
@@ -294,7 +290,7 @@ export function checkAttackHit(attacker, target) {
     const distance = Math.sqrt(dx * dx + dz * dz);
 
     // Check range
-    if (distance > ATTACK_RANGE) return false;
+    if (distance > CONFIG.ATTACK_RANGE) return false;
 
     // Calculate angle to target
     const angleToTarget = Math.atan2(-dx, -dz);
@@ -305,7 +301,7 @@ export function checkAttackHit(attacker, target) {
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
     // Check if target is within attack cone
-    return Math.abs(angleDiff) < ATTACK_ANGLE;
+    return Math.abs(angleDiff) < CONFIG.ATTACK_ANGLE;
 }
 
 /**

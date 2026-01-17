@@ -33,10 +33,6 @@ let p1CooldownBar, p2CooldownBar;
 // Track button state to prevent repeated triggers
 let buttonWasPressed = false;
 
-// Camera lunge effect constants
-const LUNGE_SPEED = 8;
-const LUNGE_DISTANCE = 0.3;
-
 export function initGameUI() {
     timerDisplay = document.getElementById('timer');
     mapTimerDisplay = document.getElementById('map-timer');
@@ -115,7 +111,7 @@ export function gameLoop(currentTime) {
         // Check for attacks
         if (player1Attacking) {
             playAttackSound(true);
-            setPlayer1LungeOffset(LUNGE_DISTANCE);
+            setPlayer1LungeOffset(CONFIG.ATTACK_LUNGE_DISTANCE);
             if (checkAttackHit(player1, player2)) {
                 endGame(1);
                 return;
@@ -123,7 +119,7 @@ export function gameLoop(currentTime) {
         }
         if (player2Attacking) {
             playAttackSound(false);
-            setPlayer2LungeOffset(LUNGE_DISTANCE);
+            setPlayer2LungeOffset(CONFIG.ATTACK_LUNGE_DISTANCE);
             if (checkAttackHit(player2, player1)) {
                 endGame(2);
                 return;
@@ -132,12 +128,12 @@ export function gameLoop(currentTime) {
 
         // Update lunge animations
         if (player1LungeOffset > 0) {
-            let newOffset = player1LungeOffset - LUNGE_SPEED * delta;
+            let newOffset = player1LungeOffset - CONFIG.ATTACK_LUNGE_SPEED * delta;
             if (newOffset < 0) newOffset = 0;
             setPlayer1LungeOffset(newOffset);
         }
         if (player2LungeOffset > 0) {
-            let newOffset = player2LungeOffset - LUNGE_SPEED * delta;
+            let newOffset = player2LungeOffset - CONFIG.ATTACK_LUNGE_SPEED * delta;
             if (newOffset < 0) newOffset = 0;
             setPlayer2LungeOffset(newOffset);
         }
@@ -241,18 +237,16 @@ function endGame(winner) {
  * Update cooldown bar UI
  */
 function updateCooldownUI() {
-    const ATTACK_COOLDOWN = 0.8;
-
     if (p1CooldownBar) {
         const p1Ready = player1AttackCooldown <= 0;
-        const p1Progress = p1Ready ? 100 : ((ATTACK_COOLDOWN - player1AttackCooldown) / ATTACK_COOLDOWN) * 100;
+        const p1Progress = p1Ready ? 100 : ((CONFIG.ATTACK_COOLDOWN - player1AttackCooldown) / CONFIG.ATTACK_COOLDOWN) * 100;
         p1CooldownBar.style.width = p1Progress + '%';
         p1CooldownBar.style.backgroundColor = p1Ready ? '#4f4' : '#44f';
     }
 
     if (p2CooldownBar) {
         const p2Ready = player2AttackCooldown <= 0;
-        const p2Progress = p2Ready ? 100 : ((ATTACK_COOLDOWN - player2AttackCooldown) / ATTACK_COOLDOWN) * 100;
+        const p2Progress = p2Ready ? 100 : ((CONFIG.ATTACK_COOLDOWN - player2AttackCooldown) / CONFIG.ATTACK_COOLDOWN) * 100;
         p2CooldownBar.style.width = p2Progress + '%';
         p2CooldownBar.style.backgroundColor = p2Ready ? '#4f4' : '#f44';
     }
