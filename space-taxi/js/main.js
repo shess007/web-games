@@ -260,10 +260,22 @@ class Game {
         // Collisions
         this.checkCollisions(speed);
 
-        // Particles
+        // Particles with enhanced physics
         for (let i = this.state.particles.length - 1; i >= 0; i--) {
             const p = this.state.particles[i];
-            p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+            p.x += p.vx;
+            p.y += p.vy;
+
+            // Apply gravity to debris particles
+            if (p.gravity) {
+                p.vy += 0.1;
+            }
+
+            // Air resistance
+            p.vx *= 0.98;
+            p.vy *= 0.98;
+
+            p.life -= p.decay;
             if (p.life <= 0) this.state.particles.splice(i, 1);
         }
 
@@ -425,28 +437,98 @@ class Game {
     }
 
     createExplosion(x, y) {
-        for (let i = 0; i < 40; i++) {
+        // Main explosion particles - fiery core
+        for (let i = 0; i < 60; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 2 + Math.random() * 10;
             this.state.particles.push({
                 x, y,
-                vx: (Math.random() - 0.5) * 12,
-                vy: (Math.random() - 0.5) * 12,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
                 life: 1.0,
                 decay: 0.01 + Math.random() * 0.02,
-                color: i % 2 === 0 ? '#ff5500' : '#ffffaa',
-                size: 2 + Math.random() * 4
+                color: ['#ff5500', '#ff8800', '#ffaa00', '#ffffaa', '#ffffff'][Math.floor(Math.random() * 5)],
+                size: 3 + Math.random() * 6
             });
         }
-        this.state.shake = 25;
+
+        // Spark particles - fast moving small pieces
+        for (let i = 0; i < 30; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 8 + Math.random() * 15;
+            this.state.particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1.0,
+                decay: 0.03 + Math.random() * 0.04,
+                color: '#ffffff',
+                size: 1 + Math.random() * 2
+            });
+        }
+
+        // Debris particles - larger, slower, gravity-affected
+        for (let i = 0; i < 15; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1 + Math.random() * 5;
+            this.state.particles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + (Math.random() - 0.5) * 20,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2,
+                life: 1.0,
+                decay: 0.005 + Math.random() * 0.01,
+                color: ['#fbbf24', '#d97706', '#444444'][Math.floor(Math.random() * 3)],
+                size: 4 + Math.random() * 6,
+                gravity: true
+            });
+        }
+
+        // Smoke particles - slow rising dark particles
+        for (let i = 0; i < 20; i++) {
+            this.state.particles.push({
+                x: x + (Math.random() - 0.5) * 30,
+                y: y + (Math.random() - 0.5) * 30,
+                vx: (Math.random() - 0.5) * 2,
+                vy: -0.5 - Math.random() * 1.5,
+                life: 1.0,
+                decay: 0.008 + Math.random() * 0.01,
+                color: '#333333',
+                size: 8 + Math.random() * 12
+            });
+        }
+
+        this.state.shake = 35;
     }
 
     createThrustParticles(x, y, color, side = false) {
-        this.state.particles.push({
-            x, y,
-            vx: side ? (Math.random() - 0.5) * 2 : (Math.random() - 0.5) * 4,
-            vy: side ? (Math.random() - 0.5) * 2 : Math.random() * 4 + 2,
-            life: 1.0, decay: 0.05,
-            color, size: 4
-        });
+        // Main thrust particle
+        const count = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < count; i++) {
+            this.state.particles.push({
+                x: x + (Math.random() - 0.5) * 6,
+                y: y + (Math.random() - 0.5) * 4,
+                vx: side ? (Math.random() - 0.5) * 3 : (Math.random() - 0.5) * 5,
+                vy: side ? (Math.random() - 0.5) * 3 : Math.random() * 5 + 3,
+                life: 1.0,
+                decay: 0.04 + Math.random() * 0.03,
+                color,
+                size: 3 + Math.random() * 3
+            });
+        }
+
+        // Add occasional spark
+        if (Math.random() > 0.7) {
+            this.state.particles.push({
+                x, y,
+                vx: side ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 10,
+                vy: side ? (Math.random() - 0.5) * 8 : Math.random() * 8 + 4,
+                life: 1.0,
+                decay: 0.08,
+                color: '#ffffff',
+                size: 1 + Math.random()
+            });
+        }
     }
 }
 

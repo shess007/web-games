@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Games Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Press Start 2P', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        /* Scanline effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* CRT vignette */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Animated starfield background */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 1;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: clamp(16px, 4vw, 32px);
+            color: #ffcc00;
+            text-shadow:
+                0 0 10px #ffcc00,
+                0 0 20px #ff6600,
+                4px 4px 0 #331100;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #ffcc00, 0 0 20px #ff6600, 4px 4px 0 #331100; }
+            to { text-shadow: 0 0 20px #ffcc00, 0 0 40px #ff6600, 4px 4px 0 #331100; }
+        }
+
+        .subtitle {
+            font-size: clamp(6px, 1.5vw, 10px);
+            color: #666;
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+
+        .games-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #333;
+            padding: 25px 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .game-card:hover::before {
+            left: 100%;
+        }
+
+        .game-card:hover {
+            border-color: #ffcc00;
+            transform: scale(1.02);
+            box-shadow:
+                0 0 20px rgba(255, 204, 0, 0.3),
+                inset 0 0 30px rgba(255, 204, 0, 0.05);
+        }
+
+        .game-card:hover .game-title {
+            color: #ffcc00;
+        }
+
+        .game-card.space-taxi { border-left: 4px solid #00ff88; }
+        .game-card.space-taxi-vs { border-left: 4px solid #ff6b6b; }
+        .game-card.bunker { border-left: 4px solid #6b9fff; }
+
+        .game-card.space-taxi:hover { border-color: #00ff88; box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 30px rgba(0, 255, 136, 0.05); }
+        .game-card.space-taxi-vs:hover { border-color: #ff6b6b; box-shadow: 0 0 20px rgba(255, 107, 107, 0.3), inset 0 0 30px rgba(255, 107, 107, 0.05); }
+        .game-card.bunker:hover { border-color: #6b9fff; box-shadow: 0 0 20px rgba(107, 159, 255, 0.3), inset 0 0 30px rgba(107, 159, 255, 0.05); }
+
+        .game-card.space-taxi:hover .game-title { color: #00ff88; }
+        .game-card.space-taxi-vs:hover .game-title { color: #ff6b6b; }
+        .game-card.bunker:hover .game-title { color: #6b9fff; }
+
+        .game-number {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 10px;
+            color: #444;
+        }
+
+        .game-title {
+            font-size: clamp(10px, 2.5vw, 14px);
+            color: #fff;
+            margin-bottom: 10px;
+            transition: color 0.2s ease;
+            text-align: left;
+        }
+
+        .game-desc {
+            font-size: clamp(6px, 1.2vw, 8px);
+            color: #888;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        .game-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 6px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            color: #666;
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 6px;
+            color: #333;
+            letter-spacing: 2px;
+        }
+
+        /* Keyboard navigation hint */
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            font-size: 6px;
+            color: #444;
+            letter-spacing: 1px;
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Focus styles for keyboard nav */
+        .game-card:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+        }
+
+        @media (max-width: 480px) {
+            .game-card {
+                padding: 20px;
+            }
+            .games-grid {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="starfield" id="starfield"></div>
+
+    <div class="container">
+        <h1>RETRO GAMES</h1>
+        <p class="subtitle">SELECT YOUR GAME</p>
+
+        <div class="games-grid">
+            <a href="space-taxi/index.html" class="game-card space-taxi" tabindex="1">
+                <span class="game-number">01</span>
+                <div class="game-title">SPACE TAXI</div>
+                <div class="game-desc">
+                    Pilot your taxi through dangerous sectors. Pick up passengers and deliver them safely while managing fuel.
+                </div>
+                <div class="game-tags">
+                    <span class="tag">1 PLAYER</span>
+                    <span class="tag">ARCADE</span>
+                    <span class="tag">16-BIT</span>
+                </div>
+            </a>
+
+            <a href="space-taxi-vs/index.html" class="game-card space-taxi-vs" tabindex="2">
+                <span class="game-number">02</span>
+                <div class="game-title">SPACE TAXI VS</div>
+                <div class="game-desc">
+                    Battle against Space Uber in this competitive taxi showdown. Outmaneuver your rival to dominate the sector.
+                </div>
+                <div class="game-tags">
+                    <span class="tag">VS MODE</span>
+                    <span class="tag">ACTION</span>
+                    <span class="tag">COMBAT</span>
+                </div>
+            </a>
+
+            <a href="The Bunker/index.html" class="game-card bunker" tabindex="3">
+                <span class="game-number">03</span>
+                <div class="game-title">THE BUNKER</div>
+                <div class="game-desc">
+                    Hunt or be hunted in a dark underground maze. Split-screen 3D tag game for two players. Find your prey before they find you.
+                </div>
+                <div class="game-tags">
+                    <span class="tag">2 PLAYERS</span>
+                    <span class="tag">3D</span>
+                    <span class="tag">HORROR</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <span class="blink">_</span> PRESS ENTER TO SELECT
+        </div>
+    </div>
+
+    <div class="nav-hint">
+        USE [1] [2] [3] OR CLICK TO SELECT
+    </div>
+
+    <script>
+        // Generate starfield
+        const starfield = document.getElementById('starfield');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.width = star.style.height = (Math.random() * 2 + 1) + 'px';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            starfield.appendChild(star);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const cards = document.querySelectorAll('.game-card');
+            if (e.key === '1') cards[0].click();
+            if (e.key === '2') cards[1].click();
+            if (e.key === '3') cards[2].click();
+        });
+    </script>
+</body>
+</html>
