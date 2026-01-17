@@ -141,7 +141,7 @@ class Player {
             const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
 
             // Check landing conditions
-            if (speed < 6 && Math.abs(this.angle) < 0.4 && this.vy >= 0) {
+            if (speed < 4 && Math.abs(this.angle) < 0.4 && this.vy >= 0) {
                 // Successful landing on floor
                 this.y = FLOOR_Y - PLAYER_H / 2;
                 this.vy = 0;
@@ -149,7 +149,7 @@ class Player {
                 this.angle = 0;
                 this.landedOn = this.x < WORLD_W / 2 ? 'floorLeft' : 'floorRight';
                 landed = { type: 'fuel' };
-            } else if (speed >= 6) {
+            } else if (speed >= 4) {
                 // Crash into floor at high speed
                 return { type: 'crash' };
             }
@@ -168,7 +168,7 @@ class Player {
                 const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
 
                 // Check landing conditions
-                if (speed < 6 && Math.abs(this.angle) < 0.4 && this.vy >= 0) {
+                if (speed < 4 && Math.abs(this.angle) < 0.4 && this.vy >= 0) {
                     // Successful landing
                     this.y = p.y - PLAYER_H / 2;
                     this.vy = 0;

@@ -7,10 +7,10 @@ const PLAYER_W = 30;
 const PLAYER_H = 16;
 
 // Physics
-const GRAVITY = 0.16;
-const THRUST_UP = 0.5;
-const THRUST_SIDE = 0.4;
-const MAX_VELOCITY = 16;
+const GRAVITY = 0.06;
+const THRUST_UP = 0.2;
+const THRUST_SIDE = 0.15;
+const MAX_VELOCITY = 8;
 const DRAG = 0.98;
 
 // Fuel System
@@ -25,7 +25,7 @@ const AMMO_REFILL_RATE = 0.015; // Per frame when on ammo platform (~1 ammo per 
 const SHOOT_COOLDOWN = 15; // Frames between shots
 
 // Projectile
-const PROJECTILE_SPEED = 28;
+const PROJECTILE_SPEED = 12;
 const PROJECTILE_SIZE = 6;
 
 // Barrier
@@ -36,7 +36,7 @@ const BARRIER_ROWS = 24; // More rows for continuous scroll effect
 const BLOCK_W = BARRIER_W / BARRIER_COLS;
 const BLOCK_H = 25;
 const BLOCK_HP = 2;
-const BARRIER_SCROLL_SPEED = 3;
+const BARRIER_SCROLL_SPEED = 1;
 
 // Match
 const ROUNDS_TO_WIN = 3;
