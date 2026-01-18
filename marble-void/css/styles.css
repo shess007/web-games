@@ -1,0 +1,305 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: #000;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Start Screen */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, #0a0a15 0%, #000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 0.8s ease, visibility 0.8s;
+}
+
+#start-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.5rem, 12vw, 4rem);
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: transparent;
+    background: linear-gradient(135deg, #fff 0%, #6ee7ff 50%, #fff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 60px rgba(110, 231, 255, 0.5);
+    margin-bottom: 1rem;
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+.subtitle {
+    font-size: clamp(0.8rem, 3vw, 1rem);
+    color: rgba(110, 231, 255, 0.6);
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+}
+
+.marble-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff, #6ee7ff, #0ea5e9, #0369a1);
+    box-shadow:
+        0 0 40px rgba(110, 231, 255, 0.8),
+        0 0 80px rgba(110, 231, 255, 0.4),
+        inset 0 0 20px rgba(255, 255, 255, 0.5);
+    margin-bottom: 3rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.start-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 1rem 3rem;
+    background: transparent;
+    border: 2px solid rgba(110, 231, 255, 0.5);
+    color: #6ee7ff;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.start-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(110, 231, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.start-btn:hover::before,
+.start-btn:active::before {
+    left: 100%;
+}
+
+.start-btn:active {
+    background: rgba(110, 231, 255, 0.1);
+    transform: scale(0.98);
+}
+
+.instructions {
+    position: absolute;
+    bottom: 15%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    padding: 0 2rem;
+}
+
+.instructions span {
+    color: rgba(110, 231, 255, 0.7);
+}
+
+/* HUD */
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#hud.visible {
+    opacity: 1;
+}
+
+.hud-item {
+    font-family: 'Orbitron', monospace;
+    color: rgba(110, 231, 255, 0.8);
+    text-shadow: 0 0 10px rgba(110, 231, 255, 0.5);
+}
+
+.level-display {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+}
+
+.level-num {
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+.timer {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+/* Win Screen */
+#win-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.95) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+#win-screen.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.win-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.5rem, 8vw, 2.5rem);
+    font-weight: 900;
+    color: #10b981;
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+    margin-bottom: 1rem;
+    animation: win-pulse 1s ease-in-out infinite;
+}
+
+@keyframes win-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.win-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: rgba(16, 185, 129, 0.7);
+    letter-spacing: 0.3em;
+    margin-bottom: 2rem;
+}
+
+.next-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 1rem 2.5rem;
+    background: transparent;
+    border: 2px solid rgba(16, 185, 129, 0.5);
+    color: #10b981;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+}
+
+.next-btn:active {
+    background: rgba(16, 185, 129, 0.1);
+    transform: scale(0.98);
+}
+
+/* Permission denied */
+#permission-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #ff6b6b;
+    font-size: 1rem;
+    padding: 2rem;
+    display: none;
+    z-index: 200;
+}
+
+#permission-error.visible {
+    display: block;
+}
+
+/* Reveal flash effect */
+.reveal-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(110, 231, 255, 0.3) 0%, transparent 50%);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 40;
+}
+
+/* Wall collision indicator */
+#collision-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 30;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+#collision-indicator.active {
+    opacity: 1;
+}
