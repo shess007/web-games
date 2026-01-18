@@ -49,6 +49,10 @@ class UIManager {
         if (this.els.passCount) this.els.passCount.innerText = `${current}/${total}`;
     }
 
+    setLevelDisplay(levelStr) {
+        if (this.els.levelIdx) this.els.levelIdx.innerText = levelStr;
+    }
+
     setTarget(tgt) {
         if (this.els.target) this.els.target.innerText = tgt;
     }

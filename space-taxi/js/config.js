@@ -4,53 +4,344 @@ var TAXI_W = 34;
 var TAXI_H = 22;
 var MAX_LANDING_SPD = 1.0;
 
-var levels = [
-    {
-        w: 1800, h: 1400, spawn: { x: 100, y: 150 },
-        platforms: [
-            { x: 45, y: 161, w: 110, h: 22, id: 0 }, // START PLATFORM
-            { x: 50, y: 300, w: 110, h: 22, id: 1 },
-            { x: 1500, y: 300, w: 120, h: 22, id: 2 },
-            { x: 800, y: 800, w: 110, h: 22, id: 3 },
-            { x: 100, y: 1200, w: 110, h: 22, id: 4 },
-            { x: 1600, y: 1300, w: 110, h: 22, id: 5 },
-            { x: 900, y: 250, w: 110, h: 22, id: 99, fuel: true },
-            { x: 1300, y: 1200, w: 110, h: 22, id: 98, fuel: true }
-        ],
-        walls: [
-            { x: 0, y: 0, w: 1800, h: 60 }, { x: 0, y: 1340, w: 1800, h: 60 },
-            { x: 0, y: 0, w: 60, h: 1400 }, { x: 1740, y: 0, w: 60, h: 1400 },
-            { x: 400, y: 400, w: 60, h: 600 }, { x: 1200, y: 400, w: 60, h: 600 }
-        ],
-        passengers: [{ f: 1, t: 2 }, { f: 4, t: 3 }, { f: 5, t: 1 }]
-    },
-    {
-        w: 2400, h: 1800, spawn: { x: 100, y: 150 },
-        platforms: [
-            { x: 45, y: 161, w: 110, h: 22, id: 0 }, // START PLATFORM
-            { x: 100, y: 350, w: 110, h: 22, id: 1 },
-            { x: 2100, y: 250, w: 110, h: 22, id: 2 },
-            { x: 1100, y: 900, w: 160, h: 22, id: 3 },
-            { x: 100, y: 1600, w: 110, h: 22, id: 4 },
-            { x: 2100, y: 1600, w: 110, h: 22, id: 5 },
-            { x: 1150, y: 250, w: 90, h: 22, id: 99, fuel: true },
-            { x: 1200, y: 1400, w: 90, h: 22, id: 98, fuel: true }
-        ],
-        walls: [
-            { x: 0, y: 0, w: 2400, h: 60 }, { x: 0, y: 1740, w: 2400, h: 60 },
-            { x: 0, y: 0, w: 60, h: 1800 }, { x: 2360, y: 0, w: 60, h: 1800 },
-            { x: 500, y: 0, w: 80, h: 700 }, { x: 500, y: 1100, w: 80, h: 700 },
-            { x: 1800, y: 0, w: 80, h: 900 }, { x: 1800, y: 1300, w: 80, h: 500 },
-            { x: 900, y: 650, w: 600, h: 50 }
-        ],
-        passengers: [{ f: 2, t: 4 }, { f: 1, t: 5 }, { f: 3, t: 2 }],
-        enemies: [
-            { x: 800, y: 400, r: 150, speed: 0.001, size: 20 },
-            { x: 1500, y: 1200, r: 200, speed: 0.0007, size: 25 },
-            { x: 300, y: 1000, r: 100, speed: 0.0015, size: 18 }
-        ]
+// Levels array - populated by procedural generator
+var levels = [];
+
+// ==================== PROCEDURAL LEVEL GENERATOR ====================
+
+class LevelGenerator {
+    constructor() {
+        this.wallThickness = 60;
+        this.platformW = 110;
+        this.platformH = 22;
+        this.minPlatformSpacing = 200;
     }
-];
+
+    generate(levelNum) {
+        // Scale difficulty with level number
+        const difficulty = Math.min(levelNum, 20);
+
+        // Level size grows with difficulty
+        const w = 1600 + Math.floor(difficulty * 100);
+        const h = 1200 + Math.floor(difficulty * 80);
+
+        // Number of platforms and passengers scale with difficulty
+        const numPlatforms = 4 + Math.floor(difficulty * 0.5);
+        const numPassengers = 2 + Math.floor(difficulty * 0.3);
+        const numFuelStations = 1 + Math.floor(difficulty / 5);
+        const numEnemies = Math.max(0, Math.floor((difficulty - 2) * 0.8));
+        const numInternalWalls = 1 + Math.floor(difficulty * 0.4);
+
+        // Generate walls (border + internal)
+        const walls = this.generateWalls(w, h, numInternalWalls, difficulty);
+
+        // Generate platforms avoiding walls
+        const platforms = this.generatePlatforms(w, h, numPlatforms, numFuelStations, walls);
+
+        // Generate passengers with valid routes
+        const passengers = this.generatePassengers(platforms, numPassengers);
+
+        // Generate enemies for higher levels
+        const enemies = this.generateEnemies(w, h, numEnemies, platforms, walls, difficulty);
+
+        // Spawn point near first platform
+        const spawnPlat = platforms[0];
+
+        const level = {
+            w,
+            h,
+            spawn: { x: spawnPlat.x + spawnPlat.w / 2, y: spawnPlat.y - 50 },
+            platforms,
+            walls,
+            passengers,
+            generated: true,
+            levelNum: levelNum
+        };
+
+        if (enemies.length > 0) {
+            level.enemies = enemies;
+        }
+
+        return level;
+    }
+
+    generateWalls(w, h, numInternal, difficulty) {
+        const walls = [];
+        const t = this.wallThickness;
+
+        // Border walls
+        walls.push({ x: 0, y: 0, w: w, h: t });           // Top
+        walls.push({ x: 0, y: h - t, w: w, h: t });       // Bottom
+        walls.push({ x: 0, y: 0, w: t, h: h });           // Left
+        walls.push({ x: w - t, y: 0, w: t, h: h });       // Right
+
+        // Internal walls - create corridors and obstacles
+        const safeZone = 250; // Keep area near spawn clear
+
+        for (let i = 0; i < numInternal; i++) {
+            const isVertical = Math.random() > 0.4;
+            let wall;
+
+            if (isVertical) {
+                // Vertical wall with gap
+                const wallX = t + safeZone + Math.random() * (w - 2 * t - safeZone - 80);
+                const gapPos = 0.2 + Math.random() * 0.6; // Gap position (20-80%)
+                const gapSize = 150 + Math.random() * 100;
+                const wallHeight = h - 2 * t;
+                const gapStart = Math.floor(wallHeight * gapPos);
+
+                // Wall above gap
+                if (gapStart > 100) {
+                    walls.push({
+                        x: wallX,
+                        y: t,
+                        w: 60 + Math.random() * 40,
+                        h: gapStart
+                    });
+                }
+                // Wall below gap
+                const belowStart = gapStart + gapSize;
+                if (belowStart < wallHeight - 100) {
+                    walls.push({
+                        x: wallX,
+                        y: t + belowStart,
+                        w: 60 + Math.random() * 40,
+                        h: wallHeight - belowStart
+                    });
+                }
+            } else {
+                // Horizontal wall with gap
+                const wallY = t + safeZone + Math.random() * (h - 2 * t - safeZone - 80);
+                const gapPos = 0.2 + Math.random() * 0.6;
+                const gapSize = 150 + Math.random() * 100;
+                const wallWidth = w - 2 * t;
+                const gapStart = Math.floor(wallWidth * gapPos);
+
+                // Wall left of gap
+                if (gapStart > 100) {
+                    walls.push({
+                        x: t,
+                        y: wallY,
+                        w: gapStart,
+                        h: 40 + Math.random() * 30
+                    });
+                }
+                // Wall right of gap
+                const rightStart = gapStart + gapSize;
+                if (rightStart < wallWidth - 100) {
+                    walls.push({
+                        x: t + rightStart,
+                        y: wallY,
+                        w: wallWidth - rightStart,
+                        h: 40 + Math.random() * 30
+                    });
+                }
+            }
+        }
+
+        // Add some floating obstacles on higher difficulties
+        if (difficulty > 5) {
+            const numObstacles = Math.floor((difficulty - 5) * 0.3);
+            for (let i = 0; i < numObstacles; i++) {
+                const obstacleW = 80 + Math.random() * 60;
+                const obstacleH = 30 + Math.random() * 30;
+                const ox = t + safeZone + Math.random() * (w - 2 * t - safeZone - obstacleW);
+                const oy = t + 200 + Math.random() * (h - 2 * t - 400);
+
+                // Check it doesn't overlap existing walls too much
+                let valid = true;
+                for (const wall of walls) {
+                    if (this.rectsOverlap(ox, oy, obstacleW, obstacleH, wall.x - 50, wall.y - 50, wall.w + 100, wall.h + 100)) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    walls.push({ x: ox, y: oy, w: obstacleW, h: obstacleH });
+                }
+            }
+        }
+
+        return walls;
+    }
+
+    generatePlatforms(w, h, numPlatforms, numFuel, walls) {
+        const platforms = [];
+        const t = this.wallThickness;
+        const margin = 100;
+
+        // Start platform (always in top-left safe zone)
+        platforms.push({
+            x: t + 20,
+            y: t + 100,
+            w: this.platformW,
+            h: this.platformH,
+            id: 0
+        });
+
+        let platformId = 1;
+        let attempts = 0;
+        const maxAttempts = 500;
+
+        // Generate regular platforms
+        while (platforms.length < numPlatforms && attempts < maxAttempts) {
+            attempts++;
+
+            const px = t + margin + Math.random() * (w - 2 * t - 2 * margin - this.platformW);
+            const py = t + margin + Math.random() * (h - 2 * t - 2 * margin - this.platformH);
+
+            if (this.isValidPlatformPosition(px, py, this.platformW, this.platformH, platforms, walls)) {
+                platforms.push({
+                    x: px,
+                    y: py,
+                    w: this.platformW,
+                    h: this.platformH,
+                    id: platformId++
+                });
+            }
+        }
+
+        // Add fuel stations
+        attempts = 0;
+        let fuelId = 99;
+        while (numFuel > 0 && attempts < maxAttempts) {
+            attempts++;
+
+            const px = t + margin + Math.random() * (w - 2 * t - 2 * margin - 90);
+            const py = t + margin + Math.random() * (h - 2 * t - 2 * margin - this.platformH);
+
+            if (this.isValidPlatformPosition(px, py, 90, this.platformH, platforms, walls)) {
+                platforms.push({
+                    x: px,
+                    y: py,
+                    w: 90,
+                    h: this.platformH,
+                    id: fuelId--,
+                    fuel: true
+                });
+                numFuel--;
+            }
+        }
+
+        return platforms;
+    }
+
+    isValidPlatformPosition(x, y, w, h, platforms, walls) {
+        // Check against walls (with margin)
+        for (const wall of walls) {
+            if (this.rectsOverlap(x, y - 60, w, h + 80, wall.x, wall.y, wall.w, wall.h)) {
+                return false;
+            }
+        }
+
+        // Check against other platforms (minimum spacing)
+        for (const plat of platforms) {
+            const dist = Math.sqrt(
+                Math.pow((x + w/2) - (plat.x + plat.w/2), 2) +
+                Math.pow((y + h/2) - (plat.y + plat.h/2), 2)
+            );
+            if (dist < this.minPlatformSpacing) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    generatePassengers(platforms, numPassengers) {
+        const passengers = [];
+        const regularPlatforms = platforms.filter(p => !p.fuel && p.id !== 0);
+
+        if (regularPlatforms.length < 2) return passengers;
+
+        const usedPairs = new Set();
+
+        for (let i = 0; i < numPassengers && i < regularPlatforms.length; i++) {
+            let attempts = 0;
+            while (attempts < 50) {
+                attempts++;
+                const fromIdx = Math.floor(Math.random() * regularPlatforms.length);
+                let toIdx = Math.floor(Math.random() * regularPlatforms.length);
+
+                // Ensure different platforms
+                if (fromIdx === toIdx) continue;
+
+                const from = regularPlatforms[fromIdx].id;
+                const to = regularPlatforms[toIdx].id;
+                const pairKey = `${from}-${to}`;
+
+                if (!usedPairs.has(pairKey)) {
+                    usedPairs.add(pairKey);
+                    passengers.push({ f: from, t: to });
+                    break;
+                }
+            }
+        }
+
+        return passengers;
+    }
+
+    generateEnemies(w, h, numEnemies, platforms, walls, difficulty) {
+        const enemies = [];
+        const t = this.wallThickness;
+        const margin = 150;
+
+        for (let i = 0; i < numEnemies; i++) {
+            let attempts = 0;
+            while (attempts < 100) {
+                attempts++;
+
+                const ex = t + margin + Math.random() * (w - 2 * t - 2 * margin);
+                const ey = t + margin + Math.random() * (h - 2 * t - 2 * margin);
+                const radius = 80 + Math.random() * 120;
+                const size = 15 + Math.random() * 15;
+                const speed = 0.0005 + Math.random() * 0.001 + (difficulty * 0.0001);
+
+                // Check not too close to platforms
+                let valid = true;
+                for (const plat of platforms) {
+                    const dist = Math.sqrt(
+                        Math.pow(ex - (plat.x + plat.w/2), 2) +
+                        Math.pow(ey - (plat.y + plat.h/2), 2)
+                    );
+                    if (dist < radius + 150) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                // Check not inside walls
+                for (const wall of walls) {
+                    if (ex > wall.x - radius && ex < wall.x + wall.w + radius &&
+                        ey > wall.y - radius && ey < wall.y + wall.h + radius) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid) {
+                    enemies.push({
+                        x: ex,
+                        y: ey,
+                        r: radius,
+                        speed: speed,
+                        size: size
+                    });
+                    break;
+                }
+            }
+        }
+
+        return enemies;
+    }
+
+    rectsOverlap(x1, y1, w1, h1, x2, y2, w2, h2) {
+        return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+    }
+}
+
+// Global generator instance
+var levelGenerator = new LevelGenerator();
 
 var radioChatter = [
     "Sektor-Kontrolle: 'Scanner-Verschmutzung in Quadrant 4 gemeldet.'",

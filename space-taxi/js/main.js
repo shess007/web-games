@@ -255,6 +255,13 @@ class Game {
     }
 
     initLevel() {
+        // Generate level if needed
+        if (this.state.currentLevelIdx >= levels.length) {
+            const levelNum = this.state.currentLevelIdx + 1;
+            const generatedLevel = levelGenerator.generate(levelNum);
+            levels.push(generatedLevel);
+        }
+
         const level = levels[this.state.currentLevelIdx];
         if (!level) return;
 
@@ -277,6 +284,9 @@ class Game {
 
         this.renderer.initStars(level);
         this.initPassenger();
+
+        // Update level display
+        this.ui.setLevelDisplay(this.state.currentLevelIdx + 1);
     }
 
     resetTaxi(x, y) {
@@ -559,16 +569,7 @@ class Game {
 
     nextLevel() {
         this.state.currentLevelIdx++;
-        if (this.state.currentLevelIdx >= levels.length) {
-            this.state.gameState = 'SUCCESS';
-            this.ui.showOverlay(
-                `<span class="text-green-500 text-xl font-bold">LEGENDÄR!</span><br><br>GALAXY TAXI TYCOON STATUS ERREICHT.<br>KONTO: $${Math.floor(this.state.cash)}`,
-                "NEUSTART"
-            );
-            this.state.currentLevelIdx = 0;
-        } else {
-            this.initLevel();
-        }
+        this.initLevel();
     }
 
     crash(msg) {
