@@ -29,10 +29,131 @@ class Game {
             chatterTimer: Math.random() * 500 + 500 // Initial delay for first chatter
         };
 
-        this.bgmInterval = null;
         this.ambienceStarted = false;
+
+        // Controller support
+        this.gamepad = null;
+        this.gamepadDeadzone = 0.3;
+        this.lastThrustVibration = 0;
+
         this.initEventListeners();
+        this.initGamepad();
         this.handleResize();
+    }
+
+    initGamepad() {
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log(`Gamepad connected: ${e.gamepad.id}`);
+            this.gamepad = e.gamepad;
+        });
+
+        window.addEventListener('gamepaddisconnected', (e) => {
+            console.log(`Gamepad disconnected: ${e.gamepad.id}`);
+            this.gamepad = null;
+        });
+    }
+
+    updateGamepad() {
+        const pads = navigator.getGamepads();
+        if (pads[0]) {
+            this.gamepad = pads[0];
+        }
+    }
+
+    getGamepadInput() {
+        this.updateGamepad();
+        const pad = this.gamepad;
+
+        const input = {
+            up: false,
+            left: false,
+            right: false,
+            start: false
+        };
+
+        if (!pad) return input;
+
+        // Left stick horizontal
+        if (pad.axes[0] < -this.gamepadDeadzone) input.left = true;
+        if (pad.axes[0] > this.gamepadDeadzone) input.right = true;
+
+        // D-pad (buttons 12-15: up, down, left, right)
+        if (pad.buttons[14]?.pressed) input.left = true;
+        if (pad.buttons[15]?.pressed) input.right = true;
+        if (pad.buttons[12]?.pressed) input.up = true;
+
+        // A button (button 0) or left stick up for thrust
+        if (pad.buttons[0]?.pressed) input.up = true;
+        if (pad.axes[1] < -this.gamepadDeadzone) input.up = true;
+
+        // Right trigger (button 7) or B button (button 2) also for thrust
+        if (pad.buttons[7]?.pressed) input.up = true;
+
+        // Start button (button 9) or A button for menu
+        if (pad.buttons[9]?.pressed || pad.buttons[0]?.pressed) input.start = true;
+
+        return input;
+    }
+
+    // ==================== VIBRATION SUPPORT ====================
+
+    vibrate(options = {}) {
+        this.updateGamepad();
+        const pad = this.gamepad;
+        if (!pad || !pad.vibrationActuator) return;
+
+        const duration = options.duration ?? 200;
+        const strongMagnitude = options.strongMagnitude ?? 0.5;
+        const weakMagnitude = options.weakMagnitude ?? 0.5;
+
+        pad.vibrationActuator.playEffect('dual-rumble', {
+            startDelay: 0,
+            duration: duration,
+            strongMagnitude: strongMagnitude,
+            weakMagnitude: weakMagnitude
+        }).catch(() => {
+            // Silently ignore vibration errors (unsupported, etc.)
+        });
+    }
+
+    vibrateExplosion() {
+        this.vibrate({
+            duration: 400,
+            strongMagnitude: 1.0,
+            weakMagnitude: 0.8
+        });
+    }
+
+    vibrateLanding() {
+        this.vibrate({
+            duration: 100,
+            strongMagnitude: 0.3,
+            weakMagnitude: 0.1
+        });
+    }
+
+    vibratePickup() {
+        this.vibrate({
+            duration: 150,
+            strongMagnitude: 0.4,
+            weakMagnitude: 0.3
+        });
+    }
+
+    vibrateThrust() {
+        this.vibrate({
+            duration: 50,
+            strongMagnitude: 0.1,
+            weakMagnitude: 0.15
+        });
+    }
+
+    vibrateFuelLow() {
+        this.vibrate({
+            duration: 300,
+            strongMagnitude: 0.6,
+            weakMagnitude: 0.4
+        });
     }
 
     initEventListeners() {
@@ -44,12 +165,8 @@ class Game {
                     this.state.currentLevelIdx = idx;
                     this.state.gameState = 'PLAYING';
                     this.ui.hideOverlay();
+                    this.audio.setup();
                     this.initLevel();
-                    if (!this.bgmInterval) {
-                        this.bgmInterval = setInterval(() => {
-                            if (this.state.gameState === 'PLAYING') this.audio.playBGMStep();
-                        }, 180);
-                    }
                     this.gameLoop();
                 });
             }
@@ -58,6 +175,21 @@ class Game {
         window.onresize = () => this.handleResize();
 
         this.ui.els.startBtn.onclick = () => this.startGame();
+
+        // Check for gamepad start button when not playing
+        this.lastGamepadStart = false;
+        setInterval(() => {
+            if (this.state.gameState !== 'PLAYING') {
+                const gamepadInput = this.getGamepadInput();
+                // Only trigger on button press (not hold)
+                if (gamepadInput.start && !this.lastGamepadStart) {
+                    this.startGame();
+                }
+                this.lastGamepadStart = gamepadInput.start;
+            } else {
+                this.lastGamepadStart = false;
+            }
+        }, 100);
 
         if (this.ui.els.fullscreenBtn) {
             this.ui.els.fullscreenBtn.onclick = () => {
@@ -119,13 +251,6 @@ class Game {
         }
         this.state.gameState = 'PLAYING';
         this.initLevel();
-
-        if (!this.bgmInterval) {
-            this.bgmInterval = setInterval(() => {
-                if (this.state.gameState === 'PLAYING') this.audio.playBGMStep();
-            }, 180);
-        }
-
         this.gameLoop();
     }
 
@@ -192,12 +317,26 @@ class Game {
 
     update() {
         const { taxi, level, keys } = this.state;
-        const thrustUp = keys['ArrowUp'] || keys['KeyW'];
-        const thrustLeft = keys['ArrowLeft'] || keys['KeyA'];
-        const thrustRight = keys['ArrowRight'] || keys['KeyD'];
+
+        // Get gamepad input
+        const gamepadInput = this.getGamepadInput();
+
+        // Combine keyboard and gamepad input
+        const thrustUp = keys['ArrowUp'] || keys['KeyW'] || gamepadInput.up;
+        const thrustLeft = keys['ArrowLeft'] || keys['KeyA'] || gamepadInput.left;
+        const thrustRight = keys['ArrowRight'] || keys['KeyD'] || gamepadInput.right;
         const anyThrust = (thrustUp || thrustLeft || thrustRight) && this.state.fuel > 0;
 
         this.audio.updateEngineSound(anyThrust, thrustUp, thrustLeft || thrustRight);
+
+        // Throttled thrust vibration (every 120ms while thrusting)
+        if (anyThrust) {
+            const now = Date.now();
+            if (now - this.lastThrustVibration > 120) {
+                this.vibrateThrust();
+                this.lastThrustVibration = now;
+            }
+        }
 
         if (this.state.fuel > 0) {
             if (thrustUp) {
@@ -225,6 +364,7 @@ class Game {
                 this.state.fuelAlertTriggered = true;
                 this.audio.playSound(350, 2.0, 'sine', 0.4, 10);
                 this.ui.setMessage("TANK LEER!");
+                this.vibrateFuelLow();
             }
         }
 
@@ -336,6 +476,11 @@ class Game {
                     this.crash(); return;
                 }
 
+                // Vibrate on first landing contact
+                if (!taxi.landedOn) {
+                    this.vibrateLanding();
+                }
+
                 taxi.y = p.y - TAXI_H / 2; taxi.vy = 0; taxi.vx = 0; taxi.angle = 0;
                 landed = true; taxi.landedOn = p.id;
                 currentPlat = p;
@@ -366,6 +511,7 @@ class Game {
         if (taxi.landedOn === pass.f && activePassenger?.state === 'WAITING') {
             activePassenger.state = 'IN_TAXI';
             this.audio.playSound(600, 0.22, 'sine', 0.1);
+            this.vibratePickup();
 
             const pickUpComments = [
                 "[ flieg gefälligst schneller! ]",
@@ -386,6 +532,7 @@ class Game {
             activePassenger.state = 'DONE';
             this.state.cash += 100;
             this.audio.playSound(800, 0.35, 'sine', 0.1);
+            this.vibratePickup();
 
             const dropOffComments = [
                 "[ gerade so überlebt.. ]",
@@ -428,6 +575,7 @@ class Game {
         this.state.gameState = 'CRASHED';
         this.createExplosion(this.state.taxi.x, this.state.taxi.y);
         this.audio.playSound(100, 0.8, 'sawtooth', 0.5);
+        this.vibrateExplosion();
 
         const crashMsg = msg || (this.state.fuel <= 0 ? "TANK LEER!" : "TOTALSCHADEN!");
         this.ui.showOverlay(
