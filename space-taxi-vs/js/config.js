@@ -21,7 +21,7 @@ const FUEL_REFILL_RATE = 1.5;
 
 // Ammo System
 const MAX_AMMO = 15;
-const AMMO_REFILL_RATE = 0.015; // Per frame when on ammo platform (~1 ammo per second)
+const AMMO_REFILL_RATE = 0.035; // Per frame when on ammo platform (~2 ammo per second)
 const SHOOT_COOLDOWN = 15; // Frames between shots
 
 // Projectile

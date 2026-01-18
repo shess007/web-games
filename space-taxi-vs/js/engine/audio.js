@@ -317,7 +317,7 @@ class AudioEngine {
         this.musicPlaying = true;
 
         // Music parameters
-        this.bpm = 128;
+        this.bpm = 175;
         this.beatDuration = 60 / this.bpm;
         this.currentBeat = 0;
         this.barLength = 16; // 16 beats per bar pattern
