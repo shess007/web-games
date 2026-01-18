@@ -23,17 +23,17 @@
                 <div class="fuel-gauge-container">
                     <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
                 </div>
-                <div class="flex justify-between w-full mt-1 px-1">
-                    <span class="text-[5px] text-gray-400">TNK:<span id="fuel-val" class="text-white">100</span>%</span>
-                    <span class="text-[5px] text-gray-400">LVL:<span id="level-idx" class="text-white">1</span></span>
+                <div class="flex justify-between w-full mt-2 px-1">
+                    <span class="text-sm text-gray-400">TNK:<span id="fuel-val" class="text-white font-bold">100</span>%</span>
+                    <span class="text-sm text-gray-400">LVL:<span id="level-idx" class="text-white font-bold">1</span></span>
                 </div>
-                <div class="mt-1 text-yellow-500 text-[6px] text-center border-t border-white/5 pt-1">
-                    CASH: $<span id="cash">0</span>
+                <div class="mt-2 text-yellow-500 text-base text-center border-t border-white/5 pt-2">
+                    CASH: $<span id="cash" class="font-bold">0</span>
                 </div>
             </div>
 
-            <div class="scanner-box mt-4 p-1 bg-blue-900/10 border border-blue-500/20">
-                <span class="text-[5px] text-blue-400 block mb-1">SCAN-RADAR</span>
+            <div class="scanner-box mt-4 p-2 bg-blue-900/10 border border-blue-500/20">
+                <span class="text-xs text-blue-400 block mb-1">SCAN-RADAR</span>
                 <div id="minimap-sidebar" class="w-full aspect-square relative"></div>
             </div>
 
@@ -46,11 +46,11 @@
         <!-- CENTER VIEW -->
         <main id="flight-deck" class="flex-1 flex flex-col items-center justify-center relative bg-[#050508]">
             <div id="ui-center" class="absolute top-2 z-30 flex flex-col items-center pointer-events-none w-full">
-                <div class="bg-black/80 border border-gray-700 px-3 py-1 shadow-lg">
-                    <span id="message" class="text-white uppercase text-[7px] tracking-widest">System Ready</span>
+                <div class="bg-black/80 border border-gray-700 px-4 py-2 shadow-lg">
+                    <span id="message" class="text-white uppercase text-sm tracking-widest">System Ready</span>
                 </div>
                 <span id="passenger-comment"
-                    class="text-pink-400 text-[9px] italic mt-1 bg-black/60 px-2 opacity-0 rounded-sm"></span>
+                    class="text-pink-400 text-sm italic mt-2 bg-black/60 px-3 py-1 opacity-0 rounded-sm"></span>
             </div>
 
             <div id="game-container" class="relative">
@@ -59,17 +59,17 @@
                 <!-- Overlay Container -->
                 <div id="overlay"
                     class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-40 text-center p-4">
-                    <h1 class="text-xl sm:text-3xl font-bold mb-2 text-yellow-500 italic uppercase tracking-tighter">
+                    <h1 class="text-2xl sm:text-4xl font-bold mb-4 text-yellow-500 italic uppercase tracking-tighter">
                         Space Taxi</h1>
-                    <div class="border border-yellow-600/30 p-4 bg-gray-900 shadow-2xl max-w-xs">
-                        <p id="overlay-msg" class="text-[7px] sm:text-[9px] uppercase leading-relaxed text-gray-300">
+                    <div class="border border-yellow-600/30 p-6 bg-gray-900 shadow-2xl max-w-sm">
+                        <p id="overlay-msg" class="text-sm sm:text-base uppercase leading-relaxed text-gray-300">
                             Sektor-Kontrolle aktiviert.<br><br>
-                            - Bringe 3 Passagiere ans Ziel<br>
+                            - Bringe Passagiere ans Ziel<br>
                             - Tanke rechtzeitig auf
                         </p>
                     </div>
                     <button id="start-btn"
-                        class="mt-6 px-10 py-4 bg-blue-700 text-white font-bold border-2 border-white uppercase text-[10px] active:scale-95 transition-transform">Start
+                        class="mt-6 px-10 py-4 bg-blue-700 text-white font-bold border-2 border-white uppercase text-base active:scale-95 transition-transform">Start
                         Mission</button>
                 </div>
             </div>
@@ -81,22 +81,22 @@
             <div id="speed-pod" class="instrument-pod">
                 <span class="label-retro">VELOCITY</span>
                 <div id="avatar-container"
-                    class="mb-2 bg-black/50 border border-white/5 w-10 h-10 mx-auto flex items-center justify-center">
+                    class="mb-2 bg-black/50 border border-white/5 w-12 h-12 mx-auto flex items-center justify-center text-2xl">
                 </div>
                 <div class="flex items-baseline justify-center gap-1">
-                    <span id="speed-val" class="text-[14px] font-bold text-green-400">0.0</span>
-                    <span class="text-[6px] text-gray-600">u/s</span>
+                    <span id="speed-val" class="text-2xl font-bold text-green-400">0.0</span>
+                    <span class="text-xs text-gray-500">u/s</span>
                 </div>
-                <div class="text-[5px] text-gray-500 flex justify-between mt-2 border-t border-white/5 pt-1">
+                <div class="text-sm text-gray-400 flex justify-between mt-3 border-t border-white/5 pt-2">
                     <span>TGT: <span id="target" class="text-cyan-400 font-bold">P1</span></span>
-                    <span>PASS: <span id="pass-count" class="text-white">0/3</span></span>
+                    <span>PASS: <span id="pass-count" class="text-white font-bold">0/3</span></span>
                 </div>
             </div>
 
             <div id="comm-container" class="flex-1 mt-4 overflow-hidden flex flex-col border-t border-white/5 pt-2">
-                <span class="label-retro text-green-500/30">COMMS LOG</span>
+                <span class="label-retro text-green-500/50">COMMS LOG</span>
                 <div id="radio-log"
-                    class="flex-1 text-[5px] text-green-500/60 font-mono flex flex-col-reverse justify-start gap-1 overflow-hidden">
+                    class="flex-1 text-xs text-green-500/70 font-mono flex flex-col-reverse justify-start gap-1 overflow-hidden leading-relaxed">
                     <!-- Entries entries -->
                 </div>
             </div>
@@ -119,9 +119,9 @@
     <!-- Rotation Warning -->
     <div id="orientation-overlay"
         class="fixed inset-0 z-[1000] bg-[#0a0a0c] flex flex-col items-center justify-center text-white p-10 text-center hidden">
-        <div class="text-5xl mb-6 animate-pulse">📱</div>
-        <h2 class="text-xl font-bold uppercase text-yellow-500 mb-2">Bitte Gerät drehen</h2>
-        <p class="text-[8px] opacity-60 uppercase tracking-widest">Querformat erforderlich</p>
+        <div class="text-6xl mb-6 animate-pulse">📱</div>
+        <h2 class="text-2xl font-bold uppercase text-yellow-500 mb-3">Bitte Gerät drehen</h2>
+        <p class="text-sm opacity-60 uppercase tracking-widest">Querformat erforderlich</p>
     </div>
 
     <!-- Secret Developer Menu -->

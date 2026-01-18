@@ -126,6 +126,22 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Hide mobile controls on desktop */
+@media (min-width: 768px) {
+    #controls-left,
+    #controls-right {
+        display: none !important;
+    }
+}
+
+/* Show mobile controls only on touch devices */
+@media (hover: hover) and (pointer: fine) {
+    #controls-left,
+    #controls-right {
+        display: none !important;
+    }
+}
+
 /* FLIGHT DECK */
 #flight-deck {
     flex: 1;

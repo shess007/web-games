@@ -15,6 +15,7 @@ class LevelGenerator {
         this.platformW = 110;
         this.platformH = 22;
         this.minPlatformSpacing = 200;
+        this.gridSize = 40; // Cell size for reachability grid
     }
 
     generate(levelNum) {
@@ -35,8 +36,15 @@ class LevelGenerator {
         // Generate walls (border + internal)
         const walls = this.generateWalls(w, h, numInternalWalls, difficulty);
 
-        // Generate platforms avoiding walls
-        const platforms = this.generatePlatforms(w, h, numPlatforms, numFuelStations, walls);
+        // Spawn point in top-left safe zone
+        const spawnX = this.wallThickness + 75;
+        const spawnY = this.wallThickness + 50;
+
+        // Build reachability map from spawn point
+        const reachable = this.buildReachabilityMap(w, h, walls, spawnX, spawnY);
+
+        // Generate platforms avoiding walls and ensuring reachability
+        const platforms = this.generatePlatforms(w, h, numPlatforms, numFuelStations, walls, reachable);
 
         // Generate passengers with valid routes
         const passengers = this.generatePassengers(platforms, numPassengers);
@@ -165,7 +173,73 @@ class LevelGenerator {
         return walls;
     }
 
-    generatePlatforms(w, h, numPlatforms, numFuel, walls) {
+    // Build a reachability map using flood-fill from spawn point
+    buildReachabilityMap(w, h, walls, spawnX, spawnY) {
+        const cols = Math.ceil(w / this.gridSize);
+        const rows = Math.ceil(h / this.gridSize);
+
+        // Initialize grid (false = not reachable yet)
+        const grid = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+        // Mark walls as permanently blocked (use -1)
+        for (const wall of walls) {
+            const startCol = Math.floor(wall.x / this.gridSize);
+            const endCol = Math.ceil((wall.x + wall.w) / this.gridSize);
+            const startRow = Math.floor(wall.y / this.gridSize);
+            const endRow = Math.ceil((wall.y + wall.h) / this.gridSize);
+
+            for (let r = startRow; r < endRow && r < rows; r++) {
+                for (let c = startCol; c < endCol && c < cols; c++) {
+                    if (r >= 0 && c >= 0) {
+                        grid[r][c] = -1; // -1 means wall/blocked
+                    }
+                }
+            }
+        }
+
+        // Flood-fill from spawn point
+        const startCol = Math.floor(spawnX / this.gridSize);
+        const startRow = Math.floor(spawnY / this.gridSize);
+
+        const queue = [[startRow, startCol]];
+        if (grid[startRow] && grid[startRow][startCol] !== -1) {
+            grid[startRow][startCol] = true;
+        }
+
+        while (queue.length > 0) {
+            const [r, c] = queue.shift();
+
+            // Check all 8 neighbors (including diagonals for flight paths)
+            const neighbors = [
+                [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1],
+                [r - 1, c - 1], [r - 1, c + 1], [r + 1, c - 1], [r + 1, c + 1]
+            ];
+
+            for (const [nr, nc] of neighbors) {
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                    if (grid[nr][nc] === false) {
+                        grid[nr][nc] = true;
+                        queue.push([nr, nc]);
+                    }
+                }
+            }
+        }
+
+        return { grid, cols, rows };
+    }
+
+    // Check if a position is reachable from spawn
+    isReachable(x, y, reachable) {
+        const col = Math.floor(x / this.gridSize);
+        const row = Math.floor(y / this.gridSize);
+
+        if (row >= 0 && row < reachable.rows && col >= 0 && col < reachable.cols) {
+            return reachable.grid[row][col] === true;
+        }
+        return false;
+    }
+
+    generatePlatforms(w, h, numPlatforms, numFuel, walls, reachable) {
         const platforms = [];
         const t = this.wallThickness;
         const margin = 100;
@@ -190,7 +264,7 @@ class LevelGenerator {
             const px = t + margin + Math.random() * (w - 2 * t - 2 * margin - this.platformW);
             const py = t + margin + Math.random() * (h - 2 * t - 2 * margin - this.platformH);
 
-            if (this.isValidPlatformPosition(px, py, this.platformW, this.platformH, platforms, walls)) {
+            if (this.isValidPlatformPosition(px, py, this.platformW, this.platformH, platforms, walls, reachable)) {
                 platforms.push({
                     x: px,
                     y: py,
@@ -210,7 +284,7 @@ class LevelGenerator {
             const px = t + margin + Math.random() * (w - 2 * t - 2 * margin - 90);
             const py = t + margin + Math.random() * (h - 2 * t - 2 * margin - this.platformH);
 
-            if (this.isValidPlatformPosition(px, py, 90, this.platformH, platforms, walls)) {
+            if (this.isValidPlatformPosition(px, py, 90, this.platformH, platforms, walls, reachable)) {
                 platforms.push({
                     x: px,
                     y: py,
@@ -226,7 +300,7 @@ class LevelGenerator {
         return platforms;
     }
 
-    isValidPlatformPosition(x, y, w, h, platforms, walls) {
+    isValidPlatformPosition(x, y, w, h, platforms, walls, reachable) {
         // Check against walls (with margin)
         for (const wall of walls) {
             if (this.rectsOverlap(x, y - 60, w, h + 80, wall.x, wall.y, wall.w, wall.h)) {
@@ -243,6 +317,16 @@ class LevelGenerator {
             if (dist < this.minPlatformSpacing) {
                 return false;
             }
+        }
+
+        // Check reachability - platform center and area above it must be reachable
+        const centerX = x + w / 2;
+        const centerY = y;
+        const aboveY = y - 50; // Check space above platform for landing
+
+        if (!this.isReachable(centerX, centerY, reachable) ||
+            !this.isReachable(centerX, aboveY, reachable)) {
+            return false;
         }
 
         return true;
