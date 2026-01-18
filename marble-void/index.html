@@ -824,9 +824,9 @@
         let x = accelerationIncludingGravity.x || 0;
         let y = accelerationIncludingGravity.y || 0;
         
-        // Adjust for portrait orientation
-        state.tilt.x = -x;
-        state.tilt.y = y;
+        // Adjust for portrait orientation (marble rolls "downhill")
+        state.tilt.x = x;
+        state.tilt.y = -y;
     }
     
     // Request permission for iOS (non-blocking)
