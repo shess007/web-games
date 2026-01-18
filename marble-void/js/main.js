@@ -36,22 +36,22 @@ const ui = createUI(elements);
 function initLevel(level) {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const padding = 60;
 
-    state.walls = generateMaze(level, w, h, CONFIG);
+    const maze = generateMaze(level, w, h, CONFIG);
+    state.walls = maze.walls;
 
-    // Place marble in a corner area
+    // Place marble at maze start position
     state.marble = {
-        x: padding + 30,
-        y: padding + 30,
+        x: maze.start.x,
+        y: maze.start.y,
         vx: 0,
         vy: 0
     };
 
-    // Place target in opposite area
+    // Place target at maze end position
     state.target = {
-        x: w - padding - 30,
-        y: h - padding - 30
+        x: maze.target.x,
+        y: maze.target.y
     };
 
     state.won = false;

@@ -1,8 +1,8 @@
 // Game Configuration
 export const CONFIG = {
-    marbleRadius: 12,
-    targetRadius: 18,
-    wallThickness: 8,
+    marbleRadius: 10,
+    targetRadius: 14,
+    wallThickness: 6,
     sensitivity: 0.35,
     friction: 0.96,
     maxSpeed: 8,
