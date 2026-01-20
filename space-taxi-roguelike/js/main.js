@@ -494,6 +494,7 @@ class Game {
 
     goToBase(isVictory) {
         this.state.gameState = 'BASE';
+        this.audio.switchMusic('base');
         this.ui.showBase({
             cash: this.state.run.cash,
             hull: this.state.run.hull,
@@ -534,6 +535,7 @@ class Game {
 
     startNewShift() {
         this.ui.hideBase();
+        this.audio.switchMusic('shift');
 
         // Keep hull and cash from previous run
         const preservedHull = this.state.run.hull;
