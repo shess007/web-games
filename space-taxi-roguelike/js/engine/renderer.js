@@ -250,7 +250,7 @@ class Renderer {
         this.drawMeteors(ctx, state.level.meteors);
 
         // Platforms and characters
-        this.drawPlatforms(ctx, state.level.platforms);
+        this.drawPlatforms(ctx, state);
         this.drawEnemies(ctx, state.level.enemies);
         this.drawActivePassenger(ctx, state.activePassenger);
 
@@ -687,13 +687,15 @@ class Renderer {
         });
     }
 
-    drawPlatforms(ctx, platforms) {
+    drawPlatforms(ctx, state) {
+        const platforms = state.level?.platforms;
         if (!platforms) return;
 
         // Get theme colors or use defaults
         const theme = this.currentTheme;
         const platformColor = theme ? theme.platformColor : '#00ff41';
         const fuelColor = theme ? theme.fuelColor : '#00d2ff';
+        const targetColor = '#ffffff'; // White for target platforms
 
         // Parse colors for rgba
         const parseColor = (hex) => {
@@ -704,17 +706,35 @@ class Renderer {
         };
         const pc = parseColor(platformColor);
         const fc = parseColor(fuelColor);
+        const tc = parseColor(targetColor);
+
+        // Determine target platform ID
+        const passengers = state.level.passengers || [];
+        const passIdx = state.passengerIndex || 0;
+        const currentPass = passengers[passIdx];
+        let targetPlatformId = null;
+        if (state.activePassenger && currentPass) {
+            if (state.activePassenger.state === 'WAITING') {
+                targetPlatformId = currentPass.f; // Pickup platform
+            } else if (state.activePassenger.state === 'IN_TAXI') {
+                targetPlatformId = currentPass.t; // Dropoff platform
+            }
+        }
 
         platforms.forEach(p => {
-            const color = p.fuel ? fc : pc;
-            const colorHex = p.fuel ? fuelColor : platformColor;
+            const isTarget = p.id === targetPlatformId;
+            // Use white/bright color for target, otherwise normal colors
+            const color = isTarget ? tc : (p.fuel ? fc : pc);
+            const colorHex = isTarget ? targetColor : (p.fuel ? fuelColor : platformColor);
 
             // Platform base with glow underneath
             const glowGradient = ctx.createRadialGradient(
                 p.x + p.w / 2, p.y + 5, 0,
                 p.x + p.w / 2, p.y + 5, p.w / 2
             );
-            glowGradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.3)`);
+            // Stronger glow for target platform
+            const glowIntensity = isTarget ? 0.5 : 0.3;
+            glowGradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${glowIntensity})`);
             glowGradient.addColorStop(1, 'transparent');
             ctx.fillStyle = glowGradient;
             ctx.fillRect(p.x - 20, p.y - 10, p.w + 40, 30);
@@ -728,14 +748,16 @@ class Renderer {
             ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${pulse})`;
             ctx.fillRect(p.x, p.y, p.w, 4);
 
-            // Add light dots along the platform
-            ctx.fillStyle = colorHex;
-            for (let i = 0; i < 5; i++) {
-                const dotPulse = 0.3 + Math.sin(this.time * 4 + i) * 0.7;
-                ctx.globalAlpha = dotPulse;
-                ctx.fillRect(p.x + 10 + i * (p.w - 20) / 4, p.y + p.h - 6, 3, 3);
+            // Add light dots ONLY for target platforms and fuel platforms
+            if (isTarget || p.fuel) {
+                ctx.fillStyle = colorHex;
+                for (let i = 0; i < 5; i++) {
+                    const dotPulse = 0.3 + Math.sin(this.time * 4 + i) * 0.7;
+                    ctx.globalAlpha = dotPulse;
+                    ctx.fillRect(p.x + 10 + i * (p.w - 20) / 4, p.y + p.h - 6, 3, 3);
+                }
+                ctx.globalAlpha = 1;
             }
-            ctx.globalAlpha = 1;
 
             // Platform name label
             ctx.fillStyle = colorHex;
