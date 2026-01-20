@@ -50,10 +50,22 @@ class UIManager {
             sumTime: document.getElementById('sum-time'),
             sumHullBonus: document.getElementById('sum-hull-bonus'),
             sumScore: document.getElementById('sum-score'),
-            sumDeathReason: document.getElementById('sum-death-reason')
+            sumDeathReason: document.getElementById('sum-death-reason'),
+
+            // Base port
+            baseOverlay: document.getElementById('base-overlay'),
+            baseTitle: document.getElementById('base-title'),
+            baseStatusMsg: document.getElementById('base-status-msg'),
+            baseCash: document.getElementById('base-cash'),
+            baseHullContainer: document.getElementById('base-hull-container'),
+            baseRepairCost: document.getElementById('base-repair-cost'),
+            baseGameOverMsg: document.getElementById('base-game-over-msg'),
+            startShiftBtn: document.getElementById('start-shift-btn'),
+            quitBtn: document.getElementById('quit-btn')
         };
         this.avatars = ['🧑‍🚀', '👾', '🤖', '🕵️', '🧙', '🥷'];
         this.contractSelectCallback = null;
+        this.repairCallback = null;
     }
 
     updateHUD(state, speed) {
@@ -290,6 +302,115 @@ class UIManager {
         if (this.els.summaryOverlay) {
             this.els.summaryOverlay.classList.add('hidden');
         }
+    }
+
+    // ==================== BASE PORT ====================
+
+    showBase(data, repairCallback) {
+        if (!this.els.baseOverlay) return;
+
+        this.repairCallback = repairCallback;
+        this.els.baseOverlay.classList.remove('hidden');
+
+        // Set title based on state
+        if (this.els.baseTitle) {
+            if (data.isVictory) {
+                this.els.baseTitle.textContent = 'SHIFT COMPLETE!';
+                this.els.baseTitle.className = 'text-2xl font-bold mb-4 text-green-500 uppercase';
+            } else {
+                this.els.baseTitle.textContent = 'BASE PORT';
+                this.els.baseTitle.className = 'text-2xl font-bold mb-4 text-cyan-500 uppercase';
+            }
+        }
+
+        // Set status message
+        if (this.els.baseStatusMsg) {
+            if (data.isVictory) {
+                this.els.baseStatusMsg.textContent = 'All sectors cleared! Start another shift for more earnings.';
+            } else if (data.deathReason) {
+                this.els.baseStatusMsg.textContent = `Taxi damaged: ${data.deathReason}`;
+            } else if (data.hull === data.maxHull && data.cash === 0) {
+                this.els.baseStatusMsg.textContent = 'Ready for duty, pilot. Good luck out there!';
+            } else {
+                this.els.baseStatusMsg.textContent = 'Welcome back, pilot.';
+            }
+        }
+
+        // Update repair cost display
+        if (this.els.baseRepairCost) {
+            this.els.baseRepairCost.textContent = data.repairCost;
+        }
+
+        this.updateBaseHull(data.hull, data.maxHull, data.cash, data.repairCost);
+
+        // Check for game over condition (0 hull and not enough cash to repair)
+        const isGameOver = data.hull <= 0 && data.cash < data.repairCost;
+
+        if (this.els.baseGameOverMsg) {
+            if (isGameOver) {
+                this.els.baseGameOverMsg.classList.remove('hidden');
+            } else {
+                this.els.baseGameOverMsg.classList.add('hidden');
+            }
+        }
+
+        // Hide start shift button if game over
+        if (this.els.startShiftBtn) {
+            if (isGameOver) {
+                this.els.startShiftBtn.classList.add('hidden');
+            } else {
+                this.els.startShiftBtn.classList.remove('hidden');
+            }
+        }
+    }
+
+    hideBase() {
+        if (this.els.baseOverlay) {
+            this.els.baseOverlay.classList.add('hidden');
+        }
+    }
+
+    updateBaseHull(current, max, cash, repairCost) {
+        if (!this.els.baseHullContainer) return;
+
+        // Update cash display
+        if (this.els.baseCash) {
+            this.els.baseCash.textContent = `$${cash}`;
+        }
+
+        // Build hull display with repair buttons
+        let html = '';
+        for (let i = 0; i < max; i++) {
+            if (i < current) {
+                // Filled hull pip
+                html += `<span class="text-2xl">❤️</span>`;
+            } else {
+                // Empty hull pip with repair button
+                const canAfford = cash >= repairCost;
+                const btnClass = canAfford
+                    ? 'bg-green-700 hover:bg-green-600 cursor-pointer'
+                    : 'bg-gray-700 cursor-not-allowed opacity-50';
+                html += `
+                    <button class="repair-btn flex flex-col items-center p-2 ${btnClass} border border-gray-600 rounded"
+                            data-index="${i}" ${!canAfford ? 'disabled' : ''}>
+                        <span class="text-2xl">🖤</span>
+                        <span class="text-xs text-white mt-1">+$${repairCost}</span>
+                    </button>
+                `;
+            }
+        }
+
+        this.els.baseHullContainer.innerHTML = html;
+
+        // Attach click handlers to repair buttons
+        const repairBtns = this.els.baseHullContainer.querySelectorAll('.repair-btn:not([disabled])');
+        repairBtns.forEach(btn => {
+            btn.onclick = () => {
+                if (this.repairCallback) {
+                    this.repairCallback();
+                }
+            };
+        });
     }
 
     // ==================== ORIGINAL UI METHODS ====================

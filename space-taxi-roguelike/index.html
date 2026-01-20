@@ -146,6 +146,44 @@
                         Try Again
                     </button>
                 </div>
+
+                <!-- Base Port Overlay -->
+                <div id="base-overlay"
+                    class="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-50 text-center p-4 hidden">
+                    <h2 id="base-title" class="text-2xl font-bold mb-4 text-cyan-500 uppercase">Base Port</h2>
+                    <div id="base-status-msg" class="text-sm text-gray-400 mb-4"></div>
+                    <div class="border border-gray-700 p-6 bg-gray-900 shadow-2xl w-full max-w-md">
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-700">
+                            <span class="text-gray-400 text-lg">CASH:</span>
+                            <span id="base-cash" class="text-yellow-500 font-bold text-2xl">$0</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-400">HULL STATUS:</span>
+                                <span class="text-xs text-gray-500">Repair: $<span id="base-repair-cost">100</span>/hull</span>
+                            </div>
+                            <div id="base-hull-container" class="flex justify-center gap-2 mt-2">
+                                <!-- Hull pips with repair buttons populated dynamically -->
+                            </div>
+                        </div>
+
+                        <div id="base-game-over-msg" class="hidden text-red-500 text-sm mt-4 p-3 border border-red-500/50 bg-red-900/20">
+                            Hull destroyed and no funds for repairs.<br>Your run has ended.
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-6">
+                        <button id="start-shift-btn"
+                            class="px-8 py-4 bg-green-700 text-white font-bold border-2 border-white uppercase text-base active:scale-95 transition-transform">
+                            Start New Shift
+                        </button>
+                        <button id="quit-btn"
+                            class="px-8 py-4 bg-gray-700 text-white font-bold border-2 border-gray-500 uppercase text-base active:scale-95 transition-transform">
+                            Quit
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
 

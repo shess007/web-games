@@ -9,7 +9,7 @@ class Game {
         this.renderer.setMinimapContainer(this.ui.els.minimap);
 
         this.state = {
-            gameState: 'START', // START, PLAYING, CONTRACT_SELECT, SECTOR_TRANSITION, DEAD, VICTORY
+            gameState: 'START', // START, PLAYING, CONTRACT_SELECT, SECTOR_TRANSITION, DEAD, VICTORY, BASE
 
             // Run state
             run: {
@@ -135,12 +135,28 @@ class Game {
         const restartBtn = document.getElementById('restart-btn');
         if (restartBtn) restartBtn.onclick = () => this.startRun();
 
+        // Base port buttons
+        const startShiftBtn = document.getElementById('start-shift-btn');
+        if (startShiftBtn) startShiftBtn.onclick = () => this.startNewShift();
+
+        const quitBtn = document.getElementById('quit-btn');
+        if (quitBtn) quitBtn.onclick = () => this.quitToStart();
+
         this.lastGamepadStart = false;
         setInterval(() => {
             if (this.state.gameState === 'START' || this.state.gameState === 'DEAD' || this.state.gameState === 'VICTORY') {
                 const gamepadInput = this.getGamepadInput();
                 if (gamepadInput.start && !this.lastGamepadStart) {
                     this.startRun();
+                }
+                this.lastGamepadStart = gamepadInput.start;
+            } else if (this.state.gameState === 'BASE') {
+                const gamepadInput = this.getGamepadInput();
+                if (gamepadInput.start && !this.lastGamepadStart) {
+                    // Only start new shift if player has hull
+                    if (this.state.run.hull > 0) {
+                        this.startNewShift();
+                    }
                 }
                 this.lastGamepadStart = gamepadInput.start;
             }
@@ -212,9 +228,8 @@ class Game {
             maxSpeedReached: 0
         };
 
-        this.state.gameState = 'PLAYING';
-        this.initSector(0);
-        this.gameLoop();
+        // Go to base port first
+        this.goToBase(false);
     }
 
     initSector(sectorIndex) {
@@ -440,7 +455,7 @@ class Game {
         this.audio.playSound(100, 0.8, 'sawtooth', 0.5);
 
         setTimeout(() => {
-            this.showRunSummary(false);
+            this.goToBase(false);
         }, 1500);
     }
 
@@ -449,7 +464,7 @@ class Game {
         this.renderer.flash('#00ff00', 0.8);
 
         setTimeout(() => {
-            this.showRunSummary(true);
+            this.goToBase(true);
         }, 1500);
     }
 
@@ -473,6 +488,81 @@ class Game {
             finalScore,
             deathReason: run.deathReason
         });
+    }
+
+    // ==================== BASE PORT ====================
+
+    goToBase(isVictory) {
+        this.state.gameState = 'BASE';
+        this.ui.showBase({
+            cash: this.state.run.cash,
+            hull: this.state.run.hull,
+            maxHull: ROGUELIKE.maxHull,
+            repairCost: ROGUELIKE.repairCost,
+            isVictory: isVictory,
+            deathReason: this.state.run.deathReason
+        }, () => this.repairHull());
+    }
+
+    repairHull() {
+        if (this.state.run.hull < ROGUELIKE.maxHull &&
+            this.state.run.cash >= ROGUELIKE.repairCost) {
+            this.state.run.hull++;
+            this.state.run.cash -= ROGUELIKE.repairCost;
+            this.ui.updateBaseHull(
+                this.state.run.hull,
+                ROGUELIKE.maxHull,
+                this.state.run.cash,
+                ROGUELIKE.repairCost
+            );
+
+            // Check if game over state should be updated (player repaired and can now continue)
+            const isGameOver = this.state.run.hull <= 0 && this.state.run.cash < ROGUELIKE.repairCost;
+            if (!isGameOver && this.ui.els.startShiftBtn) {
+                this.ui.els.startShiftBtn.classList.remove('hidden');
+            }
+            if (!isGameOver && this.ui.els.baseGameOverMsg) {
+                this.ui.els.baseGameOverMsg.classList.add('hidden');
+            }
+
+            this.audio.playSound(600, 0.2, 'sine', 0.1);
+        }
+    }
+
+    startNewShift() {
+        this.ui.hideBase();
+
+        // Keep hull and cash from previous run
+        const preservedHull = this.state.run.hull;
+        const preservedCash = this.state.run.cash;
+
+        // Reset run state but preserve hull and cash
+        this.state.run = {
+            currentSector: 0,
+            hull: preservedHull,
+            cash: preservedCash,
+            passengersDelivered: 0,
+            startTime: Date.now(),
+            deathReason: null,
+            wallBumps: 0,
+            maxSpeedReached: 0
+        };
+
+        this.state.gameState = 'PLAYING';
+        this.initSector(0);
+        this.gameLoop();
+    }
+
+    quitToStart() {
+        this.ui.hideBase();
+        this.ui.showOverlay(
+            'Survive your shift.<br><br>' +
+            '• 3 sectors • 3 lives •<br>' +
+            '• Choose your contracts •<br>' +
+            '• Reach the final fare •',
+            false
+        );
+        this.state.gameState = 'START';
     }
 
     // ==================== GAME LOOP ====================
