@@ -265,18 +265,82 @@
         <!-- RIGHT DASHBOARD -->
         <aside id="panel-right"
             class="cockpit-panel sidebar-right flex flex-col justify-between p-2 border-l border-red-600/10">
-            <div id="speed-pod" class="instrument-pod">
+
+            <!-- Passenger Display -->
+            <div id="passenger-pod" class="instrument-pod">
+                <span class="label-retro text-pink-400">PASSENGER</span>
+                <div id="avatar-container" class="avatar-display">
+                    <div class="avatar-ring"></div>
+                    <span class="avatar-icon"></span>
+                </div>
+                <div class="passenger-status">
+                    <span id="passenger-status-text">NO PASSENGER</span>
+                </div>
+            </div>
+
+            <!-- Navigation Target -->
+            <div id="nav-pod" class="instrument-pod">
+                <span class="label-retro text-cyan-400">NAVIGATION</span>
+                <div class="nav-display">
+                    <div class="nav-row">
+                        <span class="nav-label">TARGET</span>
+                        <span id="target" class="nav-value target-value">---</span>
+                    </div>
+                    <div class="nav-row">
+                        <span class="nav-label">FARES</span>
+                        <span id="fare-count" class="nav-value fare-value">0/2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Velocity Gauge - Vertical Speedometer -->
+            <div id="speed-pod" class="velocity-gauge-vertical">
                 <span class="label-retro">VELOCITY</span>
-                <div id="avatar-container"
-                    class="mb-2 bg-black/50 border border-white/5 w-12 h-12 mx-auto flex items-center justify-center text-2xl">
+                <div class="velocity-gauge-outer">
+                    <!-- Speed zone labels -->
+                    <div class="velocity-zones">
+                        <span class="zone-label zone-danger">DANGER</span>
+                        <span class="zone-label zone-caution">CAUTION</span>
+                        <span class="zone-label zone-safe">SAFE</span>
+                    </div>
+                    <div class="velocity-gauge-inner">
+                        <!-- Background zones -->
+                        <div class="velocity-zone velocity-zone-danger"></div>
+                        <div class="velocity-zone velocity-zone-caution"></div>
+                        <div class="velocity-zone velocity-zone-safe"></div>
+                        <!-- Speed indicator bar -->
+                        <div id="speed-bar"></div>
+                        <!-- Needle indicator -->
+                        <div id="speed-needle">
+                            <span class="needle-tip"></span>
+                        </div>
+                        <!-- Landing threshold line -->
+                        <div class="landing-threshold">
+                            <span class="threshold-label">MAX LAND</span>
+                        </div>
+                    </div>
+                    <!-- Tick marks -->
+                    <div class="velocity-ticks">
+                        <span class="vtick" data-label="5.0"></span>
+                        <span class="vtick"></span>
+                        <span class="vtick" data-label="4.0"></span>
+                        <span class="vtick"></span>
+                        <span class="vtick" data-label="3.0"></span>
+                        <span class="vtick"></span>
+                        <span class="vtick" data-label="2.0"></span>
+                        <span class="vtick"></span>
+                        <span class="vtick" data-label="1.0"></span>
+                        <span class="vtick"></span>
+                        <span class="vtick" data-label="0.0"></span>
+                    </div>
                 </div>
-                <div class="flex items-baseline justify-center gap-1">
-                    <span id="speed-val" class="text-2xl font-bold text-green-400">0.0</span>
-                    <span class="text-xs text-gray-500">u/s</span>
+                <div class="velocity-readout">
+                    <span id="speed-val" class="velocity-value">0.0</span>
+                    <span class="velocity-unit">u/s</span>
                 </div>
-                <div class="text-sm text-gray-400 flex justify-between mt-3 border-t border-white/5 pt-2">
-                    <span>TGT: <span id="target" class="text-cyan-400 font-bold">---</span></span>
-                    <span>FARE: <span id="fare-count" class="text-white font-bold">0/2</span></span>
+                <div class="landing-indicator" id="landing-indicator">
+                    <span class="landing-icon">⬇</span>
+                    <span class="landing-text">LAND OK</span>
                 </div>
             </div>
 

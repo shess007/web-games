@@ -6,8 +6,12 @@ class UIManager {
             fuelVal: document.getElementById('fuel-val'),
             fuelBar: document.getElementById('fuel-bar'),
             speedVal: document.getElementById('speed-val'),
+            speedBar: document.getElementById('speed-bar'),
+            speedNeedle: document.getElementById('speed-needle'),
+            landingIndicator: document.getElementById('landing-indicator'),
             fuelPod: document.getElementById('fuel-pod'),
             speedPod: document.getElementById('speed-pod'),
+            passengerStatus: document.getElementById('passenger-status-text'),
             message: document.getElementById('message'),
             passengerComment: document.getElementById('passenger-comment'),
             target: document.getElementById('target'),
@@ -97,9 +101,50 @@ class UIManager {
                 this.els.fuelBar.classList.add('warning');
             }
         }
+        // Velocity gauge updates
+        const maxSpeed = 5.0; // Max display speed
+        const landingSpeed = typeof MAX_LANDING_SPD !== 'undefined' ? MAX_LANDING_SPD : 1.0;
+        const speedPercent = Math.min((speed / maxSpeed) * 100, 100);
+        const canLand = speed <= landingSpeed;
+
         if (this.els.speedVal) {
             this.els.speedVal.innerText = speed.toFixed(1);
-            this.els.speedVal.style.color = (speed <= (typeof MAX_LANDING_SPD !== 'undefined' ? MAX_LANDING_SPD : 1.0)) ? '#00ff41' : '#ff3e3e';
+            // Apply color classes based on speed zones
+            this.els.speedVal.classList.remove('caution', 'danger');
+            if (speed > 3) {
+                this.els.speedVal.classList.add('danger');
+            } else if (speed > landingSpeed) {
+                this.els.speedVal.classList.add('caution');
+            }
+        }
+
+        // Update speed bar height and color
+        if (this.els.speedBar) {
+            this.els.speedBar.style.height = speedPercent + '%';
+            this.els.speedBar.classList.remove('caution', 'danger');
+            if (speed > 3) {
+                this.els.speedBar.classList.add('danger');
+            } else if (speed > landingSpeed) {
+                this.els.speedBar.classList.add('caution');
+            }
+        }
+
+        // Update needle position
+        if (this.els.speedNeedle) {
+            this.els.speedNeedle.style.bottom = speedPercent + '%';
+        }
+
+        // Update landing indicator
+        if (this.els.landingIndicator) {
+            this.els.landingIndicator.classList.remove('active', 'warning');
+            const landingText = this.els.landingIndicator.querySelector('.landing-text');
+            if (canLand) {
+                this.els.landingIndicator.classList.add('active');
+                if (landingText) landingText.textContent = 'LAND OK';
+            } else {
+                this.els.landingIndicator.classList.add('warning');
+                if (landingText) landingText.textContent = 'TOO FAST';
+            }
         }
 
         if (state.fuel < 25) this.els.fuelPod?.classList.add('danger-alert');
@@ -765,14 +810,24 @@ class UIManager {
 
     updatePassengerAvatar(character) {
         if (!this.els.avatar) return;
+        const avatarIcon = this.els.avatar.querySelector('.avatar-icon');
+        const passengerStatus = this.els.passengerStatus;
+
         if (character === null) {
-            this.els.avatar.innerText = '';
-            this.els.avatar.style.borderColor = 'rgba(255,255,255,0.05)';
+            if (avatarIcon) avatarIcon.innerText = '';
+            this.els.avatar.classList.remove('has-passenger');
+            if (passengerStatus) {
+                passengerStatus.innerText = 'NO PASSENGER';
+                passengerStatus.parentElement?.classList.remove('active');
+            }
         } else {
             const avatar = character?.emoji || this.avatars[0];
-            this.els.avatar.innerText = avatar;
-            this.els.avatar.style.fontSize = '24px';
-            this.els.avatar.style.borderColor = '#00d2ff';
+            if (avatarIcon) avatarIcon.innerText = avatar;
+            this.els.avatar.classList.add('has-passenger');
+            if (passengerStatus) {
+                passengerStatus.innerText = character?.name || 'ABOARD';
+                passengerStatus.parentElement?.classList.add('active');
+            }
         }
     }
 
