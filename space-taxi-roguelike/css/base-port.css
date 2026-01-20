@@ -1,0 +1,344 @@
+/* ==================== BASE PORT ==================== */
+
+.base-hangar {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0a0a12 0%, #0d0d1a 50%, #080810 100%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Animated grid floor */
+.hangar-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background:
+        linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    transform: perspective(500px) rotateX(60deg);
+    transform-origin: bottom;
+    animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Hangar ceiling lights */
+.hangar-light {
+    position: absolute;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg,
+        rgba(0, 210, 255, 0.8) 0%,
+        rgba(0, 210, 255, 0.1) 30%,
+        transparent 60%);
+    animation: lightFlicker 3s ease-in-out infinite;
+}
+
+.hangar-light-1 { left: 20%; animation-delay: 0s; }
+.hangar-light-2 { left: 50%; animation-delay: 1s; }
+.hangar-light-3 { left: 80%; animation-delay: 2s; }
+
+@keyframes lightFlicker {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Header */
+.base-header {
+    text-align: center;
+    padding: 20px;
+    z-index: 10;
+}
+
+.base-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #00d2ff;
+    text-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 40px rgba(0, 210, 255, 0.4);
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+}
+
+.base-title.victory {
+    color: #00ff41;
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.8), 0 0 40px rgba(0, 255, 65, 0.4);
+}
+
+.base-status {
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 2px;
+}
+
+/* Main content layout */
+.base-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+    z-index: 10;
+}
+
+/* Side panels */
+.base-panel {
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel-section {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 210, 255, 0.2);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.panel-label {
+    font-size: 11px;
+    color: #00d2ff;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px rgba(0, 210, 255, 0.5);
+}
+
+/* Cash display */
+.cash-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
+.cash-symbol {
+    font-size: 20px;
+    color: #ffdd00;
+    margin-right: 4px;
+}
+
+.cash-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: #ffdd00;
+    text-shadow: 0 0 10px rgba(255, 221, 0, 0.6);
+}
+
+/* Hull grid */
+.hull-grid {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.hull-pip-base {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.repair-btn {
+    width: 40px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: rgba(0, 100, 0, 0.4);
+    border: 1px solid rgba(0, 255, 65, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.repair-btn:hover:not(:disabled) {
+    background: rgba(0, 150, 0, 0.6);
+    border-color: rgba(0, 255, 65, 0.8);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+}
+
+.repair-btn:disabled {
+    background: rgba(50, 50, 50, 0.4);
+    border-color: rgba(100, 100, 100, 0.3);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.repair-btn .repair-cost {
+    font-size: 8px;
+    color: #00ff41;
+    margin-top: 2px;
+}
+
+.repair-info {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Game over message */
+.game-over-msg {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 4px;
+    color: #ff4444;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.6;
+    animation: gameOverPulse 1s ease-in-out infinite;
+}
+
+@keyframes gameOverPulse {
+    0%, 100% { border-color: rgba(255, 0, 0, 0.4); }
+    50% { border-color: rgba(255, 0, 0, 0.8); }
+}
+
+/* Taxi display area */
+.base-taxi-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.taxi-platform {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.platform-glow {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(ellipse at center,
+        rgba(0, 210, 255, 0.15) 0%,
+        rgba(0, 210, 255, 0.05) 40%,
+        transparent 70%);
+    animation: platformGlow 2s ease-in-out infinite;
+}
+
+@keyframes platformGlow {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+#taxi-canvas {
+    position: relative;
+    z-index: 5;
+    image-rendering: pixelated;
+}
+
+.platform-base {
+    position: absolute;
+    bottom: -20px;
+    width: 180px;
+    height: 20px;
+    background: linear-gradient(180deg,
+        rgba(0, 210, 255, 0.3) 0%,
+        rgba(0, 210, 255, 0.1) 50%,
+        transparent 100%);
+    border-radius: 50%;
+    filter: blur(5px);
+}
+
+.taxi-label {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+    letter-spacing: 4px;
+}
+
+/* Action buttons */
+.base-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 20px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    border: 2px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.base-btn-primary {
+    background: rgba(0, 100, 0, 0.4);
+    border-color: #00ff41;
+    color: #00ff41;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+}
+
+.base-btn-primary:hover {
+    background: rgba(0, 150, 0, 0.6);
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+}
+
+.base-btn-primary:active {
+    background: #00ff41;
+    color: #000;
+}
+
+.base-btn-secondary {
+    background: rgba(50, 50, 50, 0.4);
+    border-color: #666;
+    color: #888;
+}
+
+.base-btn-secondary:hover {
+    background: rgba(80, 80, 80, 0.6);
+    border-color: #888;
+    color: #aaa;
+}
+
+.btn-icon {
+    font-size: 14px;
+}
+
+/* Shift info */
+.shift-info {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: auto;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-row span:last-child {
+    color: #aaa;
+}

@@ -108,8 +108,8 @@ class Renderer {
     }
 
     generateNebulas(level) {
-        // Create procedural nebula positions - more nebulas with larger radius
-        const nebulaCount = 6 + Math.floor(Math.random() * 5);
+        // Create procedural nebula positions - just a few for subtle background interest
+        const nebulaCount = 2 + Math.floor(Math.random() * 2);
         for (let i = 0; i < nebulaCount; i++) {
             this.nebulaGradients.push({
                 x: Math.random() * level.w,
@@ -125,13 +125,13 @@ class Renderer {
 
     getNebulaColor() {
         const colors = [
-            'rgba(140, 60, 200, 0.25)',   // Vibrant Purple
-            'rgba(60, 140, 220, 0.22)',   // Bright Blue
-            'rgba(200, 60, 140, 0.20)',   // Hot Magenta
-            'rgba(60, 200, 150, 0.18)',   // Cyan Teal
-            'rgba(220, 140, 60, 0.20)',   // Warm Orange
-            'rgba(180, 80, 220, 0.22)',   // Violet
-            'rgba(80, 180, 220, 0.20)'    // Electric Blue
+            'rgba(140, 60, 200, 0.12)',   // Vibrant Purple
+            'rgba(60, 140, 220, 0.10)',   // Bright Blue
+            'rgba(200, 60, 140, 0.10)',   // Hot Magenta
+            'rgba(60, 200, 150, 0.08)',   // Cyan Teal
+            'rgba(220, 140, 60, 0.10)',   // Warm Orange
+            'rgba(180, 80, 220, 0.10)',   // Violet
+            'rgba(80, 180, 220, 0.10)'    // Electric Blue
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }

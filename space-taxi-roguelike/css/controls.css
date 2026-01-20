@@ -1,0 +1,47 @@
+/* BUTTONS */
+.mobile-btn-rect {
+    width: 60px;
+    height: 50px;
+    background: rgba(0, 255, 65, 0.05);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    color: var(--terminal-green);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.mobile-btn-up {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 210, 255, 0.1);
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-size: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+}
+
+.mobile-btn-rect:active, .mobile-btn-up:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hide mobile controls on desktop */
+@media (min-width: 768px) {
+    #controls-left,
+    #controls-right {
+        display: none !important;
+    }
+}
+
+/* Show mobile controls only on touch devices */
+@media (hover: hover) and (pointer: fine) {
+    #controls-left,
+    #controls-right {
+        display: none !important;
+    }
+}

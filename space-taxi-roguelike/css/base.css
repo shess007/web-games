@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+:root {
+    --cockpit-bg: #09090b;
+    --terminal-green: #00ff41;
+    --neon-blue: #00d2ff;
+    --alert-red: #ff3e3e;
+    --warn-yellow: #ffdf00;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #000;
+    overflow: hidden;
+    font-family: 'VT323', monospace;
+    color: #fff;
+    user-select: none;
+    touch-action: none;
+}
+
+#game-wrapper {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    background: #000;
+}
+
+/* CRITICAL: HIDDEN CLASS */
+.hidden {
+    display: none !important;
+}
