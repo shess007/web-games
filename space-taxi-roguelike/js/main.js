@@ -516,10 +516,13 @@ class Game {
                 ROGUELIKE.repairCost
             );
 
+            // Update the taxi display to show repaired state
+            this.ui.startTaxiAnimation(this.state.run.hull, ROGUELIKE.maxHull);
+
             // Check if game over state should be updated (player repaired and can now continue)
             const isGameOver = this.state.run.hull <= 0 && this.state.run.cash < ROGUELIKE.repairCost;
             if (!isGameOver && this.ui.els.startShiftBtn) {
-                this.ui.els.startShiftBtn.classList.remove('hidden');
+                this.ui.els.startShiftBtn.style.display = 'flex';
             }
             if (!isGameOver && this.ui.els.baseGameOverMsg) {
                 this.ui.els.baseGameOverMsg.classList.add('hidden');

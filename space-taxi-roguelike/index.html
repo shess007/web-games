@@ -29,18 +29,47 @@
                 </div>
             </div>
 
-            <!-- Fuel System -->
-            <div id="fuel-pod" class="instrument-pod">
-                <span class="label-retro">FUEL SYSTEM</span>
-                <div class="fuel-gauge-container">
-                    <div id="fuel-bar" style="width: 100%; background-color: #55ff55;"></div>
+            <!-- Sector Progress -->
+            <div id="sector-pod" class="instrument-pod">
+                <span class="label-retro text-cyan-400">SECTOR</span>
+                <div class="sector-display">
+                    <span id="sector-idx" class="sector-value">1</span>
+                    <span class="sector-divider">/</span>
+                    <span class="sector-total">3</span>
                 </div>
-                <div class="flex justify-between w-full mt-2 px-1">
-                    <span class="text-sm text-gray-400">TNK:<span id="fuel-val" class="text-white font-bold">100</span>%</span>
-                    <span class="text-sm text-gray-400">SEC:<span id="sector-idx" class="text-white font-bold">1</span>/3</span>
+            </div>
+
+            <!-- Cash Display -->
+            <div id="cash-pod" class="instrument-pod">
+                <span class="label-retro text-yellow-400">CREDITS</span>
+                <div class="cash-display-main">
+                    <span class="cash-symbol-main">$</span>
+                    <span id="cash" class="cash-value-main">0</span>
                 </div>
-                <div class="mt-2 text-yellow-500 text-base text-center border-t border-white/5 pt-2">
-                    CASH: $<span id="cash" class="font-bold">0</span>
+            </div>
+
+            <!-- Fuel System - Vertical Gauge -->
+            <div id="fuel-pod" class="fuel-gauge-vertical">
+                <span class="label-retro">FUEL</span>
+                <div class="fuel-gauge-outer">
+                    <div class="fuel-gauge-ticks">
+                        <span class="tick" data-label="100"></span>
+                        <span class="tick"></span>
+                        <span class="tick" data-label="75"></span>
+                        <span class="tick"></span>
+                        <span class="tick" data-label="50"></span>
+                        <span class="tick"></span>
+                        <span class="tick" data-label="25"></span>
+                        <span class="tick"></span>
+                        <span class="tick" data-label="0"></span>
+                    </div>
+                    <div class="fuel-gauge-inner">
+                        <div id="fuel-bar"></div>
+                        <div class="fuel-gauge-glow"></div>
+                    </div>
+                </div>
+                <div class="fuel-readout">
+                    <span id="fuel-val" class="fuel-value">100</span><span class="fuel-unit">%</span>
                 </div>
             </div>
 
@@ -148,40 +177,86 @@
                 </div>
 
                 <!-- Base Port Overlay -->
-                <div id="base-overlay"
-                    class="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-50 text-center p-4 hidden">
-                    <h2 id="base-title" class="text-2xl font-bold mb-4 text-cyan-500 uppercase">Base Port</h2>
-                    <div id="base-status-msg" class="text-sm text-gray-400 mb-4"></div>
-                    <div class="border border-gray-700 p-6 bg-gray-900 shadow-2xl w-full max-w-md">
-                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-700">
-                            <span class="text-gray-400 text-lg">CASH:</span>
-                            <span id="base-cash" class="text-yellow-500 font-bold text-2xl">$0</span>
+                <div id="base-overlay" class="absolute inset-0 z-50 hidden">
+                    <!-- Hangar Background -->
+                    <div class="base-hangar">
+                        <!-- Grid floor effect -->
+                        <div class="hangar-floor"></div>
+
+                        <!-- Hangar lights -->
+                        <div class="hangar-light hangar-light-1"></div>
+                        <div class="hangar-light hangar-light-2"></div>
+                        <div class="hangar-light hangar-light-3"></div>
+
+                        <!-- Title Bar -->
+                        <div class="base-header">
+                            <h2 id="base-title" class="base-title">BASE PORT</h2>
+                            <div id="base-status-msg" class="base-status"></div>
                         </div>
 
-                        <div class="mb-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-gray-400">HULL STATUS:</span>
-                                <span class="text-xs text-gray-500">Repair: $<span id="base-repair-cost">100</span>/hull</span>
+                        <!-- Main Content -->
+                        <div class="base-content">
+                            <!-- Left Panel - Stats -->
+                            <div class="base-panel base-panel-left">
+                                <div class="panel-section">
+                                    <div class="panel-label">PILOT ACCOUNT</div>
+                                    <div class="cash-display">
+                                        <span class="cash-symbol">$</span>
+                                        <span id="base-cash" class="cash-value">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="panel-section">
+                                    <div class="panel-label">HULL INTEGRITY</div>
+                                    <div id="base-hull-container" class="hull-grid">
+                                        <!-- Hull pips populated dynamically -->
+                                    </div>
+                                    <div class="repair-info">
+                                        REPAIR COST: $<span id="base-repair-cost">100</span>/UNIT
+                                    </div>
+                                </div>
+
+                                <div id="base-game-over-msg" class="game-over-msg hidden">
+                                    ⚠ HULL CRITICAL ⚠<br>
+                                    Insufficient funds for repairs.<br>
+                                    Run terminated.
+                                </div>
                             </div>
-                            <div id="base-hull-container" class="flex justify-center gap-2 mt-2">
-                                <!-- Hull pips with repair buttons populated dynamically -->
+
+                            <!-- Center - Taxi Display -->
+                            <div class="base-taxi-display">
+                                <div class="taxi-platform">
+                                    <div class="platform-glow"></div>
+                                    <canvas id="taxi-canvas" width="280" height="200"></canvas>
+                                    <div class="platform-base"></div>
+                                </div>
+                                <div class="taxi-label">TAXI UNIT #7</div>
+                            </div>
+
+                            <!-- Right Panel - Actions -->
+                            <div class="base-panel base-panel-right">
+                                <button id="start-shift-btn" class="base-btn base-btn-primary">
+                                    <span class="btn-icon">▶</span>
+                                    <span class="btn-text">START SHIFT</span>
+                                </button>
+
+                                <button id="quit-btn" class="base-btn base-btn-secondary">
+                                    <span class="btn-icon">✕</span>
+                                    <span class="btn-text">QUIT</span>
+                                </button>
+
+                                <div class="shift-info">
+                                    <div class="info-row">
+                                        <span>SECTORS:</span>
+                                        <span>3</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span>DIFFICULTY:</span>
+                                        <span class="text-yellow-500">NORMAL</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <div id="base-game-over-msg" class="hidden text-red-500 text-sm mt-4 p-3 border border-red-500/50 bg-red-900/20">
-                            Hull destroyed and no funds for repairs.<br>Your run has ended.
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4 mt-6">
-                        <button id="start-shift-btn"
-                            class="px-8 py-4 bg-green-700 text-white font-bold border-2 border-white uppercase text-base active:scale-95 transition-transform">
-                            Start New Shift
-                        </button>
-                        <button id="quit-btn"
-                            class="px-8 py-4 bg-gray-700 text-white font-bold border-2 border-gray-500 uppercase text-base active:scale-95 transition-transform">
-                            Quit
-                        </button>
                     </div>
                 </div>
             </div>
