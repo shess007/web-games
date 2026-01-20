@@ -304,15 +304,20 @@ class Game {
 
         const pass = level.passengers[this.state.passengerIndex];
         const startPlat = level.platforms.find(p => p.id === pass.f);
+        const destPlat = level.platforms.find(p => p.id === pass.t);
+
         this.state.activePassenger = {
             state: 'WAITING',
             x: startPlat.x + startPlat.w / 2,
-            y: startPlat.y - 5
+            y: startPlat.y - 5,
+            character: pass.character,
+            fromName: pass.fromName || startPlat.name,
+            toName: pass.toName || destPlat?.name
         };
 
         this.ui.updatePassCount(this.state.passengerIndex + 1, level.passengers.length);
-        this.ui.setTarget("P" + pass.f);
-        this.ui.setMessage("GAST HOLEN");
+        this.ui.setTarget(this.state.activePassenger.fromName || "PAD " + pass.f);
+        this.ui.setMessage("GAST HOLEN: " + (this.state.activePassenger.character?.name || "Passagier"));
     }
 
     gameLoop() {
@@ -449,7 +454,7 @@ class Game {
 
         // Update Passenger Avatar in UI
         if (this.state.activePassenger?.state === 'IN_TAXI') {
-            this.ui.updatePassengerAvatar(this.state.passengerIndex);
+            this.ui.updatePassengerAvatar(this.state.activePassenger.character);
         } else {
             this.ui.updatePassengerAvatar(null);
         }
@@ -522,37 +527,27 @@ class Game {
             activePassenger.state = 'IN_TAXI';
             this.audio.playSound(600, 0.22, 'sine', 0.1);
             this.vibratePickup();
+            this.renderer.flash('#00ffaa', 0.4); // Cyan-green flash for pickup
 
-            const pickUpComments = [
-                "[ flieg gefälligst schneller! ]",
-                "[ ist das dein erstes mal? ]",
-                "[ hoffentlich hast du 'ne lizenz.. ]",
-                "[ ich zahl nicht für umwege! ]",
-                "[ wehe ich krieg 'nen fleck auf's kostüm! ]",
-                "[ ugh, diese billig-taxis schon wieder.. ]",
-                "[ gib gas, meine pizza wird kalt! ]",
-                "[ blick nach vorn, nicht in den spiegel! ]"
-            ];
-            const randomPickUp = pickUpComments[Math.floor(Math.random() * pickUpComments.length)];
+            // Get personality-based pickup comment
+            const personality = activePassenger.character?.personality || 'casual';
+            const pickupComments = PASSENGER_COMMENTS.pickup[personality] || PASSENGER_COMMENTS.pickup.casual;
+            const randomPickUp = "[ " + pickupComments[Math.floor(Math.random() * pickupComments.length)] + " ]";
 
             this.ui.setPassengerComment(randomPickUp, 1);
-            this.ui.setTarget("P" + pass.t);
-            this.ui.setMessage("ZIEL: P" + pass.t);
+            this.ui.setTarget(activePassenger.toName || "PAD " + pass.t);
+            this.ui.setMessage("ZIEL: " + (activePassenger.toName || "PAD " + pass.t));
         } else if (taxi.landedOn === pass.t && activePassenger?.state === 'IN_TAXI') {
             activePassenger.state = 'DONE';
             this.state.cash += 100;
             this.audio.playSound(800, 0.35, 'sine', 0.1);
             this.vibratePickup();
+            this.renderer.flash('#ffdd00', 0.5); // Gold flash for dropoff + cash
 
-            const dropOffComments = [
-                "[ gerade so überlebt.. ]",
-                "[ behalt das wechselgeld nicht! ]",
-                "[ fahrstil wie ein asteroid.. ]",
-                "[ endlich raus aus der kiste! ]",
-                "[ ein stern bei taxi-checker! ]",
-                "[ trinkgeld? träum weiter! ]"
-            ];
-            const randomDropOff = dropOffComments[Math.floor(Math.random() * dropOffComments.length)];
+            // Get personality-based dropoff comment
+            const personality = activePassenger.character?.personality || 'casual';
+            const dropoffComments = PASSENGER_COMMENTS.dropoff[personality] || PASSENGER_COMMENTS.dropoff.casual;
+            const randomDropOff = "[ " + dropoffComments[Math.floor(Math.random() * dropoffComments.length)] + " ]";
             this.ui.setPassengerComment(randomDropOff, 1);
 
             this.state.passengerIndex++;
@@ -562,6 +557,7 @@ class Game {
             } else {
                 this.state.isTransitioning = true;
                 this.ui.setMessage("SEKTOR KLAR!");
+                this.renderer.flash('#ffffff', 0.7); // Bright white flash for level complete
                 setTimeout(() => this.nextLevel(), 1500);
             }
         }

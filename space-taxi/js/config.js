@@ -7,6 +7,178 @@ var MAX_LANDING_SPD = 1.0;
 // Levels array - populated by procedural generator
 var levels = [];
 
+// ==================== WORLD BUILDING DATA ====================
+
+// Platform names for procedural generation
+var PLATFORM_NAMES = [
+    "ALPHA BASE", "NEBULA DOCK", "ASTEROID HUB", "COSMIC PORT",
+    "STELLAR BAY", "VOID STATION", "PULSAR PAD", "QUASAR POINT",
+    "NOVA TERMINAL", "ECLIPSE DECK", "METEOR STOP", "ORBIT PLAZA",
+    "ZENITH TOWER", "DEEP SPACE 7", "FRONTIER POST", "DRIFT HAVEN",
+    "SOLAR FLARE", "DARK MATTER", "ION GATE", "WARP ZONE",
+    "CRYO STATION", "PLASMA PORT", "GRAVITY WELL", "SINGULARITY",
+    "PHOTON PIER", "QUANTUM QUAY", "NEUTRON NEST", "COMET CORNER",
+    "STARFALL INN", "VOID WALKER", "LUNAR LEDGE", "MARS DEPOT"
+];
+
+var FUEL_STATION_NAMES = [
+    "FUEL DEPOT", "GAS GIANT", "ENERGY CORE", "POWER CELL",
+    "REFUEL BAY", "CHARGE POINT", "TANK STATION", "PLASMA PUMP"
+];
+
+// Passenger characters with personalities
+var PASSENGERS = [
+    { emoji: "🧑‍🚀", name: "Astronaut", personality: "professional" },
+    { emoji: "👾", name: "Alien", personality: "mysterious" },
+    { emoji: "🤖", name: "Robot", personality: "logical" },
+    { emoji: "🕵️", name: "Agent", personality: "secretive" },
+    { emoji: "🧙", name: "Space Wizard", personality: "eccentric" },
+    { emoji: "🥷", name: "Ninja", personality: "silent" },
+    { emoji: "👽", name: "Grey", personality: "curious" },
+    { emoji: "🧛", name: "Void Vampire", personality: "dramatic" },
+    { emoji: "🤠", name: "Space Cowboy", personality: "casual" },
+    { emoji: "👩‍🔬", name: "Scientist", personality: "nerdy" },
+    { emoji: "💀", name: "Skeleton", personality: "spooky" },
+    { emoji: "🎃", name: "Pumpkin Head", personality: "festive" },
+    { emoji: "🦊", name: "Fox Person", personality: "sly" },
+    { emoji: "🐙", name: "Octopoid", personality: "tentacular" },
+    { emoji: "🌟", name: "Star Being", personality: "radiant" },
+    { emoji: "🔮", name: "Fortune Teller", personality: "prophetic" }
+];
+
+// Passenger comments by personality
+var PASSENGER_COMMENTS = {
+    pickup: {
+        professional: ["Mission acknowledged.", "Coordinates locked.", "Proceed to destination."],
+        mysterious: ["The stars align...", "Interesting trajectory.", "I sense... turbulence."],
+        logical: ["Efficiency at 73%.", "Route calculated.", "Fuel consumption nominal."],
+        secretive: ["Don't ask questions.", "Keep it quiet.", "No detours."],
+        eccentric: ["To infinity!", "My crystals are tingling!", "The cosmos calls!"],
+        silent: ["...", "*nods*", "..."],
+        curious: ["What is this vehicle?", "Fascinating propulsion!", "Your species is odd."],
+        dramatic: ["The void awaits!", "Darkness is my ally.", "Eternal night beckons!"],
+        casual: ["Howdy, partner!", "Let's ride!", "Yee-haw, space style!"],
+        nerdy: ["Interesting thrust vectors!", "The physics here are wild!", "Calculating G-forces..."],
+        spooky: ["Boo.", "Cold in here...", "I see dead planets."],
+        festive: ["Trick or treat!", "Spooky szn!", "Got any candy?"],
+        sly: ["Quick and quiet.", "No funny business.", "I'm watching you."],
+        tentacular: ["All 8 arms ready.", "Grip secured.", "Tentacles crossed!"],
+        radiant: ["Shine bright!", "Stellar journey!", "Glow mode: ON"],
+        prophetic: ["I foresee... a landing.", "The cards say: bumpy.", "Destiny awaits!"]
+    },
+    dropoff: {
+        professional: ["Mission complete.", "Satisfactory service.", "Payment processed."],
+        mysterious: ["Until we meet again...", "The prophecy continues.", "Farewell, mortal."],
+        logical: ["Arrival confirmed.", "Trip efficiency: adequate.", "Transaction complete."],
+        secretive: ["You saw nothing.", "Forget my face.", "This never happened."],
+        eccentric: ["What a ride!", "My aura is pleased!", "Cosmic blessings!"],
+        silent: ["...", "*vanishes*", "..."],
+        curious: ["Adequate transport.", "Your world is strange.", "Most educational."],
+        dramatic: ["The night embraces me!", "Into the shadows!", "MWAHAHAHA!"],
+        casual: ["Much obliged!", "See ya, space cowboy!", "That was a hoot!"],
+        nerdy: ["Smooth deceleration!", "Great landing angle!", "5 stars for physics!"],
+        spooky: ["Rest in peace...", "The haunting continues.", "BOO-bye!"],
+        festive: ["Happy Halloween!", "Pumpkin approved!", "Spook-tacular ride!"],
+        sly: ["Smooth operation.", "You're alright, pilot.", "Perhaps again sometime."],
+        tentacular: ["Suction cups satisfied.", "8/8 would ride again.", "Tentastic!"],
+        radiant: ["You're a star!", "Keep shining!", "Brilliant journey!"],
+        prophetic: ["As I foresaw.", "Destiny delivered.", "The cards were right."]
+    }
+};
+
+// ==================== ENVIRONMENT THEMES ====================
+
+var ENVIRONMENT_THEMES = [
+    {
+        name: "DEEP SPACE",
+        bgColor: "#050510",
+        wallColor: "#2a2a4a",
+        wallHighlight: "#4a4a6a",
+        platformColor: "#00ff41",
+        platformHighlight: "#88ff88",
+        fuelColor: "#00d2ff",
+        starColors: ["#ffffff", "#aaaaff", "#ffaaaa"],
+        ambientParticles: null
+    },
+    {
+        name: "NEBULA ZONE",
+        bgColor: "#100818",
+        wallColor: "#3a1a4a",
+        wallHighlight: "#6a2a7a",
+        platformColor: "#ff00ff",
+        platformHighlight: "#ff88ff",
+        fuelColor: "#00ffaa",
+        starColors: ["#ff88ff", "#8888ff", "#ffffff"],
+        ambientParticles: "nebula"
+    },
+    {
+        name: "ICE FIELDS",
+        bgColor: "#081018",
+        wallColor: "#2a4a6a",
+        wallHighlight: "#4a8aaa",
+        platformColor: "#00ffff",
+        platformHighlight: "#88ffff",
+        fuelColor: "#ffff00",
+        starColors: ["#aaffff", "#ffffff", "#88aaff"],
+        ambientParticles: "snow"
+    },
+    {
+        name: "LAVA SECTOR",
+        bgColor: "#180808",
+        wallColor: "#4a2a1a",
+        wallHighlight: "#8a4a2a",
+        platformColor: "#ff6600",
+        platformHighlight: "#ffaa44",
+        fuelColor: "#00ff88",
+        starColors: ["#ff8844", "#ffaa00", "#ffffff"],
+        ambientParticles: "embers"
+    },
+    {
+        name: "ASTEROID BELT",
+        bgColor: "#0a0a0a",
+        wallColor: "#4a4a4a",
+        wallHighlight: "#6a6a6a",
+        platformColor: "#ffaa00",
+        platformHighlight: "#ffdd44",
+        fuelColor: "#00aaff",
+        starColors: ["#888888", "#aaaaaa", "#ffffff"],
+        ambientParticles: "dust"
+    },
+    {
+        name: "VOID RIFT",
+        bgColor: "#080010",
+        wallColor: "#1a0a3a",
+        wallHighlight: "#3a1a6a",
+        platformColor: "#aa00ff",
+        platformHighlight: "#cc44ff",
+        fuelColor: "#00ffff",
+        starColors: ["#aa44ff", "#4444ff", "#ffffff"],
+        ambientParticles: "void"
+    },
+    {
+        name: "SOLAR FLARE",
+        bgColor: "#181008",
+        wallColor: "#5a4a1a",
+        wallHighlight: "#8a7a3a",
+        platformColor: "#ffff00",
+        platformHighlight: "#ffff88",
+        fuelColor: "#ff4400",
+        starColors: ["#ffff44", "#ffaa00", "#ffffff"],
+        ambientParticles: "plasma"
+    },
+    {
+        name: "CRYSTAL CAVES",
+        bgColor: "#080818",
+        wallColor: "#2a3a5a",
+        wallHighlight: "#4a6a8a",
+        platformColor: "#44ffaa",
+        platformHighlight: "#88ffcc",
+        fuelColor: "#ff44aa",
+        starColors: ["#44ffff", "#ff44ff", "#ffffff"],
+        ambientParticles: "crystals"
+    }
+];
+
 // ==================== PROCEDURAL LEVEL GENERATOR ====================
 
 class LevelGenerator {
@@ -55,6 +227,10 @@ class LevelGenerator {
         // Spawn point near first platform
         const spawnPlat = platforms[0];
 
+        // Select theme based on level number (cycles through themes)
+        const themeIndex = (levelNum - 1) % ENVIRONMENT_THEMES.length;
+        const theme = ENVIRONMENT_THEMES[themeIndex];
+
         const level = {
             w,
             h,
@@ -63,7 +239,8 @@ class LevelGenerator {
             walls,
             passengers,
             generated: true,
-            levelNum: levelNum
+            levelNum: levelNum,
+            theme: theme
         };
 
         if (enemies.length > 0) {
@@ -244,13 +421,20 @@ class LevelGenerator {
         const t = this.wallThickness;
         const margin = 100;
 
+        // Shuffle platform names for this level
+        const shuffledNames = [...PLATFORM_NAMES].sort(() => Math.random() - 0.5);
+        const shuffledFuelNames = [...FUEL_STATION_NAMES].sort(() => Math.random() - 0.5);
+        let nameIndex = 0;
+        let fuelNameIndex = 0;
+
         // Start platform (always in top-left safe zone)
         platforms.push({
             x: t + 20,
             y: t + 100,
             w: this.platformW,
             h: this.platformH,
-            id: 0
+            id: 0,
+            name: shuffledNames[nameIndex++] || "HOME BASE"
         });
 
         let platformId = 1;
@@ -270,7 +454,8 @@ class LevelGenerator {
                     y: py,
                     w: this.platformW,
                     h: this.platformH,
-                    id: platformId++
+                    id: platformId++,
+                    name: shuffledNames[nameIndex++] || `STATION ${platformId}`
                 });
             }
         }
@@ -291,7 +476,8 @@ class LevelGenerator {
                     w: 90,
                     h: this.platformH,
                     id: fuelId--,
-                    fuel: true
+                    fuel: true,
+                    name: shuffledFuelNames[fuelNameIndex++] || "FUEL STOP"
                 });
                 numFuel--;
             }
@@ -339,6 +525,7 @@ class LevelGenerator {
         if (regularPlatforms.length < 2) return passengers;
 
         const usedPairs = new Set();
+        const usedCharacters = new Set();
 
         for (let i = 0; i < numPassengers && i < regularPlatforms.length; i++) {
             let attempts = 0;
@@ -350,13 +537,29 @@ class LevelGenerator {
                 // Ensure different platforms
                 if (fromIdx === toIdx) continue;
 
-                const from = regularPlatforms[fromIdx].id;
-                const to = regularPlatforms[toIdx].id;
-                const pairKey = `${from}-${to}`;
+                const fromPlat = regularPlatforms[fromIdx];
+                const toPlat = regularPlatforms[toIdx];
+                const pairKey = `${fromPlat.id}-${toPlat.id}`;
 
                 if (!usedPairs.has(pairKey)) {
                     usedPairs.add(pairKey);
-                    passengers.push({ f: from, t: to });
+
+                    // Assign a unique character
+                    let character;
+                    let charAttempts = 0;
+                    do {
+                        character = PASSENGERS[Math.floor(Math.random() * PASSENGERS.length)];
+                        charAttempts++;
+                    } while (usedCharacters.has(character.emoji) && charAttempts < 20);
+                    usedCharacters.add(character.emoji);
+
+                    passengers.push({
+                        f: fromPlat.id,
+                        t: toPlat.id,
+                        fromName: fromPlat.name,
+                        toName: toPlat.name,
+                        character: character
+                    });
                     break;
                 }
             }

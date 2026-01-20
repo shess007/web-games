@@ -244,8 +244,12 @@ class Renderer {
         // Speed lines when moving fast
         this.drawSpeedLines(ctx, state);
 
-        // Game elements
-        this.drawWalls(ctx, state.level.walls);
+        // Game elements - Space obstacles
+        this.drawAsteroids(ctx, state.level.asteroids);
+        this.drawDebris(ctx, state.level.debris);
+        this.drawMeteors(ctx, state.level.meteors);
+
+        // Platforms and characters
         this.drawPlatforms(ctx, state.level.platforms);
         this.drawEnemies(ctx, state.level.enemies);
         this.drawActivePassenger(ctx, state.activePassenger);
@@ -515,36 +519,171 @@ class Renderer {
         }
     }
 
-    drawWalls(ctx, walls) {
-        if (!walls) return;
+    // ==================== SPACE OBSTACLES ====================
 
-        // Get theme colors or use defaults
-        const theme = this.currentTheme;
-        const wallColor = theme ? theme.wallColor : '#2a2a4a';
-        const wallHighlight = theme ? theme.wallHighlight : '#4a4a6a';
+    drawAsteroids(ctx, asteroids) {
+        if (!asteroids) return;
 
-        // Parse highlight color for rgba
-        const hr = parseInt(wallHighlight.slice(1, 3), 16);
-        const hg = parseInt(wallHighlight.slice(3, 5), 16);
-        const hb = parseInt(wallHighlight.slice(5, 7), 16);
+        asteroids.forEach(a => {
+            ctx.save();
+            ctx.translate(a.x, a.y);
+            ctx.rotate(a.rotation);
 
-        walls.forEach(w => {
-            // Main wall with theme color
-            ctx.fillStyle = wallColor;
-            ctx.fillRect(w.x, w.y, w.w, w.h);
+            // Outer glow
+            const glow = ctx.createRadialGradient(0, 0, a.size * 0.5, 0, 0, a.size * 1.2);
+            glow.addColorStop(0, 'rgba(100, 80, 60, 0.3)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.fillRect(-a.size * 1.5, -a.size * 1.5, a.size * 3, a.size * 3);
 
-            // Inner border glow with theme colors
-            const innerGradient = ctx.createLinearGradient(w.x, w.y, w.x, w.y + w.h);
-            innerGradient.addColorStop(0, `rgba(${hr}, ${hg}, ${hb}, 0.15)`);
-            innerGradient.addColorStop(0.5, `rgba(${hr}, ${hg}, ${hb}, 0.05)`);
-            innerGradient.addColorStop(1, `rgba(${hr}, ${hg}, ${hb}, 0.15)`);
-            ctx.fillStyle = innerGradient;
-            ctx.fillRect(w.x + 2, w.y + 2, w.w - 4, w.h - 4);
+            // Rocky body - draw polygon from vertices
+            ctx.beginPath();
+            ctx.moveTo(a.vertices[0].x, a.vertices[0].y);
+            for (let i = 1; i < a.vertices.length; i++) {
+                ctx.lineTo(a.vertices[i].x, a.vertices[i].y);
+            }
+            ctx.closePath();
 
-            // Edge highlight with theme color
-            ctx.strokeStyle = `rgba(${hr}, ${hg}, ${hb}, 0.25)`;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.w - 1, w.h - 1);
+            // Fill with gradient
+            const bodyGrad = ctx.createRadialGradient(-a.size * 0.3, -a.size * 0.3, 0, 0, 0, a.size);
+            bodyGrad.addColorStop(0, '#6a5a4a');
+            bodyGrad.addColorStop(0.5, a.color);
+            bodyGrad.addColorStop(1, '#2a2018');
+            ctx.fillStyle = bodyGrad;
+            ctx.fill();
+
+            // Edge highlight
+            ctx.strokeStyle = 'rgba(150, 130, 100, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Crater details
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(a.size * 0.2, a.size * 0.1, a.size * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-a.size * 0.3, -a.size * 0.2, a.size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        });
+    }
+
+    drawDebris(ctx, debris) {
+        if (!debris) return;
+
+        debris.forEach(d => {
+            ctx.save();
+            ctx.translate(d.x, d.y);
+            ctx.rotate(d.rotation);
+
+            ctx.fillStyle = d.color;
+
+            switch(d.type) {
+                case 'scrap':
+                    // Irregular metal piece
+                    ctx.beginPath();
+                    ctx.moveTo(-d.size, -d.size * 0.5);
+                    ctx.lineTo(d.size * 0.5, -d.size);
+                    ctx.lineTo(d.size, d.size * 0.3);
+                    ctx.lineTo(-d.size * 0.3, d.size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    break;
+
+                case 'panel':
+                    // Flat panel
+                    ctx.fillRect(-d.size, -d.size * 0.3, d.size * 2, d.size * 0.6);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.strokeRect(-d.size, -d.size * 0.3, d.size * 2, d.size * 0.6);
+                    break;
+
+                case 'pipe':
+                    // Cylindrical pipe
+                    ctx.fillRect(-d.size * 1.5, -d.size * 0.25, d.size * 3, d.size * 0.5);
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.fillRect(-d.size * 1.5, -d.size * 0.25, d.size * 3, d.size * 0.15);
+                    break;
+
+                case 'crystal':
+                    // Glowing crystal shard
+                    ctx.fillStyle = d.color;
+                    ctx.shadowColor = d.color;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -d.size);
+                    ctx.lineTo(d.size * 0.5, 0);
+                    ctx.lineTo(0, d.size);
+                    ctx.lineTo(-d.size * 0.5, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    break;
+            }
+
+            ctx.restore();
+        });
+    }
+
+    drawMeteors(ctx, meteors) {
+        if (!meteors) return;
+
+        meteors.forEach(m => {
+            // Draw fiery trail first
+            if (m.trail && m.trail.length > 1) {
+                ctx.save();
+                for (let i = 0; i < m.trail.length - 1; i++) {
+                    const t = m.trail[i];
+                    const alpha = t.life * 0.6;
+                    const size = m.size * t.life;
+
+                    // Outer glow
+                    const trailGlow = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, size * 2);
+                    trailGlow.addColorStop(0, `rgba(255, 150, 50, ${alpha * 0.5})`);
+                    trailGlow.addColorStop(0.5, `rgba(255, 80, 0, ${alpha * 0.3})`);
+                    trailGlow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = trailGlow;
+                    ctx.fillRect(t.x - size * 2, t.y - size * 2, size * 4, size * 4);
+                }
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.translate(m.x, m.y);
+            ctx.rotate(m.rotation);
+
+            // Meteor glow
+            const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, m.size * 2);
+            glow.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
+            glow.addColorStop(0.3, 'rgba(255, 100, 0, 0.4)');
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.fillRect(-m.size * 2, -m.size * 2, m.size * 4, m.size * 4);
+
+            // Meteor body
+            const bodyGrad = ctx.createRadialGradient(-m.size * 0.3, -m.size * 0.3, 0, 0, 0, m.size);
+            bodyGrad.addColorStop(0, '#ffcc66');
+            bodyGrad.addColorStop(0.3, '#ff6600');
+            bodyGrad.addColorStop(0.7, '#993300');
+            bodyGrad.addColorStop(1, '#331100');
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, m.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hot core
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(-m.size * 0.2, -m.size * 0.2, m.size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            ctx.restore();
         });
     }
 
@@ -921,17 +1060,44 @@ class Renderer {
             mCtx.stroke();
         }
 
-        // Walls
-        mCtx.fillStyle = '#22232a';
-        level.walls?.forEach(w => {
-            mCtx.fillRect(w.x * scaleW, w.y * scaleH, w.w * scaleW, w.h * scaleH);
+        // Asteroids (brown dots)
+        mCtx.fillStyle = '#6a5040';
+        level.asteroids?.forEach(a => {
+            const size = Math.max(3, a.size * scaleW * 0.8);
+            mCtx.beginPath();
+            mCtx.arc(a.x * scaleW, a.y * scaleH, size, 0, Math.PI * 2);
+            mCtx.fill();
+        });
+
+        // Debris (small gray dots)
+        mCtx.fillStyle = '#555';
+        level.debris?.forEach(d => {
+            mCtx.fillRect(d.x * scaleW - 1, d.y * scaleH - 1, 2, 2);
+        });
+
+        // Meteors (orange with trail indication)
+        level.meteors?.forEach(m => {
+            mCtx.fillStyle = '#ff6600';
+            mCtx.beginPath();
+            mCtx.arc(m.x * scaleW, m.y * scaleH, 3, 0, Math.PI * 2);
+            mCtx.fill();
+            // Direction indicator
+            mCtx.strokeStyle = '#ff9944';
+            mCtx.lineWidth = 1;
+            mCtx.beginPath();
+            mCtx.moveTo(m.x * scaleW, m.y * scaleH);
+            mCtx.lineTo((m.x - m.vx * 10) * scaleW, (m.y - m.vy * 10) * scaleH);
+            mCtx.stroke();
         });
 
         // Platforms
         level.platforms?.forEach(p => {
-            const isTarget = state.activePassenger && (
-                (state.activePassenger.state === 'WAITING' && p.id === levels[state.currentLevelIdx].passengers[state.passengerIndex].f) ||
-                (state.activePassenger.state === 'IN_TAXI' && p.id === levels[state.currentLevelIdx].passengers[state.passengerIndex].t)
+            const passengers = level.passengers || [];
+            const passIdx = state.passengerIndex || 0;
+            const currentPass = passengers[passIdx];
+            const isTarget = state.activePassenger && currentPass && (
+                (state.activePassenger.state === 'WAITING' && p.id === currentPass.f) ||
+                (state.activePassenger.state === 'IN_TAXI' && p.id === currentPass.t)
             );
             mCtx.fillStyle = isTarget ? '#fff' : (p.fuel ? '#00aaff' : '#444');
             mCtx.fillRect(p.x * scaleW, p.y * scaleH, p.w * scaleW, p.h * scaleH);

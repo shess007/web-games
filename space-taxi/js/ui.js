@@ -93,13 +93,13 @@ class UIManager {
         }, 4000);
     }
 
-    updatePassengerAvatar(idx) {
+    updatePassengerAvatar(character) {
         if (!this.els.avatar) return;
-        if (idx === null) {
+        if (character === null) {
             this.els.avatar.innerText = '';
             this.els.avatar.style.borderColor = 'rgba(255,255,255,0.05)';
         } else {
-            const avatar = this.avatars[idx % this.avatars.length];
+            const avatar = character?.emoji || this.avatars[0];
             this.els.avatar.innerText = avatar;
             this.els.avatar.style.fontSize = '24px';
             this.els.avatar.style.borderColor = '#00d2ff';
