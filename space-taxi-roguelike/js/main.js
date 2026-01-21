@@ -67,6 +67,105 @@ class Game {
         this.initEventListeners();
         this.initGamepad();
         this.handleResize();
+
+        // PixiJS particle renderer (POC)
+        this.pixiParticles = null;
+        this.initPixiParticles();
+        this.initBenchmarkPanel();
+    }
+
+    // ==================== PIXI PARTICLE RENDERER (POC) ====================
+
+    initPixiParticles() {
+        if (typeof PixiParticleRenderer !== 'undefined') {
+            this.pixiParticles = new PixiParticleRenderer(this.canvas);
+            console.log('[Game] PixiJS particle renderer initialized');
+        } else {
+            console.warn('[Game] PixiJS particle renderer not available');
+        }
+    }
+
+    initBenchmarkPanel() {
+        const panel = document.getElementById('benchmark-panel');
+        const toggleBtn = document.getElementById('bench-toggle');
+        const stressBtn = document.getElementById('bench-stress');
+        const stress10kBtn = document.getElementById('bench-stress-10k');
+
+        if (!panel) return;
+
+        // Toggle panel with 'B' key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'b' || e.key === 'B') {
+                panel.classList.toggle('hidden');
+            }
+            // Toggle PixiJS with 'P' key
+            if (e.key === 'p' || e.key === 'P') {
+                this.togglePixiRenderer();
+            }
+            // Stress test with 'S' key
+            if (e.key === 's' || e.key === 'S') {
+                if (e.shiftKey) {
+                    this.startStressTest(10000);
+                } else {
+                    this.startStressTest(5000);
+                }
+            }
+        });
+
+        // Button handlers
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.togglePixiRenderer());
+        }
+        if (stressBtn) {
+            stressBtn.addEventListener('click', () => this.startStressTest(5000));
+        }
+        if (stress10kBtn) {
+            stress10kBtn.addEventListener('click', () => this.startStressTest(10000));
+        }
+    }
+
+    togglePixiRenderer() {
+        if (this.pixiParticles) {
+            const enabled = this.pixiParticles.toggle();
+            this.updateBenchmarkPanel();
+        }
+    }
+
+    startStressTest(count) {
+        if (this.pixiParticles) {
+            if (this.pixiParticles.stressTestMode) {
+                this.pixiParticles.stopStressTest();
+            } else {
+                this.pixiParticles.startStressTest(count);
+            }
+        }
+    }
+
+    updateBenchmarkPanel() {
+        const rendererEl = document.getElementById('bench-renderer');
+        const particlesEl = document.getElementById('bench-particles');
+        const trailsEl = document.getElementById('bench-trails');
+        const drawTimeEl = document.getElementById('bench-draw-time');
+        const fpsEl = document.getElementById('bench-fps');
+
+        if (!rendererEl) return;
+
+        if (this.pixiParticles && this.pixiParticles.enabled) {
+            const stats = this.pixiParticles.getStats();
+            rendererEl.textContent = 'PixiJS (WebGL)';
+            rendererEl.className = 'text-right text-green-400';
+            particlesEl.textContent = stats.particleCount;
+            trailsEl.textContent = stats.trailCount;
+            drawTimeEl.textContent = stats.drawTime.toFixed(2) + 'ms';
+            fpsEl.textContent = stats.fps;
+        } else {
+            rendererEl.textContent = 'Canvas 2D';
+            rendererEl.className = 'text-right text-yellow-400';
+            particlesEl.textContent = this.state.particles?.length || 0;
+            trailsEl.textContent = this.renderer.particleTrails?.length || 0;
+            drawTimeEl.textContent = '-';
+            fpsEl.textContent = '-';
+        }
     }
 
     // ==================== INITIALIZATION ====================
@@ -662,6 +761,19 @@ class Game {
 
         this.renderer.draw(this.state);
         this.ui.updateMinimap(this.state, this.state.activeModifiers);
+
+        // Sync particles to PixiJS renderer (POC)
+        if (this.pixiParticles && this.pixiParticles.enabled) {
+            if (this.pixiParticles.stressTestMode) {
+                // Run stress test
+                this.pixiParticles.updateStressTest(this.state.camera);
+            } else {
+                // Sync game particles
+                this.pixiParticles.syncParticles(this.state.particles, this.state.camera);
+                this.pixiParticles.syncTrails(this.renderer.particleTrails, this.state.camera);
+            }
+            this.updateBenchmarkPanel();
+        }
 
         requestAnimationFrame(() => this.gameLoop());
     }
