@@ -2071,6 +2071,10 @@ class PixiRenderer {
     }
 
     updateSpeedLines(state) {
+        // Speed lines disabled - clear any existing and return
+        this.speedLineGraphics.clear();
+        return;
+
         const taxi = state.taxi;
         const speed = Math.sqrt(taxi.vx * taxi.vx + taxi.vy * taxi.vy);
 
