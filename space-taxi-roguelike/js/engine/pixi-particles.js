@@ -47,20 +47,34 @@ class PixiParticleRenderer {
                 width: WORLD_W,
                 height: WORLD_H,
                 backgroundAlpha: 0,
+                transparent: true,
                 antialias: false,
                 resolution: 1,
-                powerPreference: 'high-performance'
+                powerPreference: 'high-performance',
+                clearBeforeRender: true
             });
 
+            // Wait for the app to initialize (v7+ requirement)
+            if (this.app.init) {
+                await this.app.init();
+            }
+
+            // Get the canvas view
+            const canvas = this.app.view || this.app.canvas;
+
             // Position the PixiJS canvas over the game canvas
-            this.app.view.style.position = 'absolute';
-            this.app.view.style.top = '0';
-            this.app.view.style.left = '0';
-            this.app.view.style.pointerEvents = 'none';
-            this.app.view.style.zIndex = '10';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '10';
+            canvas.style.background = 'transparent';
 
             // Insert after game canvas
-            this.gameCanvas.parentNode.insertBefore(this.app.view, this.gameCanvas.nextSibling);
+            this.gameCanvas.parentNode.insertBefore(canvas, this.gameCanvas.nextSibling);
+
+            // Store reference to canvas
+            this.pixiCanvas = canvas;
 
             // Create containers for layering
             this.trailContainer = new PIXI.ParticleContainer(5000, {
@@ -359,8 +373,8 @@ class PixiParticleRenderer {
 
     toggle() {
         this.enabled = !this.enabled;
-        if (this.app) {
-            this.app.view.style.display = this.enabled ? 'block' : 'none';
+        if (this.pixiCanvas) {
+            this.pixiCanvas.style.display = this.enabled ? 'block' : 'none';
         }
         console.log(`[PixiJS] Particle renderer ${this.enabled ? 'enabled' : 'disabled'}`);
         return this.enabled;
