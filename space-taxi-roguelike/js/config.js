@@ -2,6 +2,14 @@
 
 var WORLD_W = 800;
 var WORLD_H = 600;
+
+// ==================== AUDIO CONFIG ====================
+
+var AUDIO_CONFIG = {
+    baseMusicBpm: 85,
+    shiftMusicBpm: 180
+};
+
 var TAXI_W = 34;
 var TAXI_H = 22;
 var TAXI_THRUST_UP = 0.26;

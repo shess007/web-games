@@ -192,7 +192,7 @@ class AudioEngine {
     // ==================== BASE PORT MUSIC (Ambient/Chill) ====================
 
     startBaseMusic() {
-        this.bpm = 85;
+        this.bpm = AUDIO_CONFIG.baseMusicBpm;
         this.beatDuration = 60 / this.bpm;
         this.barLength = 16;
 
@@ -401,7 +401,7 @@ class AudioEngine {
     // ==================== SHIFT MUSIC (Fast/Energetic/Melodic) ====================
 
     startShiftMusic() {
-        this.bpm = 170;
+        this.bpm = AUDIO_CONFIG.shiftMusicBpm;
         this.beatDuration = 60 / this.bpm;
         this.barLength = 16;
 
