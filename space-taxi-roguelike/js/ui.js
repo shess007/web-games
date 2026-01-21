@@ -69,10 +69,17 @@ class UIManager {
             taxiCanvas: document.getElementById('taxi-canvas'),
             baseFuelBar: document.getElementById('base-fuel-bar'),
             baseFuelValue: document.getElementById('base-fuel-value'),
-            fuelPackButtons: document.getElementById('fuel-pack-buttons')
+            fuelPackButtons: document.getElementById('fuel-pack-buttons'),
+
+            // Pause menu
+            pauseOverlay: document.getElementById('pause-overlay'),
+            resumeBtn: document.getElementById('resume-btn'),
+            pauseQuitBtn: document.getElementById('pause-quit-btn')
         };
         this.avatars = ['🧑‍🚀', '👾', '🤖', '🕵️', '🧙', '🥷'];
         this.contractSelectCallback = null;
+        this.resumeCallback = null;
+        this.pauseQuitCallback = null;
         this.repairCallback = null;
         this.fuelCallback = null;
         this.taxiAnimFrame = 0;
@@ -925,5 +932,35 @@ class UIManager {
 
     hideOverlay() {
         this.els.overlay?.classList.add('hidden');
+    }
+
+    // ==================== PAUSE MENU ====================
+
+    showPauseMenu(resumeCallback, quitCallback) {
+        if (!this.els.pauseOverlay) return;
+
+        this.resumeCallback = resumeCallback;
+        this.pauseQuitCallback = quitCallback;
+        this.els.pauseOverlay.classList.remove('hidden');
+
+        // Attach button handlers
+        if (this.els.resumeBtn) {
+            this.els.resumeBtn.onclick = () => {
+                if (this.resumeCallback) this.resumeCallback();
+            };
+        }
+        if (this.els.pauseQuitBtn) {
+            this.els.pauseQuitBtn.onclick = () => {
+                if (this.pauseQuitCallback) this.pauseQuitCallback();
+            };
+        }
+    }
+
+    hidePauseMenu() {
+        if (this.els.pauseOverlay) {
+            this.els.pauseOverlay.classList.add('hidden');
+        }
+        this.resumeCallback = null;
+        this.pauseQuitCallback = null;
     }
 }

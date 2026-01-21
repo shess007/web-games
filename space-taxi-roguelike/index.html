@@ -142,6 +142,25 @@
                     </div>
                 </div>
 
+                <!-- Pause Menu Overlay -->
+                <div id="pause-overlay"
+                    class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-50 text-center p-4 hidden">
+                    <h2 class="text-3xl font-bold mb-6 text-cyan-400 uppercase tracking-widest">Paused</h2>
+                    <div class="flex flex-col gap-3 w-full max-w-xs">
+                        <button id="resume-btn"
+                            class="w-full px-8 py-4 bg-cyan-700 text-white font-bold border-2 border-cyan-400 uppercase text-base hover:bg-cyan-600 active:scale-95 transition-all">
+                            Resume
+                        </button>
+                        <button id="pause-quit-btn"
+                            class="w-full px-8 py-4 bg-gray-700 text-white font-bold border-2 border-gray-500 uppercase text-base hover:bg-gray-600 active:scale-95 transition-all">
+                            Quit to Base
+                        </button>
+                    </div>
+                    <div class="mt-6 text-gray-500 text-sm">
+                        Press <span class="text-white">ESC</span> or <span class="text-white">START</span> to resume
+                    </div>
+                </div>
+
                 <!-- Run Summary Overlay -->
                 <div id="summary-overlay"
                     class="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-50 text-center p-4 hidden">

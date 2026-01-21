@@ -2022,12 +2022,12 @@ class PixiRenderer {
             const alpha = 0.35 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
             engineGlow.beginFill(0xffff64, alpha);
-            engineGlow.drawEllipse(0, 25, 25 * smoothRatio, 40 * smoothRatio);
+            engineGlow.drawEllipse(0, 18, 20 * smoothRatio, 35 * smoothRatio);
             engineGlow.endFill();
         }
         // Hot core
         engineGlow.beginFill(0xffffff, 0.6);
-        engineGlow.drawEllipse(0, 22, 6, 10);
+        engineGlow.drawEllipse(0, 16, 5, 8);
         engineGlow.endFill();
         engineGlow.visible = false;
         this.taxiSprites.engineGlow = engineGlow;
@@ -2073,29 +2073,134 @@ class PixiRenderer {
         // Taxi body container (rotates) (v7 API)
         const body = new PIXI.Graphics();
 
-        // Shadow
-        body.beginFill(0x000000, 0.3);
-        body.drawRect(-14, 8, 28, 4);
+        // Shadow (elliptical for depth)
+        body.beginFill(0x000000, 0.25);
+        body.drawEllipse(0, 10, 14, 3);
         body.endFill();
 
-        // Main body
+        // Main body - sleek hover car shape
+        // Lower body (darker yellow base)
+        body.beginFill(0xd9a520);
+        body.drawPolygon([
+            -16, 2,     // left bottom
+            -14, 6,     // left wheel well
+            -8, 6,      // inner left
+            -6, 4,      // center bottom curve
+            6, 4,       // center bottom curve
+            8, 6,       // inner right
+            14, 6,      // right wheel well
+            16, 2,      // right bottom
+            14, -2,     // right side
+            -14, -2,    // left side
+        ]);
+        body.endFill();
+
+        // Upper body (main yellow)
         body.beginFill(0xfbbf24);
-        body.drawRect(-15, -10, 30, 16);
+        body.drawPolygon([
+            -14, -2,    // left bottom
+            -15, -6,    // left side slant
+            -12, -10,   // left top corner
+            10, -10,    // right top front
+            14, -6,     // right front slope
+            14, -2,     // right bottom
+        ]);
         body.endFill();
 
-        // Body highlight
-        body.beginFill(0xffffff, 0.2);
-        body.drawRect(-14, -9, 28, 4);
+        // Hood/nose (front slope)
+        body.beginFill(0xe5b020);
+        body.drawPolygon([
+            10, -10,    // top front
+            14, -6,     // front slope
+            16, -2,     // front bottom
+            16, 2,      // nose bottom
+            12, -4,     // nose curve
+        ]);
         body.endFill();
 
-        // Cockpit
-        body.beginFill(0x00d2ff);
-        body.drawRect(2, -7, 10, 5);
+        // Rear engine section
+        body.beginFill(0x444444);
+        body.drawPolygon([
+            -15, -6,    // top
+            -17, -4,    // rear top
+            -17, 2,     // rear bottom
+            -14, 4,     // bottom curve
+            -14, -2,    // body connection
+        ]);
         body.endFill();
 
-        // Cockpit shine
+        // Engine exhaust detail
+        body.beginFill(0x333333);
+        body.drawRect(-17, -2, 3, 4);
+        body.endFill();
+        body.beginFill(0x222222);
+        body.drawRect(-18, -1, 2, 2);
+        body.endFill();
+
+        // Body highlight (top shine)
+        body.beginFill(0xffffff, 0.25);
+        body.drawPolygon([
+            -12, -10,   // left top
+            -11, -9,    // inner left
+            8, -9,      // inner right
+            10, -10,    // right top
+        ]);
+        body.endFill();
+
+        // Side stripe (taxi detail)
+        body.beginFill(0x000000, 0.6);
+        body.drawPolygon([
+            -10, -4,
+            10, -4,
+            12, -3,
+            -10, -3,
+        ]);
+        body.endFill();
+
+        // Cockpit windshield (angled)
+        body.beginFill(0x00d2ff, 0.9);
+        body.drawPolygon([
+            2, -9,      // top left
+            10, -9,     // top right
+            12, -5,     // bottom right
+            4, -5,      // bottom left
+        ]);
+        body.endFill();
+
+        // Cockpit shine (reflection)
+        body.beginFill(0xffffff, 0.5);
+        body.drawPolygon([
+            3, -8,
+            6, -8,
+            7, -6,
+            4, -6,
+        ]);
+        body.endFill();
+
+        // Side window
+        body.beginFill(0x00b8e0, 0.7);
+        body.drawPolygon([
+            -8, -8,
+            0, -8,
+            0, -5,
+            -6, -5,
+        ]);
+        body.endFill();
+
+        // Roof light (taxi sign)
+        body.beginFill(0xffff00);
+        body.drawRoundedRect(-4, -12, 8, 3, 1);
+        body.endFill();
         body.beginFill(0xffffff, 0.4);
-        body.drawRect(3, -6, 4, 2);
+        body.drawRect(-3, -11, 6, 1);
+        body.endFill();
+
+        // Front headlight
+        body.beginFill(0xffffee);
+        body.drawEllipse(15, -1, 2, 2);
+        body.endFill();
+        body.beginFill(0xffffff, 0.6);
+        body.drawEllipse(15, -1, 1, 1);
         body.endFill();
 
         this.taxiSprites.body = body;
@@ -2103,36 +2208,74 @@ class PixiRenderer {
 
         // Landing gear (separate so we can show/hide) (v7 API)
         const gearLeft = new PIXI.Graphics();
-        gearLeft.beginFill(0x555555);
-        gearLeft.drawRect(-12, 6, 6, 5);
+        // Landing strut
+        gearLeft.beginFill(0x666666);
+        gearLeft.drawPolygon([
+            -10, 6,
+            -8, 6,
+            -7, 10,
+            -11, 10,
+        ]);
         gearLeft.endFill();
+        // Landing pad
+        gearLeft.beginFill(0x555555);
+        gearLeft.drawRoundedRect(-13, 10, 8, 2, 1);
+        gearLeft.endFill();
+        // Landing light
         gearLeft.beginFill(0x00ff00);
-        gearLeft.drawRect(-10, 9, 2, 2);
+        gearLeft.drawCircle(-9, 11, 1.5);
         gearLeft.endFill();
         this.taxiSprites.gearLeft = gearLeft;
         this.taxiContainer.addChild(gearLeft);
 
         const gearRight = new PIXI.Graphics();
-        gearRight.beginFill(0x555555);
-        gearRight.drawRect(6, 6, 6, 5);
+        // Landing strut
+        gearRight.beginFill(0x666666);
+        gearRight.drawPolygon([
+            8, 6,
+            10, 6,
+            11, 10,
+            7, 10,
+        ]);
         gearRight.endFill();
+        // Landing pad
+        gearRight.beginFill(0x555555);
+        gearRight.drawRoundedRect(5, 10, 8, 2, 1);
+        gearRight.endFill();
+        // Landing light
         gearRight.beginFill(0x00ff00);
-        gearRight.drawRect(8, 9, 2, 2);
+        gearRight.drawCircle(9, 11, 1.5);
         gearRight.endFill();
         this.taxiSprites.gearRight = gearRight;
         this.taxiContainer.addChild(gearRight);
 
         // Nav lights (blinking) (v7 API)
         const navLightRed = new PIXI.Graphics();
+        // Glow effect
+        navLightRed.beginFill(0xff0000, 0.3);
+        navLightRed.drawCircle(-16, -4, 4);
+        navLightRed.endFill();
+        // Core light
         navLightRed.beginFill(0xff0000);
-        navLightRed.drawRect(-15, -5, 2, 2);
+        navLightRed.drawCircle(-16, -4, 2);
+        navLightRed.endFill();
+        navLightRed.beginFill(0xffffff, 0.5);
+        navLightRed.drawCircle(-16, -4, 1);
         navLightRed.endFill();
         this.taxiSprites.navLightRed = navLightRed;
         this.taxiContainer.addChild(navLightRed);
 
         const navLightGreen = new PIXI.Graphics();
+        // Glow effect
+        navLightGreen.beginFill(0x00ff00, 0.3);
+        navLightGreen.drawCircle(16, -4, 4);
+        navLightGreen.endFill();
+        // Core light
         navLightGreen.beginFill(0x00ff00);
-        navLightGreen.drawRect(13, -5, 2, 2);
+        navLightGreen.drawCircle(16, -4, 2);
+        navLightGreen.endFill();
+        navLightGreen.beginFill(0xffffff, 0.5);
+        navLightGreen.drawCircle(16, -4, 1);
         navLightGreen.endFill();
         this.taxiSprites.navLightGreen = navLightGreen;
         this.taxiContainer.addChild(navLightGreen);

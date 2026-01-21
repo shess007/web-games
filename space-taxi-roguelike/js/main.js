@@ -11,7 +11,7 @@ class Game {
         this.initRendererMinimap();
 
         this.state = {
-            gameState: 'START', // START, PLAYING, CONTRACT_SELECT, SECTOR_TRANSITION, DEAD, VICTORY, BASE
+            gameState: 'START', // START, PLAYING, CONTRACT_SELECT, SECTOR_TRANSITION, DEAD, VICTORY, BASE, PAUSED
 
             // Run state
             run: {
@@ -65,6 +65,10 @@ class Game {
         this.lastGamepadLeft = false;
         this.lastGamepadRight = false;
         this.lastGamepadConfirm = false;
+
+        // Pause state
+        this.pausedFromState = null; // State we paused from (PLAYING or CONTRACT_SELECT)
+        this.pausedContractTimeRemaining = null; // Time remaining on contract timer when paused
 
         this.initEventListeners();
         this.initGamepad();
@@ -134,6 +138,14 @@ class Game {
     initEventListeners() {
         window.onkeydown = e => {
             this.state.keys[e.code] = true;
+            // ESC key for pause menu
+            if (e.code === 'Escape') {
+                if (this.state.gameState === 'PLAYING' || this.state.gameState === 'CONTRACT_SELECT') {
+                    this.pauseGame();
+                } else if (this.state.gameState === 'PAUSED') {
+                    this.resumeGame();
+                }
+            }
             // Number keys for contract selection
             if (this.state.gameState === 'CONTRACT_SELECT') {
                 if (e.code === 'Digit1' && this.state.availableContracts[0]) this.selectContract(0);
@@ -171,6 +183,18 @@ class Game {
                     if (this.state.run.hull > 0) {
                         this.startNewShift();
                     }
+                }
+                this.lastGamepadStart = gamepadInput.start;
+            } else if (this.state.gameState === 'PLAYING') {
+                // Gamepad START to pause during gameplay
+                if (gamepadInput.start && !this.lastGamepadStart) {
+                    this.pauseGame();
+                }
+                this.lastGamepadStart = gamepadInput.start;
+            } else if (this.state.gameState === 'PAUSED') {
+                // Gamepad START to resume from pause
+                if (gamepadInput.start && !this.lastGamepadStart) {
+                    this.resumeGame();
                 }
                 this.lastGamepadStart = gamepadInput.start;
             } else if (this.state.gameState === 'CONTRACT_SELECT') {
@@ -779,14 +803,93 @@ class Game {
         this.state.gameState = 'START';
     }
 
+    // ==================== PAUSE SYSTEM ====================
+
+    pauseGame() {
+        if (this.state.gameState !== 'PLAYING' && this.state.gameState !== 'CONTRACT_SELECT') return;
+
+        // Store which state we paused from
+        this.pausedFromState = this.state.gameState;
+
+        // Pause contract selection timer if active
+        if (this.contractSelectionTimer) {
+            clearTimeout(this.contractSelectionTimer);
+            this.contractSelectionTimer = null;
+        }
+
+        // Store remaining time on active contract timer
+        if (this.state.activeContract?.timeLimit && this.state.contractStartTime) {
+            this.pausedContractTimeRemaining = this.state.activeContract.timeLimit - (Date.now() - this.state.contractStartTime);
+        }
+
+        // Pause audio engine sound
+        this.audio.updateEngineSound(false, false, false);
+
+        this.state.gameState = 'PAUSED';
+        this.ui.showPauseMenu(
+            () => this.resumeGame(),
+            () => this.pauseQuitToBase()
+        );
+    }
+
+    resumeGame() {
+        if (this.state.gameState !== 'PAUSED') return;
+
+        this.ui.hidePauseMenu();
+
+        // Restore contract timer if there was remaining time
+        if (this.pausedContractTimeRemaining !== null && this.state.activeContract?.timeLimit) {
+            this.state.contractStartTime = Date.now() - (this.state.activeContract.timeLimit - this.pausedContractTimeRemaining);
+            this.pausedContractTimeRemaining = null;
+        }
+
+        // Restart contract selection timer if we paused from CONTRACT_SELECT
+        if (this.pausedFromState === 'CONTRACT_SELECT') {
+            // Restart the auto-select countdown
+            this.contractSelectionTimer = setTimeout(() => {
+                if (this.state.gameState === 'CONTRACT_SELECT') {
+                    this.selectContract(0);
+                }
+            }, ROGUELIKE.contractSelectionTime);
+            this.ui.startContractCountdown();
+        }
+
+        // Restore game state
+        this.state.gameState = this.pausedFromState;
+        this.pausedFromState = null;
+    }
+
+    pauseQuitToBase() {
+        if (this.state.gameState !== 'PAUSED') return;
+
+        this.ui.hidePauseMenu();
+        this.ui.hideContractSelection();
+        this.ui.hideContractInfo();
+
+        // Clear any remaining timers
+        if (this.contractSelectionTimer) {
+            clearTimeout(this.contractSelectionTimer);
+            this.contractSelectionTimer = null;
+        }
+
+        this.pausedFromState = null;
+        this.pausedContractTimeRemaining = null;
+
+        // Go to base (not victory, not death - just quit)
+        this.goToBase(false);
+    }
+
     // ==================== GAME LOOP ====================
 
     gameLoop() {
-        if (this.state.gameState !== 'PLAYING' && this.state.gameState !== 'CONTRACT_SELECT') return;
+        if (this.state.gameState !== 'PLAYING' &&
+            this.state.gameState !== 'CONTRACT_SELECT' &&
+            this.state.gameState !== 'PAUSED') return;
 
         if (this.state.gameState === 'PLAYING') {
             this.update();
         }
+        // When PAUSED or CONTRACT_SELECT, we still draw but don't update physics
 
         this.renderer.draw(this.state);
         this.ui.updateMinimap(this.state, this.state.activeModifiers);
