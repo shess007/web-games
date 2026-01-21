@@ -841,10 +841,10 @@ class Game {
     quitToStart() {
         this.ui.hideBase();
         this.ui.showOverlay(
-            'Survive your shift.<br><br>' +
-            '• 3 sectors • 3 lives •<br>' +
-            '• Choose your contracts •<br>' +
-            '• Reach the final fare •',
+            'Pilot, your shift begins now.<br>' +
+            'Navigate <span class="highlight">hostile sectors</span>,<br>' +
+            'pick up fares, and survive.<br>' +
+            '<span class="danger">No second chances.</span>',
             false
         );
         this.state.gameState = 'START';

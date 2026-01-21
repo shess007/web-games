@@ -115,23 +115,106 @@
             <div id="game-container" class="relative">
                 <canvas id="gameCanvas"></canvas>
 
-                <!-- Start Overlay -->
-                <div id="overlay"
-                    class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-40 text-center p-4">
-                    <h1 class="text-2xl sm:text-4xl font-bold mb-2 text-red-500 italic uppercase tracking-tighter">
-                        Space Taxi</h1>
-                    <h2 class="text-lg sm:text-xl mb-4 text-yellow-500 uppercase tracking-widest">Roguelike</h2>
-                    <div class="border border-red-600/30 p-6 bg-gray-900 shadow-2xl max-w-sm">
-                        <p id="overlay-msg" class="text-sm sm:text-base uppercase leading-relaxed text-gray-300">
-                            Survive your shift.<br><br>
-                            • 3 sectors • 3 lives •<br>
-                            • Choose your contracts •<br>
-                            • Reach the final fare •
-                        </p>
+                <!-- Start Screen - Cinematic -->
+                <div id="overlay" class="start-screen-wrapper">
+                    <div id="start-screen">
+                        <!-- Starfield Background -->
+                        <div class="starfield">
+                            <div class="stars stars-layer-1"></div>
+                            <div class="stars stars-layer-2"></div>
+                            <div class="stars stars-layer-3"></div>
+                            <div class="nebula"></div>
+                        </div>
+
+                        <!-- CRT Effects -->
+                        <div class="crt-overlay"></div>
+                        <div class="vignette"></div>
+
+                        <!-- Radio Status Indicator -->
+                        <div class="radio-static">
+                            <div class="radio-dot"></div>
+                            <span class="radio-text">DISPATCH LINK</span>
+                            <div class="signal-bars">
+                                <div class="signal-bar"></div>
+                                <div class="signal-bar"></div>
+                                <div class="signal-bar"></div>
+                                <div class="signal-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Flying Taxi Animation -->
+                        <div class="flying-taxi">
+                            <svg viewBox="0 0 60 25" fill="none">
+                                <ellipse cx="30" cy="14" rx="22" ry="8" fill="#ffdf00"/>
+                                <ellipse cx="30" cy="12" rx="18" ry="6" fill="#ffe44d"/>
+                                <rect x="18" y="6" width="16" height="8" rx="3" fill="#00d2ff" opacity="0.6"/>
+                                <circle cx="12" cy="20" r="3" fill="#333"/>
+                                <circle cx="48" cy="20" r="3" fill="#333"/>
+                            </svg>
+                            <div class="taxi-thruster"></div>
+                        </div>
+
+                        <!-- Corner Decorations -->
+                        <div class="corner-decor top-left"></div>
+                        <div class="corner-decor top-right"></div>
+                        <div class="corner-decor bottom-left"></div>
+                        <div class="corner-decor bottom-right"></div>
+
+                        <!-- Main Content -->
+                        <div class="start-content">
+                            <!-- Taxi Sign -->
+                            <div class="taxi-sign">
+                                <div class="taxi-sign-inner">TAXI</div>
+                            </div>
+
+                            <!-- Title -->
+                            <div class="start-title">
+                                <h1 class="title-main">SPACE TAXI</h1>
+                            </div>
+                            <h2 class="title-sub">ROGUELIKE</h2>
+
+                            <!-- Dispatch Transmission -->
+                            <div class="dispatch-box">
+                                <div class="dispatch-header">
+                                    <div class="dispatch-icon"></div>
+                                    <span class="dispatch-label">Incoming Dispatch</span>
+                                </div>
+                                <p id="overlay-msg" class="dispatch-text">
+                                    Pilot, your shift begins now.<br>
+                                    Navigate <span class="highlight">hostile sectors</span>,<br>
+                                    pick up fares, and survive.<br>
+                                    <span class="danger">No second chances.</span>
+                                </p>
+                                <div class="mission-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-value">3</span>
+                                        <span class="stat-label">Sectors</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-value">3</span>
+                                        <span class="stat-label">Lives</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-value">$0</span>
+                                        <span class="stat-label">Starting</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Start Button -->
+                            <button id="start-btn" class="start-button">
+                                ACCEPT DISPATCH
+                            </button>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="start-footer">
+                            <div class="controls-hint">
+                                <kbd>ARROWS</kbd> or <kbd>WASD</kbd> to fly
+                            </div>
+                            <div class="version-tag">v1.0 // ALPHA BUILD</div>
+                        </div>
                     </div>
-                    <button id="start-btn"
-                        class="mt-6 px-10 py-4 bg-red-700 text-white font-bold border-2 border-white uppercase text-base active:scale-95 transition-transform">Start
-                        Shift</button>
                 </div>
 
                 <!-- Contract Selection Overlay -->

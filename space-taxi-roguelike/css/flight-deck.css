@@ -14,38 +14,11 @@ canvas {
     max-height: 100%;
 }
 
-#overlay {
+/* Start Screen Wrapper */
+#overlay.start-screen-wrapper {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.95);
     z-index: 500;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-#overlay h1 {
-    font-size: 48px;
-    color: var(--warn-yellow);
-    text-shadow: 0 0 20px var(--warn-yellow);
-    margin-bottom: 20px;
-}
-
-#start-btn {
-    padding: 15px 40px;
-    background: #003300;
-    border: 2px solid var(--terminal-green);
-    color: var(--terminal-green);
-    font-size: 24px;
-    cursor: pointer;
-    font-family: 'VT323', monospace;
-    transition: all 0.2s;
-}
-
-#start-btn:active {
-    background: var(--terminal-green);
-    color: #000;
 }
 
 /* ALERTS */

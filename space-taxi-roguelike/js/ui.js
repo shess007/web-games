@@ -927,7 +927,7 @@ class UIManager {
     showOverlay(msg, isGameOver = false) {
         if (this.els.overlayMsg) this.els.overlayMsg.innerHTML = msg;
         this.els.overlay?.classList.remove('hidden');
-        if (this.els.startBtn) this.els.startBtn.innerText = isGameOver ? 'TRY AGAIN' : 'START SHIFT';
+        if (this.els.startBtn) this.els.startBtn.innerText = isGameOver ? 'TRY AGAIN' : 'ACCEPT DISPATCH';
     }
 
     hideOverlay() {

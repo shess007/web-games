@@ -21,6 +21,7 @@ class PixiRenderer {
         this.galaxyGraphics = [];
         this.cosmicDust = [];
         this.dustSprites = [];
+        this.backgroundGradientSprite = null;
 
         // Game element sprites
         this.platformSprites = new Map();
@@ -132,6 +133,9 @@ class PixiRenderer {
         // └── uiContainer (screen space)
 
         this.containers = {
+            // Fixed background (screen space, never moves - for gradient overlay)
+            fixedBackground: new PIXI.Container(),
+
             // Background layers with different parallax speeds
             background: new PIXI.Container(),
             parallaxLayer1: new PIXI.Container(), // Dust, nebulas (0.05-0.15)
@@ -145,6 +149,7 @@ class PixiRenderer {
         };
 
         // Add to stage in order (back to front)
+        this.app.stage.addChild(this.containers.fixedBackground); // Fixed gradient (never moves)
         this.app.stage.addChild(this.containers.background);
         this.app.stage.addChild(this.containers.parallaxLayer1);
         this.app.stage.addChild(this.containers.parallaxLayer2);
@@ -209,6 +214,60 @@ class PixiRenderer {
 
         // Meteor glow texture
         this.textures.meteorGlow = this.createGlowTexture(32, 0xff6600, 0.7);
+
+        // Background gradient texture (matching start screen)
+        this.textures.backgroundGradient = this.createBackgroundGradientTexture();
+    }
+
+    createBackgroundGradientTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = WORLD_W;
+        canvas.height = WORLD_H;
+        const ctx = canvas.getContext('2d');
+
+        // Main vertical gradient (like start screen: black -> dark blue -> slight purple)
+        const mainGradient = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+        mainGradient.addColorStop(0, '#000000');
+        mainGradient.addColorStop(0.4, '#050510');
+        mainGradient.addColorStop(1, '#0a0a20');
+        ctx.fillStyle = mainGradient;
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+        // Add nebula-like radial glows (matching start screen)
+        // Purple glow bottom-left
+        const glow1 = ctx.createRadialGradient(
+            WORLD_W * 0.2, WORLD_H * 0.8, 0,
+            WORLD_W * 0.2, WORLD_H * 0.8, WORLD_H * 0.5
+        );
+        glow1.addColorStop(0, 'rgba(138, 43, 226, 0.15)');
+        glow1.addColorStop(0.5, 'rgba(138, 43, 226, 0.05)');
+        glow1.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow1;
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+        // Cyan glow top-right
+        const glow2 = ctx.createRadialGradient(
+            WORLD_W * 0.8, WORLD_H * 0.2, 0,
+            WORLD_W * 0.8, WORLD_H * 0.2, WORLD_H * 0.4
+        );
+        glow2.addColorStop(0, 'rgba(0, 210, 255, 0.1)');
+        glow2.addColorStop(0.5, 'rgba(0, 210, 255, 0.03)');
+        glow2.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow2;
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+        // Red subtle glow center
+        const glow3 = ctx.createRadialGradient(
+            WORLD_W * 0.5, WORLD_H * 0.5, 0,
+            WORLD_W * 0.5, WORLD_H * 0.5, WORLD_H * 0.4
+        );
+        glow3.addColorStop(0, 'rgba(255, 62, 62, 0.05)');
+        glow3.addColorStop(0.4, 'rgba(255, 62, 62, 0.02)');
+        glow3.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow3;
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+        return PIXI.Texture.from(canvas);
     }
 
     createGlowTexture(size, color, intensity) {
@@ -354,6 +413,9 @@ class PixiRenderer {
         // Store current theme
         this.currentTheme = level.theme || null;
 
+        // Add background gradient (matching start screen nebula effect)
+        this.createBackgroundGradient();
+
         // Generate galaxy clusters
         this.generateGalaxyClusters(level);
 
@@ -366,15 +428,31 @@ class PixiRenderer {
         // Generate stars with multiple parallax layers
         this.generateStars(level);
 
-        // Update background color based on theme
-        const theme = this.currentTheme;
-        if (theme) {
-            const bgColor = this.parseHexColor(theme.bgColor);
-            this.app.renderer.background.color = bgColor;
+        // Update background color based on theme (keep dark for space feel)
+        this.app.renderer.background.color = 0x000000;
+    }
+
+    createBackgroundGradient() {
+        // Create sprite from pre-generated gradient texture
+        // Add to fixedBackground container (never moves with camera)
+        if (this.textures.backgroundGradient) {
+            this.backgroundGradientSprite = new PIXI.Sprite(this.textures.backgroundGradient);
+            this.backgroundGradientSprite.width = WORLD_W;
+            this.backgroundGradientSprite.height = WORLD_H;
+            this.backgroundGradientSprite.x = 0;
+            this.backgroundGradientSprite.y = 0;
+            this.backgroundGradientSprite.alpha = 0.8;
+            this.containers.fixedBackground.addChild(this.backgroundGradientSprite);
         }
     }
 
     clearBackgroundElements() {
+        // Clear background gradient
+        if (this.backgroundGradientSprite) {
+            this.backgroundGradientSprite.destroy();
+            this.backgroundGradientSprite = null;
+        }
+
         // Clear stars
         this.starSprites.forEach(s => s.destroy());
         this.starSprites = [];
@@ -396,6 +474,7 @@ class PixiRenderer {
         this.cosmicDust = [];
 
         // Clear containers
+        this.containers.fixedBackground.removeChildren();
         this.containers.background.removeChildren();
         this.containers.parallaxLayer1.removeChildren();
         this.containers.parallaxLayer2.removeChildren();
@@ -499,13 +578,14 @@ class PixiRenderer {
     }
 
     generateNebulas(level) {
-        const nebulaCount = 3 + Math.floor(Math.random() * 3);
+        // More nebulas with larger radius for more prominent effect (like start screen)
+        const nebulaCount = 5 + Math.floor(Math.random() * 4);
 
         for (let i = 0; i < nebulaCount; i++) {
             const nebula = {
                 x: Math.random() * level.w,
                 y: Math.random() * level.h,
-                radius: 250 + Math.random() * 400,
+                radius: 300 + Math.random() * 500,
                 color1: this.getNebulaColorHex(),
                 color2: this.getNebulaColorHex(),
                 color3: this.getNebulaColorHex(),
@@ -535,17 +615,18 @@ class PixiRenderer {
     }
 
     getNebulaColorHex() {
+        // Colors matching the start screen nebula theme (purple, cyan, blue, magenta)
         const colors = [
-            0x8c3cc8, // Purple
-            0x3c8cdc, // Blue
-            0xc83c8c, // Magenta
-            0x3cc896, // Teal
-            0xdc8c3c, // Orange
-            0xb450dc, // Violet
-            0x50b4dc, // Electric Blue
-            0x6644aa, // Deep Purple
-            0x4488cc, // Sky Blue
-            0xaa44aa  // Plum
+            0x8a2be2, // Blue Violet (prominent)
+            0x00d2ff, // Cyan (prominent - matches start screen)
+            0x9932cc, // Dark Orchid
+            0x00bfff, // Deep Sky Blue
+            0xba55d3, // Medium Orchid
+            0x4169e1, // Royal Blue
+            0xff3e3e, // Red accent (subtle)
+            0x8b008b, // Dark Magenta
+            0x00ced1, // Dark Turquoise
+            0x9400d3  // Dark Violet
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -656,26 +737,36 @@ class PixiRenderer {
     }
 
     generateStars(level) {
+        // More stars with continuous scroll speeds (like start screen animation)
         const layers = [
-            { count: 80, sizeMin: 0.5, sizeMax: 1, speed: 0.2, opacity: 0.3, texture: 'starSmall' },
-            { count: 60, sizeMin: 1, sizeMax: 2, speed: 0.5, opacity: 0.5, texture: 'starSmall' },
-            { count: 40, sizeMin: 2, sizeMax: 3, speed: 0.8, opacity: 0.7, texture: 'starMedium' },
-            { count: 15, sizeMin: 3, sizeMax: 5, speed: 1.0, opacity: 1.0, texture: 'starLarge' }
+            { count: 120, sizeMin: 0.5, sizeMax: 1, speed: 0.2, opacity: 0.4, texture: 'starSmall', scrollSpeed: 0.3 },
+            { count: 90, sizeMin: 1, sizeMax: 2, speed: 0.5, opacity: 0.6, texture: 'starSmall', scrollSpeed: 0.5 },
+            { count: 50, sizeMin: 2, sizeMax: 3, speed: 0.8, opacity: 0.8, texture: 'starMedium', scrollSpeed: 0.8 },
+            { count: 20, sizeMin: 3, sizeMax: 5, speed: 1.0, opacity: 1.0, texture: 'starLarge', scrollSpeed: 1.2 }
         ];
+
+        // Store level dimensions for wrapping
+        this.starFieldWidth = level.w * 1.5;
+        this.starFieldHeight = level.h * 1.5;
 
         layers.forEach((layer, layerIdx) => {
             for (let i = 0; i < layer.count; i++) {
                 const star = {
-                    x: Math.random() * level.w,
-                    y: Math.random() * level.h,
+                    x: Math.random() * this.starFieldWidth - level.w * 0.25,
+                    y: Math.random() * this.starFieldHeight - level.h * 0.25,
+                    baseX: 0, // Will store base position for wrapping
+                    baseY: 0,
                     s: layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin),
                     o: layer.opacity * (0.5 + Math.random() * 0.5),
                     layer: layerIdx,
                     speed: layer.speed,
+                    scrollSpeed: layer.scrollSpeed, // Continuous scroll speed
                     twinkleSpeed: 0.5 + Math.random() * 2,
                     twinkleOffset: Math.random() * Math.PI * 2,
-                    color: Math.random() > 0.8 ? this.getStarColorTint() : 0xffffff
+                    color: Math.random() > 0.7 ? this.getStarColorTint() : 0xffffff
                 };
+                star.baseX = star.x;
+                star.baseY = star.y;
                 this.stars.push(star);
 
                 // Create sprite
@@ -777,6 +868,12 @@ class PixiRenderer {
     // ==================== BACKGROUND UPDATES ====================
 
     updateBackground(camera, level) {
+        // Background gradient is in fixedBackground container - no position update needed
+        // Just apply subtle pulsing effect
+        if (this.backgroundGradientSprite) {
+            this.backgroundGradientSprite.alpha = 0.7 + Math.sin(this.time * 0.2) * 0.1;
+        }
+
         // Update galaxy clusters
         this.galaxyGraphics.forEach((graphics, idx) => {
             const cluster = this.galaxyClusters[idx];
@@ -868,14 +965,25 @@ class PixiRenderer {
             sprite.alpha = pulse;
         });
 
-        // Update stars with parallax and twinkling
+        // Update stars with parallax, twinkling, and continuous scrolling
         this.starSprites.forEach(sprite => {
             const star = sprite.star;
             if (!star) return;
 
-            // Parallax position
-            const parallaxX = star.x - camera.x * (1 - star.speed);
-            const parallaxY = star.y - camera.y * (1 - star.speed);
+            // Continuous scrolling effect (like start screen starfield)
+            const scrollOffset = this.time * star.scrollSpeed * 15;
+
+            // Calculate scrolled position with wrapping
+            let scrolledY = star.baseY + scrollOffset;
+
+            // Wrap stars when they go off screen (creates infinite scroll effect)
+            if (this.starFieldHeight) {
+                scrolledY = ((scrolledY % this.starFieldHeight) + this.starFieldHeight) % this.starFieldHeight - level.h * 0.25;
+            }
+
+            // Parallax position combined with scroll
+            const parallaxX = star.baseX - camera.x * (1 - star.speed);
+            const parallaxY = scrolledY - camera.y * (1 - star.speed);
 
             // Twinkle
             const twinkle = 0.5 + Math.sin(this.time * star.twinkleSpeed + star.twinkleOffset) * 0.5;

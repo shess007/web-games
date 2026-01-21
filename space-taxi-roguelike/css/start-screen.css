@@ -1,0 +1,721 @@
+/* ═══════════════════════════════════════════════════════════════
+   SPACE TAXI ROGUELIKE - CINEMATIC START SCREEN
+   ═══════════════════════════════════════════════════════════════ */
+
+/* STARFIELD CONTAINER */
+#start-screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #000000 0%, #050510 40%, #0a0a20 100%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* STARFIELD LAYERS */
+.starfield {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.stars {
+    position: absolute;
+    width: 100%;
+    height: 200%;
+    background-repeat: repeat;
+    animation: scroll-stars linear infinite;
+}
+
+.stars-layer-1 {
+    background-image:
+        radial-gradient(1px 1px at 20px 30px, white, transparent),
+        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 90px 40px, white, transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 160px 120px, white, transparent),
+        radial-gradient(1px 1px at 200px 200px, rgba(255,255,255,0.5), transparent);
+    background-size: 250px 250px;
+    animation-duration: 60s;
+    opacity: 0.8;
+}
+
+.stars-layer-2 {
+    background-image:
+        radial-gradient(1.5px 1.5px at 100px 50px, #00d2ff, transparent),
+        radial-gradient(2px 2px at 200px 150px, #ffdf00, transparent),
+        radial-gradient(1.5px 1.5px at 300px 100px, white, transparent),
+        radial-gradient(1px 1px at 400px 200px, #ff6b6b, transparent),
+        radial-gradient(2px 2px at 500px 50px, white, transparent);
+    background-size: 550px 300px;
+    animation-duration: 90s;
+    opacity: 0.6;
+}
+
+.stars-layer-3 {
+    background-image:
+        radial-gradient(2.5px 2.5px at 150px 100px, white, transparent),
+        radial-gradient(3px 3px at 350px 250px, #00ff41, transparent),
+        radial-gradient(2px 2px at 450px 150px, #ff3e3e, transparent);
+    background-size: 700px 400px;
+    animation-duration: 120s;
+    opacity: 0.4;
+}
+
+@keyframes scroll-stars {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+}
+
+/* NEBULA GLOW */
+.nebula {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 80%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0, 210, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 62, 62, 0.05) 0%, transparent 40%);
+    animation: nebula-pulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes nebula-pulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* MAIN CONTENT */
+.start-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* TAXI LIGHT / NEON SIGN */
+.taxi-sign {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.taxi-sign-inner {
+    background: linear-gradient(180deg, #ffdf00 0%, #ffb700 50%, #ff9500 100%);
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    letter-spacing: 8px;
+    padding: 8px 25px 10px;
+    border-radius: 4px;
+    position: relative;
+    box-shadow:
+        0 0 10px #ffdf00,
+        0 0 20px #ffdf0080,
+        0 0 40px #ffdf0040,
+        inset 0 -3px 6px rgba(0,0,0,0.3),
+        inset 0 3px 6px rgba(255,255,255,0.3);
+    animation: taxi-glow 2s ease-in-out infinite alternate;
+}
+
+.taxi-sign-inner::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    border-radius: 2px;
+}
+
+@keyframes taxi-glow {
+    0% {
+        box-shadow:
+            0 0 10px #ffdf00,
+            0 0 20px #ffdf0080,
+            0 0 40px #ffdf0040;
+    }
+    100% {
+        box-shadow:
+            0 0 15px #ffdf00,
+            0 0 30px #ffdf0090,
+            0 0 60px #ffdf0060,
+            0 0 80px #ffdf0030;
+    }
+}
+
+/* MAIN TITLE */
+.start-title {
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.title-main {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(28px, 6vw, 48px);
+    color: transparent;
+    background: linear-gradient(180deg, #ffffff 0%, #00d2ff 50%, #0099cc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow:
+        0 0 30px rgba(0, 210, 255, 0.8),
+        0 0 60px rgba(0, 210, 255, 0.4);
+    letter-spacing: 4px;
+    animation: title-flicker 4s ease-in-out infinite;
+    position: relative;
+}
+
+/* Scan line effect over title */
+.title-main::after {
+    content: 'SPACE TAXI';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    color: transparent;
+    background: linear-gradient(180deg, #ffffff 0%, #00d2ff 50%, #0099cc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    clip-path: polygon(0 0, 100% 0, 100% 10%, 0 10%);
+    animation: scan-line 3s linear infinite;
+}
+
+@keyframes title-flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.8; }
+    94% { opacity: 1; }
+    96% { opacity: 0.9; }
+    97% { opacity: 1; }
+}
+
+@keyframes scan-line {
+    0% { clip-path: polygon(0 0%, 100% 0%, 100% 5%, 0 5%); opacity: 0.5; }
+    100% { clip-path: polygon(0 100%, 100% 100%, 100% 105%, 0 105%); opacity: 0.3; }
+}
+
+/* SUBTITLE */
+.title-sub {
+    font-family: 'VT323', monospace;
+    font-size: clamp(18px, 3vw, 28px);
+    color: #ff3e3e;
+    letter-spacing: 12px;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 10px #ff3e3e,
+        0 0 20px rgba(255, 62, 62, 0.5);
+    margin-bottom: 30px;
+    animation: subtitle-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes subtitle-pulse {
+    0% { opacity: 0.7; letter-spacing: 12px; }
+    100% { opacity: 1; letter-spacing: 14px; }
+}
+
+/* DISPATCH TRANSMISSION BOX */
+.dispatch-box {
+    position: relative;
+    max-width: 380px;
+    padding: 20px 25px;
+    background: rgba(0, 20, 30, 0.85);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    margin-bottom: 30px;
+}
+
+.dispatch-box::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00d2ff, transparent);
+    animation: dispatch-scan 2s ease-in-out infinite;
+}
+
+.dispatch-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 210, 255, 0.03) 2px,
+        rgba(0, 210, 255, 0.03) 4px
+    );
+    pointer-events: none;
+}
+
+@keyframes dispatch-scan {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.dispatch-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+.dispatch-icon {
+    width: 12px;
+    height: 12px;
+    background: #00ff41;
+    border-radius: 50%;
+    animation: blink-green 1s ease-in-out infinite;
+    box-shadow: 0 0 10px #00ff41;
+}
+
+@keyframes blink-green {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.dispatch-label {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #00d2ff;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.dispatch-text {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #c0c0c0;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.dispatch-text .highlight {
+    color: #ffdf00;
+    text-shadow: 0 0 8px rgba(255, 223, 0, 0.5);
+}
+
+.dispatch-text .danger {
+    color: #ff3e3e;
+    text-shadow: 0 0 8px rgba(255, 62, 62, 0.5);
+}
+
+/* MISSION BRIEFING */
+.mission-stats {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: #00ff41;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.stat-label {
+    font-family: 'VT323', monospace;
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* START BUTTON */
+.start-button {
+    position: relative;
+    padding: 18px 50px;
+    background: linear-gradient(180deg, #1a3a1a 0%, #0d260d 100%);
+    border: 2px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(12px, 2vw, 16px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    text-shadow: 0 0 10px #00ff41;
+    box-shadow:
+        0 0 20px rgba(0, 255, 65, 0.3),
+        inset 0 0 20px rgba(0, 255, 65, 0.1);
+    animation: button-pulse 2s ease-in-out infinite;
+}
+
+.start-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+    animation: button-shine 3s ease-in-out infinite;
+}
+
+.start-button::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+}
+
+@keyframes button-pulse {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(0, 255, 65, 0.3),
+            inset 0 0 20px rgba(0, 255, 65, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 30px rgba(0, 255, 65, 0.5),
+            0 0 60px rgba(0, 255, 65, 0.2),
+            inset 0 0 30px rgba(0, 255, 65, 0.15);
+    }
+}
+
+@keyframes button-shine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
+}
+
+.start-button:hover {
+    background: linear-gradient(180deg, #00ff41 0%, #00cc33 100%);
+    color: #000;
+    text-shadow: none;
+    transform: scale(1.02);
+    box-shadow:
+        0 0 40px rgba(0, 255, 65, 0.6),
+        0 0 80px rgba(0, 255, 65, 0.3);
+}
+
+.start-button:active {
+    transform: scale(0.98);
+}
+
+/* FLYING TAXI SILHOUETTE */
+.flying-taxi {
+    position: absolute;
+    width: 60px;
+    height: 25px;
+    opacity: 0;
+    animation: fly-across 12s linear infinite;
+    pointer-events: none;
+}
+
+.flying-taxi svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 8px #ffdf00);
+}
+
+@keyframes fly-across {
+    0% {
+        left: -80px;
+        top: 30%;
+        opacity: 0;
+        transform: rotate(-5deg);
+    }
+    5% { opacity: 0.7; }
+    45% {
+        top: 25%;
+        transform: rotate(0deg);
+    }
+    55% {
+        top: 35%;
+        transform: rotate(3deg);
+    }
+    95% { opacity: 0.7; }
+    100% {
+        left: calc(100% + 80px);
+        top: 28%;
+        opacity: 0;
+        transform: rotate(-2deg);
+    }
+}
+
+/* THRUSTER PARTICLES */
+.taxi-thruster {
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 6px;
+    background: linear-gradient(90deg, transparent, #00d2ff, #00ffff);
+    filter: blur(2px);
+    opacity: 0.8;
+    animation: thruster-flicker 0.1s ease-in-out infinite alternate;
+}
+
+@keyframes thruster-flicker {
+    0% { width: 12px; opacity: 0.7; }
+    100% { width: 18px; opacity: 1; }
+}
+
+/* CORNER DECORATIONS */
+.corner-decor {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    pointer-events: none;
+}
+
+.corner-decor.top-left {
+    top: 20px;
+    left: 20px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.corner-decor.top-right {
+    top: 20px;
+    right: 20px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.corner-decor.bottom-left {
+    bottom: 20px;
+    left: 20px;
+    border-right: none;
+    border-top: none;
+}
+
+.corner-decor.bottom-right {
+    bottom: 20px;
+    right: 20px;
+    border-left: none;
+    border-top: none;
+}
+
+/* FOOTER INFO */
+.start-footer {
+    position: absolute;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.controls-hint {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #444;
+    letter-spacing: 2px;
+}
+
+.controls-hint kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #333;
+    border-radius: 3px;
+    color: #666;
+    margin: 0 3px;
+}
+
+/* VERSION TAG */
+.version-tag {
+    font-family: 'VT323', monospace;
+    font-size: 12px;
+    color: #333;
+    letter-spacing: 1px;
+}
+
+/* CRT SCANLINE OVERLAY */
+.crt-overlay {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+    animation: scanlines-move 10s linear infinite;
+}
+
+@keyframes scanlines-move {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100px; }
+}
+
+/* VIGNETTE EFFECT */
+.vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+    pointer-events: none;
+    z-index: 99;
+}
+
+/* GLITCH EFFECT ON TITLE */
+.title-main {
+    position: relative;
+}
+
+.title-main::before {
+    content: 'SPACE TAXI';
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 100%;
+    color: #ff3e3e;
+    background: transparent;
+    overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitch-top 3s infinite linear alternate-reverse;
+    opacity: 0.8;
+}
+
+.title-main::after {
+    content: 'SPACE TAXI';
+    position: absolute;
+    top: 0;
+    left: -2px;
+    width: 100%;
+    color: #00d2ff;
+    background: transparent;
+    overflow: hidden;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitch-bottom 2.5s infinite linear alternate-reverse;
+    opacity: 0.8;
+}
+
+@keyframes glitch-top {
+    0%, 95% { transform: translate(0, 0); }
+    96% { transform: translate(-2px, 0); }
+    97% { transform: translate(2px, 0); }
+    98% { transform: translate(-1px, 0); }
+    99% { transform: translate(1px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes glitch-bottom {
+    0%, 93% { transform: translate(0, 0); }
+    94% { transform: translate(2px, 0); }
+    95% { transform: translate(-2px, 0); }
+    96% { transform: translate(1px, 0); }
+    97% { transform: translate(-1px, 0); }
+    98% { transform: translate(2px, 0); }
+    99% { transform: translate(-2px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+/* RADIO STATIC INDICATOR */
+.radio-static {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+}
+
+.radio-dot {
+    width: 8px;
+    height: 8px;
+    background: #00ff41;
+    border-radius: 50%;
+    animation: radio-blink 0.5s ease-in-out infinite alternate;
+    box-shadow: 0 0 6px #00ff41;
+}
+
+.radio-text {
+    font-family: 'VT323', monospace;
+    font-size: 11px;
+    color: #00ff41;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@keyframes radio-blink {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+/* SIGNAL STRENGTH BARS */
+.signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 10px;
+}
+
+.signal-bar {
+    width: 3px;
+    background: #00ff41;
+    animation: signal-pulse 1.5s ease-in-out infinite;
+}
+
+.signal-bar:nth-child(1) { height: 30%; animation-delay: 0s; }
+.signal-bar:nth-child(2) { height: 50%; animation-delay: 0.1s; }
+.signal-bar:nth-child(3) { height: 70%; animation-delay: 0.2s; }
+.signal-bar:nth-child(4) { height: 100%; animation-delay: 0.3s; }
+
+@keyframes signal-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .dispatch-box {
+        max-width: 90%;
+        padding: 15px 20px;
+    }
+
+    .mission-stats {
+        gap: 15px;
+    }
+
+    .stat-value {
+        font-size: 14px;
+    }
+
+    .start-button {
+        padding: 15px 35px;
+    }
+
+    .corner-decor {
+        width: 40px;
+        height: 40px;
+    }
+
+    .radio-static {
+        top: 5px;
+        right: 5px;
+        padding: 4px 8px;
+    }
+}

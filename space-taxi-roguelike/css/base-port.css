@@ -278,26 +278,79 @@
     font-family: 'VT323', monospace;
     font-size: 18px;
     border: 2px solid;
-    border-radius: 4px;
+    border-radius: 0;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
 .base-btn-primary {
-    background: rgba(0, 100, 0, 0.4);
-    border-color: #00ff41;
+    position: relative;
+    padding: 18px 40px;
+    background: linear-gradient(180deg, #1a3a1a 0%, #0d260d 100%);
+    border: 2px solid #00ff41;
     color: #00ff41;
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    text-shadow: 0 0 10px #00ff41;
+    box-shadow:
+        0 0 20px rgba(0, 255, 65, 0.3),
+        inset 0 0 20px rgba(0, 255, 65, 0.1);
+    animation: btnPulse 2s ease-in-out infinite;
+    overflow: hidden;
+}
+
+.base-btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+    animation: btnShine 3s ease-in-out infinite;
+}
+
+.base-btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    pointer-events: none;
+}
+
+@keyframes btnPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(0, 255, 65, 0.3),
+            inset 0 0 20px rgba(0, 255, 65, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 30px rgba(0, 255, 65, 0.5),
+            0 0 60px rgba(0, 255, 65, 0.2),
+            inset 0 0 30px rgba(0, 255, 65, 0.15);
+    }
+}
+
+@keyframes btnShine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
 }
 
 .base-btn-primary:hover {
-    background: rgba(0, 150, 0, 0.6);
-    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+    background: linear-gradient(180deg, #00ff41 0%, #00cc33 100%);
+    color: #000;
+    text-shadow: none;
+    transform: scale(1.02);
+    box-shadow:
+        0 0 40px rgba(0, 255, 65, 0.6),
+        0 0 80px rgba(0, 255, 65, 0.3);
 }
 
 .base-btn-primary:active {
+    transform: scale(0.98);
     background: #00ff41;
     color: #000;
 }
