@@ -355,6 +355,17 @@ class Game {
         }
 
         const pass = level.passengers[this.state.passengerIndex];
+
+        // If taxi is sitting on the from platform, swap from/to so passenger spawns elsewhere
+        if (this.state.taxi.landedOn === pass.f) {
+            const temp = pass.f;
+            pass.f = pass.t;
+            pass.t = temp;
+            const tempName = pass.fromName;
+            pass.fromName = pass.toName;
+            pass.toName = tempName;
+        }
+
         const startPlat = level.platforms.find(p => p.id === pass.f);
         const destPlat = level.platforms.find(p => p.id === pass.t);
 

@@ -486,7 +486,7 @@ class UIManager {
 
         // Update cash display
         if (this.els.baseCash) {
-            this.els.baseCash.textContent = cash;
+            this.els.baseCash.textContent = Math.floor(cash);
         }
 
         // Build hull display with repair buttons
