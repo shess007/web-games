@@ -166,6 +166,17 @@ class Game {
                 if (e.code === 'Digit2' && this.state.availableContracts[1]) this.selectContract(1);
                 if (e.code === 'Digit3' && this.state.availableContracts[2]) this.selectContract(2);
             }
+            // Enter or Space to start game from start/dead/victory screens
+            if ((e.code === 'Enter' || e.code === 'Space') &&
+                (this.state.gameState === 'START' || this.state.gameState === 'DEAD' || this.state.gameState === 'VICTORY')) {
+                this.startRun();
+            }
+            // Enter or Space to start shift from base port
+            else if ((e.code === 'Enter' || e.code === 'Space') && this.state.gameState === 'BASE') {
+                if (this.state.run.hull > 0) {
+                    this.startNewShift();
+                }
+            }
         };
         window.onkeyup = e => this.state.keys[e.code] = false;
         window.onresize = () => this.handleResize();
