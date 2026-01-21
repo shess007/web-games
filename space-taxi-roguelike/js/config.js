@@ -12,10 +12,10 @@ var AUDIO_CONFIG = {
 
 var TAXI_W = 34;
 var TAXI_H = 22;
-var TAXI_THRUST_UP = 0.26;
-var TAXI_THRUST_SIDE = 0.22;
+var TAXI_THRUST_UP = 0.21;
+var TAXI_THRUST_SIDE = 0.18;
 var MAX_LANDING_SPD = 1.0;
-var GEAR_THRUST_MULT = 0.5;  // Thrust multiplier when landing gear is extended
+var GEAR_THRUST_MULT = 0.35;  // Thrust multiplier when landing gear is extended
 
 // ==================== ROGUELIKE CONFIG ====================
 
