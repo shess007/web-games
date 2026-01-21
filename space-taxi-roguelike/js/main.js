@@ -493,6 +493,7 @@ class Game {
         passenger.walkTime = 0;
         passenger.walkDuration = walkDuration;
         passenger.x = taxiX;
+        passenger.y = platform.y - 5; // Set Y to destination platform surface
 
         this.ui.setMessage("EXITING...");
     }

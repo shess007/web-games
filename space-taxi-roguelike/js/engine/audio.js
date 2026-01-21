@@ -401,7 +401,7 @@ class AudioEngine {
     // ==================== SHIFT MUSIC (Fast/Energetic/Melodic) ====================
 
     startShiftMusic() {
-        this.bpm = 145;
+        this.bpm = 170;
         this.beatDuration = 60 / this.bpm;
         this.barLength = 16;
 
