@@ -4,6 +4,8 @@ var WORLD_W = 800;
 var WORLD_H = 600;
 var TAXI_W = 34;
 var TAXI_H = 22;
+var TAXI_THRUST_UP = 0.16;
+var TAXI_THRUST_SIDE = 0.12;
 var MAX_LANDING_SPD = 1.0;
 
 // ==================== ROGUELIKE CONFIG ====================

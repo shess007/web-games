@@ -1,12 +1,14 @@
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
 
         this.audio = new AudioEngine();
-        this.renderer = new Renderer(this.canvas, this.ctx);
+        // Use PixiJS renderer (GPU-accelerated)
+        this.renderer = new PixiRenderer(this.canvas);
         this.ui = new UIManager();
-        this.renderer.setMinimapContainer(this.ui.els.minimap);
+
+        // Wait for renderer to initialize before setting minimap
+        this.initRendererMinimap();
 
         this.state = {
             gameState: 'START', // START, PLAYING, CONTRACT_SELECT, SECTOR_TRANSITION, DEAD, VICTORY, BASE
@@ -67,105 +69,12 @@ class Game {
         this.initEventListeners();
         this.initGamepad();
         this.handleResize();
-
-        // PixiJS particle renderer (POC)
-        this.pixiParticles = null;
-        this.initPixiParticles();
-        this.initBenchmarkPanel();
     }
 
-    // ==================== PIXI PARTICLE RENDERER (POC) ====================
-
-    initPixiParticles() {
-        if (typeof PixiParticleRenderer !== 'undefined') {
-            this.pixiParticles = new PixiParticleRenderer(this.canvas);
-            console.log('[Game] PixiJS particle renderer initialized');
-        } else {
-            console.warn('[Game] PixiJS particle renderer not available');
-        }
-    }
-
-    initBenchmarkPanel() {
-        const panel = document.getElementById('benchmark-panel');
-        const toggleBtn = document.getElementById('bench-toggle');
-        const stressBtn = document.getElementById('bench-stress');
-        const stress10kBtn = document.getElementById('bench-stress-10k');
-
-        if (!panel) return;
-
-        // Toggle panel with 'B' key
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'b' || e.key === 'B') {
-                panel.classList.toggle('hidden');
-            }
-            // Toggle PixiJS with 'P' key
-            if (e.key === 'p' || e.key === 'P') {
-                this.togglePixiRenderer();
-            }
-            // Stress test with 'S' key
-            if (e.key === 's' || e.key === 'S') {
-                if (e.shiftKey) {
-                    this.startStressTest(10000);
-                } else {
-                    this.startStressTest(5000);
-                }
-            }
-        });
-
-        // Button handlers
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => this.togglePixiRenderer());
-        }
-        if (stressBtn) {
-            stressBtn.addEventListener('click', () => this.startStressTest(5000));
-        }
-        if (stress10kBtn) {
-            stress10kBtn.addEventListener('click', () => this.startStressTest(10000));
-        }
-    }
-
-    togglePixiRenderer() {
-        if (this.pixiParticles) {
-            const enabled = this.pixiParticles.toggle();
-            this.updateBenchmarkPanel();
-        }
-    }
-
-    startStressTest(count) {
-        if (this.pixiParticles) {
-            if (this.pixiParticles.stressTestMode) {
-                this.pixiParticles.stopStressTest();
-            } else {
-                this.pixiParticles.startStressTest(count);
-            }
-        }
-    }
-
-    updateBenchmarkPanel() {
-        const rendererEl = document.getElementById('bench-renderer');
-        const particlesEl = document.getElementById('bench-particles');
-        const trailsEl = document.getElementById('bench-trails');
-        const drawTimeEl = document.getElementById('bench-draw-time');
-        const fpsEl = document.getElementById('bench-fps');
-
-        if (!rendererEl) return;
-
-        if (this.pixiParticles && this.pixiParticles.enabled) {
-            const stats = this.pixiParticles.getStats();
-            rendererEl.textContent = 'PixiJS (WebGL)';
-            rendererEl.className = 'text-right text-green-400';
-            particlesEl.textContent = stats.particleCount;
-            trailsEl.textContent = stats.trailCount;
-            drawTimeEl.textContent = stats.drawTime.toFixed(2) + 'ms';
-            fpsEl.textContent = stats.fps;
-        } else {
-            rendererEl.textContent = 'Canvas 2D';
-            rendererEl.className = 'text-right text-yellow-400';
-            particlesEl.textContent = this.state.particles?.length || 0;
-            trailsEl.textContent = this.renderer.particleTrails?.length || 0;
-            drawTimeEl.textContent = '-';
-            fpsEl.textContent = '-';
-        }
+    async initRendererMinimap() {
+        // Wait for PixiJS renderer to fully initialize
+        await this.renderer.waitForReady();
+        this.renderer.setMinimapContainer(this.ui.els.minimap);
     }
 
     // ==================== INITIALIZATION ====================
@@ -326,8 +235,8 @@ class Game {
         const availableH = window.innerHeight;
         const scale = Math.min(availableW / WORLD_W, availableH / WORLD_H);
 
-        this.canvas.width = WORLD_W;
-        this.canvas.height = WORLD_H;
+        // PixiJS manages the canvas dimensions internally
+        // We only need to set the CSS dimensions for scaling
         this.canvas.style.width = (WORLD_W * scale) + 'px';
         this.canvas.style.height = (WORLD_H * scale) + 'px';
 
@@ -362,7 +271,7 @@ class Game {
         this.goToBase(false);
     }
 
-    initSector(sectorIndex) {
+    async initSector(sectorIndex) {
         const level = sectorGenerator.generateSector(sectorIndex);
         if (!level) {
             this.victory();
@@ -387,7 +296,10 @@ class Game {
             vx: 0, vy: 0, angle: 0, landedOn: null
         };
 
+        // Wait for renderer to be ready before initializing stars
+        await this.renderer.waitForReady();
         this.renderer.initStars(level);
+
         this.ui.updateSector(sectorIndex + 1, ROGUELIKE.totalSectors);
         this.ui.updateHull(this.state.run.hull, ROGUELIKE.maxHull);
         this.ui.updateModifiers(this.state.activeModifiers);
@@ -397,12 +309,12 @@ class Game {
         this.initPassenger();
     }
 
-    nextSector() {
+    async nextSector() {
         this.state.run.currentSector++;
         if (this.state.run.currentSector >= ROGUELIKE.totalSectors) {
             this.victory();
         } else {
-            this.initSector(this.state.run.currentSector);
+            await this.initSector(this.state.run.currentSector);
         }
     }
 
@@ -711,7 +623,7 @@ class Game {
         }
     }
 
-    startNewShift() {
+    async startNewShift() {
         this.ui.hideBase();
         this.audio.switchMusic('shift');
 
@@ -734,7 +646,7 @@ class Game {
         };
 
         this.state.gameState = 'PLAYING';
-        this.initSector(0);
+        await this.initSector(0);
         this.gameLoop();
     }
 
@@ -761,19 +673,6 @@ class Game {
 
         this.renderer.draw(this.state);
         this.ui.updateMinimap(this.state, this.state.activeModifiers);
-
-        // Sync particles to PixiJS renderer (POC)
-        if (this.pixiParticles && this.pixiParticles.enabled) {
-            if (this.pixiParticles.stressTestMode) {
-                // Run stress test
-                this.pixiParticles.updateStressTest(this.state.camera);
-            } else {
-                // Sync game particles
-                this.pixiParticles.syncParticles(this.state.particles, this.state.camera);
-                this.pixiParticles.syncTrails(this.renderer.particleTrails, this.state.camera);
-            }
-            this.updateBenchmarkPanel();
-        }
 
         requestAnimationFrame(() => this.gameLoop());
     }
@@ -811,18 +710,18 @@ class Game {
         // Apply thrust
         if (this.state.fuel > 0) {
             if (thrustUp) {
-                taxi.vy -= 0.24 * thrustMult;
+                taxi.vy -= TAXI_THRUST_UP * thrustMult;
                 this.state.fuel -= 0.18 * fuelDrainMult;
                 this.createThrustParticles(taxi.x, taxi.y + 10, '#ffff55');
                 this.state.shake = Math.max(this.state.shake, 1.5);
             }
             if (thrustLeft) {
-                taxi.vx -= 0.19 * thrustMult;
+                taxi.vx -= TAXI_THRUST_SIDE * thrustMult;
                 this.state.fuel -= 0.07 * fuelDrainMult;
                 taxi.angle = -0.15;
                 this.createThrustParticles(taxi.x + 15, taxi.y, '#00ffff', true);
             } else if (thrustRight) {
-                taxi.vx += 0.19 * thrustMult;
+                taxi.vx += TAXI_THRUST_SIDE * thrustMult;
                 this.state.fuel -= 0.07 * fuelDrainMult;
                 taxi.angle = 0.15;
                 this.createThrustParticles(taxi.x - 15, taxi.y, '#00ffff', true);
