@@ -342,3 +342,92 @@
 .info-row span:last-child {
     color: #aaa;
 }
+
+/* Fuel display */
+.fuel-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.fuel-bar-container {
+    flex: 1;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.fuel-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #00ff41, #00cc33);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+    transition: width 0.3s ease;
+}
+
+.fuel-bar-fill.low {
+    background: linear-gradient(90deg, #ffdd00, #cc9900);
+    box-shadow: 0 0 10px rgba(255, 221, 0, 0.4);
+}
+
+.fuel-bar-fill.critical {
+    background: linear-gradient(90deg, #ff4444, #cc0000);
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+}
+
+.fuel-value-text {
+    font-size: 16px;
+    color: #00ff41;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* Fuel pack buttons */
+.fuel-pack-grid {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.fuel-pack-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    background: rgba(0, 100, 150, 0.3);
+    border: 1px solid rgba(0, 210, 255, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'VT323', monospace;
+}
+
+.fuel-pack-btn:hover:not(:disabled) {
+    background: rgba(0, 150, 200, 0.5);
+    border-color: rgba(0, 210, 255, 0.8);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+}
+
+.fuel-pack-btn:disabled {
+    background: rgba(50, 50, 50, 0.3);
+    border-color: rgba(100, 100, 100, 0.3);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.fuel-pack-btn .pack-amount {
+    font-size: 14px;
+    color: #00d2ff;
+    font-weight: bold;
+}
+
+.fuel-pack-btn .pack-cost {
+    font-size: 10px;
+    color: #ffdd00;
+    margin-top: 2px;
+}

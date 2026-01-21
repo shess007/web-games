@@ -58,6 +58,12 @@ class Game {
         this.lastThrustVibration = 0;
         this.contractSelectionTimer = null;
 
+        // Gamepad navigation state
+        this.selectedContractIndex = 0;
+        this.lastGamepadLeft = false;
+        this.lastGamepadRight = false;
+        this.lastGamepadConfirm = false;
+
         this.initEventListeners();
         this.initGamepad();
         this.handleResize();
@@ -144,14 +150,14 @@ class Game {
 
         this.lastGamepadStart = false;
         setInterval(() => {
+            const gamepadInput = this.getGamepadInput();
+
             if (this.state.gameState === 'START' || this.state.gameState === 'DEAD' || this.state.gameState === 'VICTORY') {
-                const gamepadInput = this.getGamepadInput();
                 if (gamepadInput.start && !this.lastGamepadStart) {
                     this.startRun();
                 }
                 this.lastGamepadStart = gamepadInput.start;
             } else if (this.state.gameState === 'BASE') {
-                const gamepadInput = this.getGamepadInput();
                 if (gamepadInput.start && !this.lastGamepadStart) {
                     // Only start new shift if player has hull
                     if (this.state.run.hull > 0) {
@@ -159,6 +165,30 @@ class Game {
                     }
                 }
                 this.lastGamepadStart = gamepadInput.start;
+            } else if (this.state.gameState === 'CONTRACT_SELECT') {
+                const numContracts = this.state.availableContracts.length;
+
+                // Navigate left
+                if (gamepadInput.left && !this.lastGamepadLeft) {
+                    this.selectedContractIndex = (this.selectedContractIndex - 1 + numContracts) % numContracts;
+                    this.ui.highlightContract(this.selectedContractIndex);
+                }
+                this.lastGamepadLeft = gamepadInput.left;
+
+                // Navigate right
+                if (gamepadInput.right && !this.lastGamepadRight) {
+                    this.selectedContractIndex = (this.selectedContractIndex + 1) % numContracts;
+                    this.ui.highlightContract(this.selectedContractIndex);
+                }
+                this.lastGamepadRight = gamepadInput.right;
+
+                // Confirm selection
+                if (gamepadInput.confirm && !this.lastGamepadConfirm) {
+                    if (this.state.availableContracts[this.selectedContractIndex]) {
+                        this.selectContract(this.selectedContractIndex);
+                    }
+                }
+                this.lastGamepadConfirm = gamepadInput.confirm;
             }
         }, 100);
 
@@ -225,7 +255,8 @@ class Game {
             startTime: Date.now(),
             deathReason: null,
             wallBumps: 0,
-            maxSpeedReached: 0
+            maxSpeedReached: 0,
+            baseFuel: ROGUELIKE.maxFuel  // Fuel reserve at base
         };
 
         // Go to base port first
@@ -245,7 +276,7 @@ class Game {
         this.state.passengerIndex = 0;
         this.state.activePassenger = null;
         this.state.activeContract = null;
-        this.state.fuel = 100;
+        this.state.fuel = this.state.run.baseFuel;  // Use fuel from base reserve
         this.state.particles = [];
         this.state.shake = 0;
         this.state.fuelAlertTriggered = false;
@@ -329,7 +360,9 @@ class Game {
         }));
 
         this.state.gameState = 'CONTRACT_SELECT';
+        this.selectedContractIndex = 0;
         this.ui.showContractSelection(this.state.availableContracts, (idx) => this.selectContract(idx));
+        this.ui.highlightContract(0);
 
         // Auto-select timer
         this.contractSelectionTimer = setTimeout(() => {
@@ -495,14 +528,52 @@ class Game {
     goToBase(isVictory) {
         this.state.gameState = 'BASE';
         this.audio.switchMusic('base');
+
+        // Save remaining fuel to base reserve (if any left from shift)
+        if (this.state.fuel > 0) {
+            this.state.run.baseFuel = Math.min(this.state.fuel, ROGUELIKE.maxFuel);
+        }
+
         this.ui.showBase({
             cash: this.state.run.cash,
             hull: this.state.run.hull,
             maxHull: ROGUELIKE.maxHull,
             repairCost: ROGUELIKE.repairCost,
             isVictory: isVictory,
-            deathReason: this.state.run.deathReason
-        }, () => this.repairHull());
+            deathReason: this.state.run.deathReason,
+            fuel: this.state.run.baseFuel,
+            maxFuel: ROGUELIKE.maxFuel,
+            fuelPacks: ROGUELIKE.fuelPacks
+        }, () => this.repairHull(), (packIndex) => this.buyFuel(packIndex));
+    }
+
+    buyFuel(packIndex) {
+        const pack = ROGUELIKE.fuelPacks[packIndex];
+        if (!pack) return;
+
+        if (this.state.run.cash >= pack.cost && this.state.run.baseFuel < ROGUELIKE.maxFuel) {
+            this.state.run.cash -= pack.cost;
+            this.state.run.baseFuel = Math.min(this.state.run.baseFuel + pack.amount, ROGUELIKE.maxFuel);
+
+            // Update UI
+            this.ui.updateBaseFuel(
+                this.state.run.baseFuel,
+                ROGUELIKE.maxFuel,
+                this.state.run.cash,
+                ROGUELIKE.fuelPacks
+            );
+            this.ui.updateBaseHull(
+                this.state.run.hull,
+                ROGUELIKE.maxHull,
+                this.state.run.cash,
+                ROGUELIKE.repairCost
+            );
+
+            // Update cash display
+            if (this.ui.els.baseCash) {
+                this.ui.els.baseCash.textContent = this.state.run.cash;
+            }
+        }
     }
 
     repairHull() {
@@ -515,6 +586,14 @@ class Game {
                 ROGUELIKE.maxHull,
                 this.state.run.cash,
                 ROGUELIKE.repairCost
+            );
+
+            // Also update fuel display (cash changed, so button states may change)
+            this.ui.updateBaseFuel(
+                this.state.run.baseFuel,
+                ROGUELIKE.maxFuel,
+                this.state.run.cash,
+                ROGUELIKE.fuelPacks
             );
 
             // Update the taxi display to show repaired state
@@ -537,11 +616,12 @@ class Game {
         this.ui.hideBase();
         this.audio.switchMusic('shift');
 
-        // Keep hull and cash from previous run
+        // Keep hull, cash, and fuel from previous run
         const preservedHull = this.state.run.hull;
         const preservedCash = this.state.run.cash;
+        const preservedFuel = this.state.run.baseFuel;
 
-        // Reset run state but preserve hull and cash
+        // Reset run state but preserve hull, cash, and fuel
         this.state.run = {
             currentSector: 0,
             hull: preservedHull,
@@ -550,7 +630,8 @@ class Game {
             startTime: Date.now(),
             deathReason: null,
             wallBumps: 0,
-            maxSpeedReached: 0
+            maxSpeedReached: 0,
+            baseFuel: preservedFuel
         };
 
         this.state.gameState = 'PLAYING';

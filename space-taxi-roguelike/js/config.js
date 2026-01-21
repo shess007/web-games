@@ -18,6 +18,13 @@ var ROGUELIKE = {
     repairCost: 100,
     fuelCostPerFrame: 0.1,
     contractSelectionTime: 5000, // 5 seconds to choose
+    // Fuel packs available at base
+    fuelPacks: [
+        { name: 'SMALL', amount: 25, cost: 30 },
+        { name: 'MEDIUM', amount: 50, cost: 50 },
+        { name: 'LARGE', amount: 100, cost: 80 }
+    ],
+    maxFuel: 100
 };
 
 // Sector configuration

@@ -66,11 +66,15 @@ class UIManager {
             baseGameOverMsg: document.getElementById('base-game-over-msg'),
             startShiftBtn: document.getElementById('start-shift-btn'),
             quitBtn: document.getElementById('quit-btn'),
-            taxiCanvas: document.getElementById('taxi-canvas')
+            taxiCanvas: document.getElementById('taxi-canvas'),
+            baseFuelBar: document.getElementById('base-fuel-bar'),
+            baseFuelValue: document.getElementById('base-fuel-value'),
+            fuelPackButtons: document.getElementById('fuel-pack-buttons')
         };
         this.avatars = ['🧑‍🚀', '👾', '🤖', '🕵️', '🧙', '🥷'];
         this.contractSelectCallback = null;
         this.repairCallback = null;
+        this.fuelCallback = null;
         this.taxiAnimFrame = 0;
     }
 
@@ -282,6 +286,21 @@ class UIManager {
         }
     }
 
+    highlightContract(index) {
+        if (!this.els.contractOptions) return;
+
+        const buttons = this.els.contractOptions.querySelectorAll('.contract-btn');
+        buttons.forEach((btn, i) => {
+            if (i === index) {
+                btn.classList.add('ring-2', 'ring-white', 'scale-105');
+                btn.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
+            } else {
+                btn.classList.remove('ring-2', 'ring-white', 'scale-105');
+                btn.style.boxShadow = '';
+            }
+        });
+    }
+
     // ==================== ACTIVE CONTRACT INFO ====================
 
     showContractInfo(contract) {
@@ -378,10 +397,11 @@ class UIManager {
 
     // ==================== BASE PORT ====================
 
-    showBase(data, repairCallback) {
+    showBase(data, repairCallback, fuelCallback) {
         if (!this.els.baseOverlay) return;
 
         this.repairCallback = repairCallback;
+        this.fuelCallback = fuelCallback;
         this.els.baseOverlay.classList.remove('hidden');
 
         // Set title based on state
@@ -414,6 +434,7 @@ class UIManager {
         }
 
         this.updateBaseHull(data.hull, data.maxHull, data.cash, data.repairCost);
+        this.updateBaseFuel(data.fuel, data.maxFuel, data.cash, data.fuelPacks);
 
         // Check for game over condition (0 hull and not enough cash to repair)
         const isGameOver = data.hull <= 0 && data.cash < data.repairCost;
@@ -490,6 +511,57 @@ class UIManager {
                 }
             };
         });
+    }
+
+    updateBaseFuel(current, max, cash, fuelPacks) {
+        // Update fuel bar
+        if (this.els.baseFuelBar) {
+            const percent = Math.round((current / max) * 100);
+            this.els.baseFuelBar.style.width = `${percent}%`;
+
+            // Update color based on level
+            this.els.baseFuelBar.classList.remove('low', 'critical');
+            if (percent <= 25) {
+                this.els.baseFuelBar.classList.add('critical');
+            } else if (percent <= 50) {
+                this.els.baseFuelBar.classList.add('low');
+            }
+        }
+
+        // Update fuel value text
+        if (this.els.baseFuelValue) {
+            this.els.baseFuelValue.textContent = `${Math.round(current)}%`;
+        }
+
+        // Build fuel pack buttons
+        if (this.els.fuelPackButtons && fuelPacks) {
+            let html = '';
+            fuelPacks.forEach((pack, idx) => {
+                const canAfford = cash >= pack.cost;
+                const wouldOverfill = current >= max;
+                const disabled = !canAfford || wouldOverfill;
+
+                html += `
+                    <button class="fuel-pack-btn" data-pack-index="${idx}" ${disabled ? 'disabled' : ''}>
+                        <span class="pack-amount">+${pack.amount}%</span>
+                        <span class="pack-cost">$${pack.cost}</span>
+                    </button>
+                `;
+            });
+
+            this.els.fuelPackButtons.innerHTML = html;
+
+            // Attach click handlers
+            const packBtns = this.els.fuelPackButtons.querySelectorAll('.fuel-pack-btn:not([disabled])');
+            packBtns.forEach(btn => {
+                btn.onclick = () => {
+                    const packIndex = parseInt(btn.dataset.packIndex);
+                    if (this.fuelCallback) {
+                        this.fuelCallback(packIndex);
+                    }
+                };
+            });
+        }
     }
 
     startTaxiAnimation(hull, maxHull) {
