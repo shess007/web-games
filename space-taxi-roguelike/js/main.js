@@ -313,11 +313,11 @@ class Game {
         this.state.shake = 0;
         this.state.fuelAlertTriggered = false;
 
-        // Reset taxi position
+        // Reset taxi position - spawn landed on base platform
         this.state.taxi = {
             x: level.spawn.x,
             y: level.spawn.y,
-            vx: 0, vy: 0, angle: 0, landedOn: null
+            vx: 0, vy: 0, angle: 0, landedOn: level.spawn.platformId
         };
 
         // Wait for renderer to be ready before initializing stars

@@ -1039,6 +1039,9 @@ class PixiRenderer {
             case 'fuel':
                 this.drawFuelStationBuilding(graphics, 0, 0, width, height, color);
                 break;
+            case 'base_port':
+                this.drawBasePortBuilding(graphics, 0, 0, width, height, color);
+                break;
             default:
                 this.drawResidentialBuilding(graphics, 0, 0, width, height, color);
         }
@@ -1334,6 +1337,155 @@ class PixiRenderer {
         // Price display on booth
         graphics.beginFill(0x00ff00, 0.8);
         graphics.drawRect(x + 3, y + height - 12, 10, 6);
+        graphics.endFill();
+    }
+
+    drawBasePortBuilding(graphics, x, y, width, height, color) {
+        // Main hangar body
+        graphics.beginFill(color);
+        graphics.drawRect(x, y + 15, width * 0.7, height - 15);
+        graphics.endFill();
+
+        // Hangar body highlight (left side)
+        graphics.beginFill(0xffffff, 0.1);
+        graphics.drawRect(x, y + 15, width * 0.15, height - 15);
+        graphics.endFill();
+
+        // Curved hangar roof
+        graphics.beginFill(this.darkenColor(color, 0.15));
+        graphics.arc(x + width * 0.35, y + 18, width * 0.38, Math.PI, 0);
+        graphics.endFill();
+
+        // Roof highlight
+        graphics.beginFill(0xffffff, 0.08);
+        graphics.arc(x + width * 0.35, y + 18, width * 0.35, Math.PI, Math.PI * 1.5);
+        graphics.endFill();
+
+        // Control tower (right side, taller)
+        const towerX = x + width * 0.7;
+        const towerW = width * 0.3;
+        const towerH = height + 25;
+
+        // Tower body
+        graphics.beginFill(this.darkenColor(color, 0.2));
+        graphics.drawRect(towerX, y - 25, towerW, towerH);
+        graphics.endFill();
+
+        // Tower highlight
+        graphics.beginFill(0xffffff, 0.1);
+        graphics.drawRect(towerX, y - 25, towerW * 0.3, towerH);
+        graphics.endFill();
+
+        // Tower observation window (large)
+        graphics.beginFill(0x001122);
+        graphics.drawRect(towerX + 3, y - 20, towerW - 6, 12);
+        graphics.endFill();
+
+        // Window glass reflection
+        graphics.beginFill(0x4488ff, 0.4);
+        graphics.drawRect(towerX + 4, y - 19, towerW - 8, 10);
+        graphics.endFill();
+
+        // Window shine
+        graphics.beginFill(0xffffff, 0.3);
+        graphics.drawRect(towerX + 5, y - 18, 4, 3);
+        graphics.endFill();
+
+        // Antenna mast on tower
+        graphics.beginFill(0x555555);
+        graphics.drawRect(towerX + towerW / 2 - 2, y - 45, 4, 22);
+        graphics.endFill();
+
+        // Antenna dish
+        graphics.beginFill(0x666666);
+        graphics.arc(towerX + towerW / 2, y - 43, 8, Math.PI * 0.8, Math.PI * 0.2);
+        graphics.endFill();
+
+        // Beacon light on top (red warning light)
+        for (let i = 3; i >= 1; i--) {
+            graphics.beginFill(0xff0000, 0.2);
+            graphics.drawCircle(towerX + towerW / 2, y - 47, i * 2 + 2);
+            graphics.endFill();
+        }
+        graphics.beginFill(0xff3333);
+        graphics.drawCircle(towerX + towerW / 2, y - 47, 3);
+        graphics.endFill();
+
+        // Large hangar door (where taxi comes from)
+        graphics.beginFill(0x1a1a2a);
+        graphics.drawRect(x + width * 0.25, y + 25, width * 0.35, height - 25);
+        graphics.endFill();
+
+        // Hangar door frame
+        graphics.beginFill(0x444466);
+        graphics.drawRect(x + width * 0.24, y + 23, width * 0.37, 3);
+        graphics.drawRect(x + width * 0.24, y + 23, 3, height - 23);
+        graphics.drawRect(x + width * 0.59, y + 23, 3, height - 23);
+        graphics.endFill();
+
+        // Hangar door horizontal lines (industrial look)
+        graphics.beginFill(0x333344);
+        for (let i = 0; i < 4; i++) {
+            graphics.drawRect(x + width * 0.26, y + 32 + i * 8, width * 0.33, 2);
+        }
+        graphics.endFill();
+
+        // Landing guide lights on hangar (green = clear)
+        for (let i = 0; i < 3; i++) {
+            // Glow
+            graphics.beginFill(0x00ff00, 0.3);
+            graphics.drawCircle(x + 8 + i * 12, y + height - 6, 4);
+            graphics.endFill();
+            // Light
+            graphics.beginFill(0x00ff44);
+            graphics.drawCircle(x + 8 + i * 12, y + height - 6, 2);
+            graphics.endFill();
+        }
+
+        // "BASE" sign on hangar
+        // Sign background
+        graphics.beginFill(0x001133);
+        graphics.drawRect(x + 5, y + 3, 32, 10);
+        graphics.endFill();
+
+        // Sign border glow (cyan)
+        for (let i = 2; i >= 1; i--) {
+            graphics.beginFill(0x00ccff, 0.2);
+            graphics.drawRect(x + 5 - i, y + 3 - i, 32 + i * 2, 10 + i * 2);
+            graphics.endFill();
+        }
+
+        // "BASE" text as pixel blocks
+        graphics.beginFill(0x00ccff);
+        // B
+        graphics.drawRect(x + 7, y + 5, 2, 6);
+        graphics.drawRect(x + 7, y + 5, 4, 1);
+        graphics.drawRect(x + 7, y + 7, 4, 1);
+        graphics.drawRect(x + 7, y + 10, 4, 1);
+        graphics.drawRect(x + 10, y + 5, 1, 2);
+        graphics.drawRect(x + 10, y + 8, 1, 2);
+        // A
+        graphics.drawRect(x + 13, y + 5, 4, 1);
+        graphics.drawRect(x + 13, y + 6, 1, 5);
+        graphics.drawRect(x + 16, y + 6, 1, 5);
+        graphics.drawRect(x + 14, y + 8, 2, 1);
+        // S
+        graphics.drawRect(x + 19, y + 5, 4, 1);
+        graphics.drawRect(x + 19, y + 6, 1, 2);
+        graphics.drawRect(x + 19, y + 7, 4, 1);
+        graphics.drawRect(x + 22, y + 8, 1, 2);
+        graphics.drawRect(x + 19, y + 10, 4, 1);
+        // E
+        graphics.drawRect(x + 25, y + 5, 1, 6);
+        graphics.drawRect(x + 25, y + 5, 4, 1);
+        graphics.drawRect(x + 25, y + 7, 3, 1);
+        graphics.drawRect(x + 25, y + 10, 4, 1);
+        graphics.endFill();
+
+        // Small windows on main hangar
+        graphics.beginFill(0x88aaff, 0.4);
+        graphics.drawRect(x + 5, y + 18, 8, 5);
+        graphics.drawRect(x + width * 0.62, y + 18, 6, 5);
         graphics.endFill();
     }
 

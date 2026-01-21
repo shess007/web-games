@@ -7,7 +7,7 @@ var WORLD_H = 600;
 
 var AUDIO_CONFIG = {
     baseMusicBpm: 85,
-    shiftMusicBpm: 180
+    shiftMusicBpm: 280
 };
 
 var TAXI_W = 34;
@@ -408,7 +408,8 @@ class SectorGenerator {
         return {
             w,
             h,
-            spawn: { x: spawnPlat.x + spawnPlat.w / 2, y: spawnPlat.y - 50 },
+            // Spawn taxi landed on the base platform (platform 0)
+            spawn: { x: spawnPlat.x + spawnPlat.w / 2, y: spawnPlat.y - TAXI_H / 2, platformId: 0 },
             platforms,
             asteroids,
             debris,
@@ -651,11 +652,11 @@ class SectorGenerator {
         const shuffledBuildingTypes = [...BUILDING_TYPES_ARRAY].sort(() => Math.random() - 0.5);
         let buildingTypeIndex = 0;
 
-        // Start platform - near top-left but with margin from edge
+        // Start platform - Base Port where the taxi spawns
         platforms.push({
             x: margin, y: margin + 50, w: this.platformW, h: this.platformH,
-            id: 0, name: shuffledNames[nameIndex++] || "HOME BASE",
-            buildingType: shuffledBuildingTypes[buildingTypeIndex++ % shuffledBuildingTypes.length]
+            id: 0, name: "HOME BASE",
+            buildingType: 'base_port'
         });
 
         let platformId = 1;
@@ -815,11 +816,12 @@ var BUILDING_TYPES = {
     space_factory: { width: 70, height: 55, doorX: 35, color: 0x4a4a4a, style: 'industrial' },
     space_disco: { width: 50, height: 45, doorX: 22, color: 0x3a1a4a, style: 'entertainment' },
     space_pub: { width: 45, height: 40, doorX: 20, color: 0x4a3a2a, style: 'hospitality' },
-    fuel_station: { width: 50, height: 35, doorX: 25, color: 0x1a3a5a, style: 'fuel' }
+    fuel_station: { width: 50, height: 35, doorX: 25, color: 0x1a3a5a, style: 'fuel' },
+    base_port: { width: 80, height: 60, doorX: 40, color: 0x2a3a5a, style: 'base_port' }
 };
 
-// Only non-fuel building types for random assignment to passenger platforms
-var BUILDING_TYPES_ARRAY = Object.keys(BUILDING_TYPES).filter(t => t !== 'fuel_station');
+// Only regular building types for random assignment to passenger platforms (exclude fuel_station and base_port)
+var BUILDING_TYPES_ARRAY = Object.keys(BUILDING_TYPES).filter(t => t !== 'fuel_station' && t !== 'base_port');
 
 // ==================== WALKING CONFIG ====================
 

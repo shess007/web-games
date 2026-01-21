@@ -684,7 +684,7 @@ class AudioEngine {
         if (!this.musicPlaying || !this.ctx) return;
 
         const scheduleNext = () => {
-            if (!this.musicPlaying) return;
+            if (!this.musicPlaying || this.currentMusicType !== type) return;
 
             if (type === 'shift') {
                 this.playShiftBeat(this.currentBeat);
