@@ -39,7 +39,7 @@ var SECTOR_CONFIG = [
         fuelStations: 1,
         enemies: 0,
         asteroids: 3,
-        debris: 5,
+        debris: 0,
         meteors: 0,
         modifierCount: 0,
         contractChoices: 2,
@@ -639,10 +639,15 @@ class SectorGenerator {
         let nameIndex = 0;
         let fuelNameIndex = 0;
 
+        // Shuffle building types for variety
+        const shuffledBuildingTypes = [...BUILDING_TYPES_ARRAY].sort(() => Math.random() - 0.5);
+        let buildingTypeIndex = 0;
+
         // Start platform - near top-left but with margin from edge
         platforms.push({
             x: margin, y: margin + 50, w: this.platformW, h: this.platformH,
-            id: 0, name: shuffledNames[nameIndex++] || "HOME BASE"
+            id: 0, name: shuffledNames[nameIndex++] || "HOME BASE",
+            buildingType: shuffledBuildingTypes[buildingTypeIndex++ % shuffledBuildingTypes.length]
         });
 
         let platformId = 1;
@@ -656,7 +661,8 @@ class SectorGenerator {
             if (this.isValidPlatformPosition(px, py, this.platformW, this.platformH, platforms, walls, reachable)) {
                 platforms.push({
                     x: px, y: py, w: this.platformW, h: this.platformH,
-                    id: platformId++, name: shuffledNames[nameIndex++] || `STATION ${platformId}`
+                    id: platformId++, name: shuffledNames[nameIndex++] || `STATION ${platformId}`,
+                    buildingType: shuffledBuildingTypes[buildingTypeIndex++ % shuffledBuildingTypes.length]
                 });
             }
         }
@@ -672,7 +678,8 @@ class SectorGenerator {
             if (this.isValidPlatformPosition(px, py, 90, this.platformH, platforms, walls, reachable)) {
                 platforms.push({
                     x: px, y: py, w: 90, h: this.platformH,
-                    id: fuelId--, fuel: true, name: shuffledFuelNames[fuelNameIndex++] || "FUEL STOP"
+                    id: fuelId--, fuel: true, name: shuffledFuelNames[fuelNameIndex++] || "FUEL STOP",
+                    buildingType: 'fuel_station'
                 });
                 numFuel--;
             }
@@ -791,6 +798,27 @@ class SectorGenerator {
 
 // Global generator instance
 var sectorGenerator = new SectorGenerator();
+
+// ==================== BUILDING TYPES ====================
+
+var BUILDING_TYPES = {
+    space_house: { width: 40, height: 50, doorX: 18, color: 0x2a4a6a, style: 'residential' },
+    space_villa: { width: 60, height: 65, doorX: 28, color: 0x3a5a7a, style: 'luxury' },
+    space_factory: { width: 70, height: 55, doorX: 35, color: 0x4a4a4a, style: 'industrial' },
+    space_disco: { width: 50, height: 45, doorX: 22, color: 0x3a1a4a, style: 'entertainment' },
+    space_pub: { width: 45, height: 40, doorX: 20, color: 0x4a3a2a, style: 'hospitality' },
+    fuel_station: { width: 50, height: 35, doorX: 25, color: 0x1a3a5a, style: 'fuel' }
+};
+
+// Only non-fuel building types for random assignment to passenger platforms
+var BUILDING_TYPES_ARRAY = Object.keys(BUILDING_TYPES).filter(t => t !== 'fuel_station');
+
+// ==================== WALKING CONFIG ====================
+
+var WALKING_CONFIG = {
+    walkSpeed: 50,  // pixels per second
+    legAnimationSpeed: 0.15
+};
 
 // ==================== RADIO CHATTER ====================
 

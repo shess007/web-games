@@ -334,14 +334,30 @@ class Game {
         const startPlat = level.platforms.find(p => p.id === pass.f);
         const destPlat = level.platforms.find(p => p.id === pass.t);
 
+        // Get building door position for this platform (building on LEFT side)
+        const buildingType = BUILDING_TYPES[startPlat.buildingType];
+        let doorX = startPlat.x + startPlat.w / 2; // Default to platform center
+        if (buildingType) {
+            const buildingX = startPlat.x + 5; // Building positioned on left side with small margin
+            doorX = buildingX + buildingType.doorX;
+        }
+
         this.state.activePassenger = {
             state: 'WAITING',
-            x: startPlat.x + startPlat.w / 2,
+            x: doorX,  // Start at door
             y: startPlat.y - 5,
             character: pass.character,
             fromName: pass.fromName || startPlat.name,
             toName: pass.toName || destPlat?.name,
-            vipOnly: pass.vipOnly
+            vipOnly: pass.vipOnly,
+            // Walking properties
+            walkProgress: 0,
+            walkStartX: 0,
+            walkEndX: 0,
+            walkDirection: 1,
+            walkTime: 0,
+            fromPlatform: startPlat,
+            toPlatform: destPlat
         };
 
         this.ui.updateFareCount(this.state.passengerIndex + 1, level.passengers.length);
@@ -419,7 +435,107 @@ class Game {
         this.renderer.flash('#00ffaa', 0.4);
     }
 
+    // ==================== WALKING STATE MACHINE ====================
+
+    startPassengerWalkToTaxi() {
+        const passenger = this.state.activePassenger;
+        const taxi = this.state.taxi;
+        const platform = passenger.fromPlatform;
+
+        // Get building door position (building on LEFT side)
+        const buildingType = BUILDING_TYPES[platform.buildingType];
+        let doorX = platform.x + platform.w / 2;
+        if (buildingType) {
+            const buildingX = platform.x + 5; // Building positioned on left side
+            doorX = buildingX + buildingType.doorX;
+        }
+
+        // Calculate walk distance from door to taxi
+        const taxiX = taxi.x;
+        const distance = Math.abs(taxiX - doorX);
+        const walkDuration = distance / WALKING_CONFIG.walkSpeed;
+
+        passenger.state = 'WALKING_TO_TAXI';
+        passenger.walkStartX = doorX;
+        passenger.walkEndX = taxiX;
+        passenger.walkDirection = taxiX > doorX ? 1 : -1;
+        passenger.walkProgress = 0;
+        passenger.walkTime = 0;
+        passenger.walkDuration = walkDuration;
+        passenger.x = doorX;
+
+        this.ui.setMessage("BOARDING...");
+    }
+
+    startPassengerWalkToBuilding() {
+        const passenger = this.state.activePassenger;
+        const taxi = this.state.taxi;
+        const platform = passenger.toPlatform;
+
+        // Get building door position for destination (building on LEFT side)
+        const buildingType = BUILDING_TYPES[platform.buildingType];
+        let doorX = platform.x + platform.w / 2;
+        if (buildingType) {
+            const buildingX = platform.x + 5; // Building positioned on left side
+            doorX = buildingX + buildingType.doorX;
+        }
+
+        // Calculate walk distance from taxi to door
+        const taxiX = taxi.x;
+        const distance = Math.abs(doorX - taxiX);
+        const walkDuration = distance / WALKING_CONFIG.walkSpeed;
+
+        passenger.state = 'WALKING_TO_BUILDING';
+        passenger.walkStartX = taxiX;
+        passenger.walkEndX = doorX;
+        passenger.walkDirection = doorX > taxiX ? 1 : -1;
+        passenger.walkProgress = 0;
+        passenger.walkTime = 0;
+        passenger.walkDuration = walkDuration;
+        passenger.x = taxiX;
+
+        this.ui.setMessage("EXITING...");
+    }
+
+    updatePassengerWalking(dt) {
+        const passenger = this.state.activePassenger;
+        if (!passenger) return;
+
+        if (passenger.state !== 'WALKING_TO_TAXI' && passenger.state !== 'WALKING_TO_BUILDING') {
+            return;
+        }
+
+        // Update walk progress
+        passenger.walkTime += dt;
+        passenger.walkProgress = Math.min(1, passenger.walkTime / passenger.walkDuration);
+
+        // Interpolate position
+        passenger.x = passenger.walkStartX + (passenger.walkEndX - passenger.walkStartX) * passenger.walkProgress;
+
+        // Check if walk is complete
+        if (passenger.walkProgress >= 1) {
+            if (passenger.state === 'WALKING_TO_TAXI') {
+                // Passenger reached taxi - show contract selection
+                this.showContractSelection();
+            } else if (passenger.state === 'WALKING_TO_BUILDING') {
+                // Passenger reached building - finalize delivery
+                this.finalizeDelivery();
+            }
+        }
+    }
+
+    isTaxiLocked() {
+        const passenger = this.state.activePassenger;
+        if (!passenger) return false;
+        return passenger.state === 'WALKING_TO_TAXI' || passenger.state === 'WALKING_TO_BUILDING';
+    }
+
     completeDelivery() {
+        // Start passenger walking to building (exiting taxi)
+        this.startPassengerWalkToBuilding();
+    }
+
+    finalizeDelivery() {
         const contract = this.state.activeContract;
         const passenger = this.state.activePassenger;
         let success = true;
@@ -681,10 +797,16 @@ class Game {
         const { taxi, level, keys } = this.state;
         if (!level) return;
 
+        // Update passenger walking animation
+        this.updatePassengerWalking(0.016); // ~60fps delta time
+
+        // Check if taxi is locked during passenger boarding/exiting
+        const taxiLocked = this.isTaxiLocked();
+
         const gamepadInput = this.getGamepadInput();
-        const thrustUp = keys['ArrowUp'] || keys['KeyW'] || gamepadInput.up;
-        const thrustLeft = keys['ArrowLeft'] || keys['KeyA'] || gamepadInput.left;
-        const thrustRight = keys['ArrowRight'] || keys['KeyD'] || gamepadInput.right;
+        const thrustUp = !taxiLocked && (keys['ArrowUp'] || keys['KeyW'] || gamepadInput.up);
+        const thrustLeft = !taxiLocked && (keys['ArrowLeft'] || keys['KeyA'] || gamepadInput.left);
+        const thrustRight = !taxiLocked && (keys['ArrowRight'] || keys['KeyD'] || gamepadInput.right);
         const anyThrust = (thrustUp || thrustLeft || thrustRight) && this.state.fuel > 0;
 
         this.audio.updateEngineSound(anyThrust, thrustUp, thrustLeft || thrustRight);
@@ -1042,11 +1164,11 @@ class Game {
 
         const pass = level.passengers[passengerIndex];
 
-        // Pickup
+        // Pickup - start walking to taxi
         if (taxi.landedOn === pass.f && activePassenger.state === 'WAITING') {
-            this.showContractSelection();
+            this.startPassengerWalkToTaxi();
         }
-        // Dropoff
+        // Dropoff - start walking to building
         else if (taxi.landedOn === pass.t && activePassenger.state === 'IN_TAXI') {
             this.completeDelivery();
         }
