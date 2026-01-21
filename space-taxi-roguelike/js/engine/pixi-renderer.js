@@ -36,6 +36,7 @@ class PixiRenderer {
         // Taxi
         this.taxiContainer = null;
         this.taxiSprites = {};
+        this.gearAnimProgress = 1.0; // 0 = retracted, 1 = extended
 
         // Particles
         this.particleSprites = [];
@@ -2131,10 +2132,20 @@ class PixiRenderer {
         this.taxiContainer.y = taxi.y;
         this.taxiSprites.body.rotation = taxi.angle || 0;
 
-        // Update landing gear
-        const gearOut = (typeof taxi.gearOut === 'undefined') ? true : taxi.gearOut;
-        this.taxiSprites.gearLeft.visible = gearOut;
-        this.taxiSprites.gearRight.visible = gearOut;
+        // Update landing gear animation
+        const gearTarget = (typeof taxi.gearOut === 'undefined') ? 1.0 : (taxi.gearOut ? 1.0 : 0.0);
+        const gearSpeed = 0.15; // Animation speed
+        if (this.gearAnimProgress < gearTarget) {
+            this.gearAnimProgress = Math.min(gearTarget, this.gearAnimProgress + gearSpeed);
+        } else if (this.gearAnimProgress > gearTarget) {
+            this.gearAnimProgress = Math.max(gearTarget, this.gearAnimProgress - gearSpeed);
+        }
+        // Apply animation - scale Y from 0 to 1
+        this.taxiSprites.gearLeft.scale.y = this.gearAnimProgress;
+        this.taxiSprites.gearRight.scale.y = this.gearAnimProgress;
+        // Hide completely when fully retracted
+        this.taxiSprites.gearLeft.visible = this.gearAnimProgress > 0.01;
+        this.taxiSprites.gearRight.visible = this.gearAnimProgress > 0.01;
 
         // Update nav light blinking
         const blink = Math.sin(Date.now() / 200) > 0;
@@ -2362,25 +2373,27 @@ class PixiRenderer {
         this.taxiSprites.body = body;
         this.taxiContainer.addChild(body);
 
-        // Landing gear (separate so we can show/hide) (v7 API)
+        // Landing gear (separate so we can animate extend/retract) (v7 API)
+        // Draw gear relative to pivot at y=0, actual position offset by container y
         const gearLeft = new PIXI.Graphics();
         // Landing strut
         gearLeft.beginFill(0x666666);
         gearLeft.drawPolygon([
-            -10, 6,
-            -8, 6,
-            -7, 10,
-            -11, 10,
+            -10, 0,
+            -8, 0,
+            -7, 4,
+            -11, 4,
         ]);
         gearLeft.endFill();
         // Landing pad
         gearLeft.beginFill(0x555555);
-        gearLeft.drawRoundedRect(-13, 10, 8, 2, 1);
+        gearLeft.drawRoundedRect(-13, 4, 8, 2, 1);
         gearLeft.endFill();
         // Landing light
         gearLeft.beginFill(0x00ff00);
-        gearLeft.drawCircle(-9, 11, 1.5);
+        gearLeft.drawCircle(-9, 5, 1.5);
         gearLeft.endFill();
+        gearLeft.y = 6; // Base position (where gear attaches to taxi)
         this.taxiSprites.gearLeft = gearLeft;
         this.taxiContainer.addChild(gearLeft);
 
@@ -2388,20 +2401,21 @@ class PixiRenderer {
         // Landing strut
         gearRight.beginFill(0x666666);
         gearRight.drawPolygon([
-            8, 6,
-            10, 6,
-            11, 10,
-            7, 10,
+            8, 0,
+            10, 0,
+            11, 4,
+            7, 4,
         ]);
         gearRight.endFill();
         // Landing pad
         gearRight.beginFill(0x555555);
-        gearRight.drawRoundedRect(5, 10, 8, 2, 1);
+        gearRight.drawRoundedRect(5, 4, 8, 2, 1);
         gearRight.endFill();
         // Landing light
         gearRight.beginFill(0x00ff00);
-        gearRight.drawCircle(9, 11, 1.5);
+        gearRight.drawCircle(9, 5, 1.5);
         gearRight.endFill();
+        gearRight.y = 6; // Base position (where gear attaches to taxi)
         this.taxiSprites.gearRight = gearRight;
         this.taxiContainer.addChild(gearRight);
 

@@ -15,6 +15,7 @@ var TAXI_H = 22;
 var TAXI_THRUST_UP = 0.26;
 var TAXI_THRUST_SIDE = 0.22;
 var MAX_LANDING_SPD = 1.0;
+var GEAR_THRUST_MULT = 0.5;  // Thrust multiplier when landing gear is extended
 
 // ==================== ROGUELIKE CONFIG ====================
 

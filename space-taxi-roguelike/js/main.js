@@ -44,7 +44,7 @@ class Game {
 
             // Physics state
             fuel: 100,
-            taxi: { x: 100, y: 100, vx: 0, vy: 0, angle: 0, landedOn: null },
+            taxi: { x: 100, y: 100, vx: 0, vy: 0, angle: 0, landedOn: null, gearOut: false },
             camera: { x: 0, y: 0 },
             particles: [],
             shake: 0,
@@ -65,6 +65,7 @@ class Game {
         this.lastGamepadLeft = false;
         this.lastGamepadRight = false;
         this.lastGamepadConfirm = false;
+        this.lastGamepadGear = false;
 
         // Pause state
         this.pausedFromState = null; // State we paused from (PLAYING or CONTRACT_SELECT)
@@ -100,7 +101,7 @@ class Game {
     getGamepadInput() {
         this.updateGamepad();
         const pad = this.gamepad;
-        const input = { up: false, left: false, right: false, start: false, confirm: false };
+        const input = { up: false, left: false, right: false, start: false, confirm: false, gear: false };
         if (!pad) return input;
 
         if (pad.axes[0] < -this.gamepadDeadzone) input.left = true;
@@ -113,6 +114,8 @@ class Game {
         if (pad.buttons[7]?.pressed) input.up = true;
         if (pad.buttons[9]?.pressed) input.start = true;
         if (pad.buttons[0]?.pressed) input.confirm = true;
+        // Button 2 (X on Xbox, Square on PS) for landing gear
+        if (pad.buttons[2]?.pressed) input.gear = true;
 
         return input;
     }
@@ -135,6 +138,13 @@ class Game {
     vibrateThrust() { this.vibrate({ duration: 50, strongMagnitude: 0.1, weakMagnitude: 0.15 }); }
     vibrateDamage() { this.vibrate({ duration: 200, strongMagnitude: 0.8, weakMagnitude: 0.6 }); }
 
+    toggleLandingGear() {
+        const taxi = this.state.taxi;
+        taxi.gearOut = !taxi.gearOut;
+        this.audio.playSound(taxi.gearOut ? 300 : 400, 0.1, 'square', 0.3, 10);
+        this.ui.setMessage(taxi.gearOut ? "GEAR EXTENDED" : "GEAR RETRACTED");
+    }
+
     initEventListeners() {
         window.onkeydown = e => {
             this.state.keys[e.code] = true;
@@ -145,6 +155,10 @@ class Game {
                 } else if (this.state.gameState === 'PAUSED') {
                     this.resumeGame();
                 }
+            }
+            // Space key to toggle landing gear
+            if (e.code === 'Space' && this.state.gameState === 'PLAYING') {
+                this.toggleLandingGear();
             }
             // Number keys for contract selection
             if (this.state.gameState === 'CONTRACT_SELECT') {
@@ -237,6 +251,17 @@ class Game {
         this.setupTouch('btn-up', 'ArrowUp');
         this.setupTouch('btn-left', 'ArrowLeft');
         this.setupTouch('btn-right', 'ArrowRight');
+
+        // Gear button toggles on touch
+        const gearBtn = document.getElementById('btn-gear');
+        if (gearBtn) {
+            gearBtn.ontouchstart = e => {
+                e.preventDefault();
+                if (this.state.gameState === 'PLAYING') {
+                    this.toggleLandingGear();
+                }
+            };
+        }
     }
 
     setupTouch(id, code) {
@@ -317,7 +342,7 @@ class Game {
         this.state.taxi = {
             x: level.spawn.x,
             y: level.spawn.y,
-            vx: 0, vy: 0, angle: 0, landedOn: level.spawn.platformId
+            vx: 0, vy: 0, angle: 0, landedOn: level.spawn.platformId, gearOut: true
         };
 
         // Wait for renderer to be ready before initializing stars
@@ -919,6 +944,13 @@ class Game {
         const taxiLocked = this.isTaxiLocked();
 
         const gamepadInput = this.getGamepadInput();
+
+        // Handle gamepad gear toggle (edge detection)
+        if (gamepadInput.gear && !this.lastGamepadGear) {
+            this.toggleLandingGear();
+        }
+        this.lastGamepadGear = gamepadInput.gear;
+
         const thrustUp = !taxiLocked && (keys['ArrowUp'] || keys['KeyW'] || gamepadInput.up);
         const thrustLeft = !taxiLocked && (keys['ArrowLeft'] || keys['KeyA'] || gamepadInput.left);
         const thrustRight = !taxiLocked && (keys['ArrowRight'] || keys['KeyD'] || gamepadInput.right);
@@ -938,6 +970,9 @@ class Game {
         let thrustMult = 1.0;
         const solarStorm = this.state.activeModifiers.find(m => m.thrustMultiplier);
         if (solarStorm) thrustMult = solarStorm.thrustMultiplier;
+
+        // Reduce thrust when landing gear is extended
+        if (taxi.gearOut) thrustMult *= GEAR_THRUST_MULT;
 
         // Calculate fuel drain multiplier
         let fuelDrainMult = 1.0;
@@ -1027,14 +1062,6 @@ class Game {
 
         const speed = Math.sqrt(taxi.vx * taxi.vx + taxi.vy * taxi.vy);
         this.state.run.maxSpeedReached = Math.max(this.state.run.maxSpeedReached, speed);
-
-        // Landing gear
-        let nearPlatform = false;
-        for (let p of level.platforms) {
-            const dist = Math.sqrt(Math.pow(taxi.x - (p.x + p.w / 2), 2) + Math.pow(taxi.y - p.y, 2));
-            if (dist < 100) { nearPlatform = true; break; }
-        }
-        taxi.gearOut = nearPlatform;
 
         // Update enemies
         if (level.enemies) {
@@ -1217,6 +1244,13 @@ class Game {
         for (let p of level.platforms) {
             if (taxi.x + TAXI_W / 2 > p.x && taxi.x - TAXI_W / 2 < p.x + p.w &&
                 taxi.y + TAXI_H / 2 > p.y && taxi.y - TAXI_H / 2 < p.y + p.h) {
+
+                // Check if landing gear is extended - only 1 damage, not fatal
+                if (!taxi.gearOut && !taxi.landedOn) {
+                    this.takeDamage(1, "Gear not extended!");
+                    taxi.vy = -taxi.vy * 0.4;
+                    return;
+                }
 
                 // Check landing speed
                 if (speed > ROGUELIKE.hardLandingSpeed) {
