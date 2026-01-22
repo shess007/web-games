@@ -258,22 +258,42 @@ const PixiBackgroundMixin = {
     },
 
     drawNebulaCloud(graphics, cx, cy, radius, color, eccentricity, maxAlpha) {
-        // Use many more steps for smooth gradient (50 steps instead of 10)
-        const steps = 50;
+        // Check if anime style banded nebulas are enabled
+        const useBanded = typeof AnimeStyleConfig !== 'undefined' &&
+                         AnimeStyleConfig.enabled &&
+                         AnimeStyleConfig.background.bandedNebulas;
 
-        for (let i = steps; i >= 1; i--) {
-            const ratio = i / steps;
+        if (useBanded) {
+            // === ANIME STYLE: Distinct color bands ===
+            const numBands = AnimeStyleConfig.background.nebulaSteps || 4;
 
-            // Use smooth exponential falloff for natural gradient
-            // This creates a much smoother transition than linear
-            const smoothRatio = Math.pow(ratio, 0.7);
-            const alpha = maxAlpha * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+            for (let i = numBands; i >= 1; i--) {
+                const ratio = i / numBands;
+                const alpha = maxAlpha * (1 - ratio * 0.7);
+                const bandRadius = radius * ratio;
 
-            if (alpha < 0.001) continue;
+                graphics.beginFill(color, alpha);
+                graphics.drawEllipse(cx, cy, bandRadius, bandRadius * eccentricity);
+                graphics.endFill();
+            }
+        } else {
+            // Original: Use many more steps for smooth gradient (50 steps instead of 10)
+            const steps = 50;
 
-            graphics.beginFill(color, alpha);
-            graphics.drawEllipse(cx, cy, radius * smoothRatio, radius * eccentricity * smoothRatio);
-            graphics.endFill();
+            for (let i = steps; i >= 1; i--) {
+                const ratio = i / steps;
+
+                // Use smooth exponential falloff for natural gradient
+                // This creates a much smoother transition than linear
+                const smoothRatio = Math.pow(ratio, 0.7);
+                const alpha = maxAlpha * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+
+                if (alpha < 0.001) continue;
+
+                graphics.beginFill(color, alpha);
+                graphics.drawEllipse(cx, cy, radius * smoothRatio, radius * eccentricity * smoothRatio);
+                graphics.endFill();
+            }
         }
     },
 

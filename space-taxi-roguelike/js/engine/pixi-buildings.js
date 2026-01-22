@@ -184,10 +184,38 @@ const PixiBuildingsMixin = {
     },
 
     drawResidentialBuilding(graphics, x, y, width, height, color) {
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
+        // === ANIME STYLE: Building outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(color);
+            const thickness = AnimeStyleConfig.outline.buildingThickness;
+            const alpha = AnimeStyleConfig.outline.alpha;
+
+            // Main body outline
+            graphics.lineStyle(thickness, outlineColor, alpha);
+            graphics.drawRect(x, y + 15, width, height - 15);
+
+            // Roof outline
+            graphics.moveTo(x - 3, y + 15);
+            graphics.lineTo(x + width / 2, y);
+            graphics.lineTo(x + width + 3, y + 15);
+            graphics.closePath();
+            graphics.lineStyle(0);
+        }
+
         // Main body
         graphics.beginFill(color);
         graphics.drawRect(x, y + 15, width, height - 15);
         graphics.endFill();
+
+        // === ANIME STYLE: Shadow side (right wall darker) ===
+        if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
+            const shadowColor = AnimeStyleUtils.darkenColor(color, AnimeStyleConfig.shading.shadowDarken);
+            graphics.beginFill(shadowColor, 0.4);
+            graphics.drawRect(x + width - 8, y + 15, 8, height - 15);
+            graphics.endFill();
+        }
 
         // Triangular roof
         graphics.beginFill(this.lightenColor(color, 0.2));
@@ -216,10 +244,32 @@ const PixiBuildingsMixin = {
     },
 
     drawLuxuryBuilding(graphics, x, y, width, height, color) {
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
+        // === ANIME STYLE: Building outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(color);
+            const thickness = AnimeStyleConfig.outline.buildingThickness;
+            const alpha = AnimeStyleConfig.outline.alpha;
+
+            graphics.lineStyle(thickness, outlineColor, alpha);
+            graphics.drawRect(x, y + 20, width, height - 20);
+            graphics.arc(x + width / 2, y + 20, width / 2, Math.PI, 0);
+            graphics.lineStyle(0);
+        }
+
         // Main body with slight gradient effect
         graphics.beginFill(color);
         graphics.drawRect(x, y + 20, width, height - 20);
         graphics.endFill();
+
+        // === ANIME STYLE: Shadow side ===
+        if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
+            const shadowColor = AnimeStyleUtils.darkenColor(color, AnimeStyleConfig.shading.shadowDarken);
+            graphics.beginFill(shadowColor, 0.4);
+            graphics.drawRect(x + width - 10, y + 20, 10, height - 20);
+            graphics.endFill();
+        }
 
         // Body highlight
         graphics.beginFill(0xffffff, 0.1);
@@ -607,6 +657,8 @@ const PixiBuildingsMixin = {
     },
 
     drawWindows(graphics, startX, startY, cols, rows, cellWidth, cellHeight) {
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const wx = startX + col * (cellWidth + 4);
@@ -621,6 +673,17 @@ const PixiBuildingsMixin = {
                 graphics.beginFill(0x88aaff, 0.5);
                 graphics.drawRect(wx, wy, cellWidth, cellHeight);
                 graphics.endFill();
+
+                // === ANIME STYLE: Specular window shine ===
+                if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
+                    // Diagonal shine across window
+                    graphics.beginFill(0xffffff, 0.4);
+                    graphics.moveTo(wx, wy);
+                    graphics.lineTo(wx + cellWidth * 0.4, wy);
+                    graphics.lineTo(wx, wy + cellHeight * 0.4);
+                    graphics.closePath();
+                    graphics.endFill();
+                }
             }
         }
     },

@@ -16,6 +16,37 @@ const defaultVertexShader = `
     }
 `;
 
+// ==================== POSTERIZE FILTER (ANIME COLOR BANDING) ====================
+
+const posterizeFragmentShader = `
+    precision mediump float;
+
+    varying vec2 vTextureCoord;
+    uniform sampler2D uSampler;
+    uniform float uLevels;
+
+    void main(void) {
+        vec4 color = texture2D(uSampler, vTextureCoord);
+
+        // Posterize each color channel
+        color.r = floor(color.r * uLevels + 0.5) / uLevels;
+        color.g = floor(color.g * uLevels + 0.5) / uLevels;
+        color.b = floor(color.b * uLevels + 0.5) / uLevels;
+
+        gl_FragColor = color;
+    }
+`;
+
+class PosterizeFilter extends PIXI.Filter {
+    constructor(levels = 8) {
+        super(defaultVertexShader, posterizeFragmentShader);
+        this.uniforms.uLevels = levels;
+    }
+
+    get levels() { return this.uniforms.uLevels; }
+    set levels(value) { this.uniforms.uLevels = Math.max(2, value); }
+}
+
 // ==================== VIGNETTE FILTER ====================
 
 const vignetteFragmentShader = `
@@ -66,9 +97,17 @@ class PostProcessingManager {
             console.warn('[PostProcessingManager] Failed to create vignette filter:', e);
         }
 
+        try {
+            this.filters.posterize = new PosterizeFilter(8);
+            console.log('[PostProcessingManager] Posterize filter created');
+        } catch (e) {
+            console.warn('[PostProcessingManager] Failed to create posterize filter:', e);
+        }
+
         // Default enabled state for each filter
         this.filterEnabled = {
-            vignette: false
+            vignette: false,
+            posterize: false
         };
 
         this.time = 0;
@@ -78,6 +117,9 @@ class PostProcessingManager {
         if (!this.enabled) return [];
 
         const active = [];
+        if (this.filterEnabled.posterize && this.filters.posterize) {
+            active.push(this.filters.posterize);
+        }
         if (this.filterEnabled.vignette && this.filters.vignette) {
             active.push(this.filters.vignette);
         }
@@ -138,6 +180,18 @@ class PostProcessingManager {
                 }
                 break;
 
+            case 'anime':
+                this.setAll(false);
+                if (this.filters.posterize) {
+                    this.enable('posterize');
+                    this.filters.posterize.levels = 6; // Subtle posterization
+                }
+                if (this.filters.vignette) {
+                    this.enable('vignette');
+                    this.filters.vignette.intensity = 0.25;
+                }
+                break;
+
             default:
                 console.warn(`Unknown preset: ${presetName}`);
         }
@@ -145,5 +199,6 @@ class PostProcessingManager {
 }
 
 // Export
+window.PosterizeFilter = PosterizeFilter;
 window.VignetteFilter = VignetteFilter;
 window.PostProcessingManager = PostProcessingManager;

@@ -17,6 +17,9 @@ class PixiRenderer {
         this.initialized = false;
         this.time = 0;
 
+        // Anime style toggle
+        this.animeStyleEnabled = true;
+
         // Container hierarchy (set up in init)
         this.containers = {};
 
@@ -98,6 +101,11 @@ class PixiRenderer {
             // Set up container hierarchy
             this.setupContainers();
 
+            // Initialize anime FX system
+            if (typeof PixiAnimeFXMixin !== 'undefined') {
+                this.initAnimeFX();
+            }
+
             // Generate reusable textures
             this.generateTextures();
 
@@ -162,6 +170,11 @@ class PixiRenderer {
         this.app.stage.addChild(this.containers.parallaxLayer1);
         this.app.stage.addChild(this.containers.parallaxLayer2);
         this.app.stage.addChild(this.containers.game);
+
+        // Anime FX container (between game and ui for manga effects)
+        this.containers.animeFX = new PIXI.Container();
+        this.app.stage.addChild(this.containers.animeFX);
+
         this.app.stage.addChild(this.containers.ui);
 
         // Create game sub-containers
@@ -310,22 +323,61 @@ class PixiRenderer {
         const graphics = new PIXI.Graphics();
         const halfSize = size / 2;
 
-        // Smooth glow (v7 API)
-        const steps = 15;
-        for (let i = steps; i >= 1; i--) {
-            const ratio = i / steps;
-            const smoothRatio = Math.pow(ratio, 0.6);
-            const alpha = 0.4 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
-            if (alpha < 0.001) continue;
-            graphics.beginFill(color, alpha);
-            graphics.drawCircle(halfSize, halfSize, halfSize * smoothRatio);
+        // Check if anime style sparkles are enabled
+        const useSparkle = typeof AnimeStyleConfig !== 'undefined' &&
+                          AnimeStyleConfig.enabled &&
+                          AnimeStyleConfig.background.sparkleStars;
+
+        if (useSparkle) {
+            // === ANIME STYLE: 4-point sparkle star ===
+            const armLength = halfSize;
+            const armWidth = halfSize * 0.2;
+
+            // Outer glow
+            graphics.beginFill(color, 0.2);
+            graphics.drawCircle(halfSize, halfSize, halfSize * 0.8);
+            graphics.endFill();
+
+            // Vertical arm
+            graphics.beginFill(color, 0.7);
+            graphics.moveTo(halfSize, halfSize - armLength);
+            graphics.lineTo(halfSize + armWidth, halfSize);
+            graphics.lineTo(halfSize, halfSize + armLength);
+            graphics.lineTo(halfSize - armWidth, halfSize);
+            graphics.closePath();
+            graphics.endFill();
+
+            // Horizontal arm
+            graphics.beginFill(color, 0.7);
+            graphics.moveTo(halfSize - armLength, halfSize);
+            graphics.lineTo(halfSize, halfSize + armWidth);
+            graphics.lineTo(halfSize + armLength, halfSize);
+            graphics.lineTo(halfSize, halfSize - armWidth);
+            graphics.closePath();
+            graphics.endFill();
+
+            // Bright center core
+            graphics.beginFill(0xffffff, 0.9);
+            graphics.drawCircle(halfSize, halfSize, size * 0.1);
+            graphics.endFill();
+        } else {
+            // Original: Smooth glow (v7 API)
+            const steps = 15;
+            for (let i = steps; i >= 1; i--) {
+                const ratio = i / steps;
+                const smoothRatio = Math.pow(ratio, 0.6);
+                const alpha = 0.4 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+                if (alpha < 0.001) continue;
+                graphics.beginFill(color, alpha);
+                graphics.drawCircle(halfSize, halfSize, halfSize * smoothRatio);
+                graphics.endFill();
+            }
+
+            // Core with bright center
+            graphics.beginFill(0xffffff, 0.9);
+            graphics.drawCircle(halfSize, halfSize, size * 0.12);
             graphics.endFill();
         }
-
-        // Core with bright center
-        graphics.beginFill(0xffffff, 0.9);
-        graphics.drawCircle(halfSize, halfSize, size * 0.12);
-        graphics.endFill();
 
         return this.app.renderer.generateTexture(graphics);
     }
@@ -460,6 +512,11 @@ class PixiRenderer {
         // Update screen flash
         this.updateScreenFlash();
 
+        // Update anime FX (speed lines, impact frames, etc.)
+        if (this.animeStyleEnabled && typeof this.updateAnimeFX === 'function') {
+            this.updateAnimeFX(state, 0.016);
+        }
+
         // Update particle trails
         this.updateParticleTrails(state.particles);
 
@@ -530,6 +587,9 @@ if (typeof PixiTaxiMixin !== 'undefined') {
 }
 if (typeof PixiMinimapMixin !== 'undefined') {
     Object.assign(PixiRenderer.prototype, PixiMinimapMixin);
+}
+if (typeof PixiAnimeFXMixin !== 'undefined') {
+    Object.assign(PixiRenderer.prototype, PixiAnimeFXMixin);
 }
 
 // Export for use

@@ -504,6 +504,11 @@ class Game {
         this.audio.playSound(600, 0.22, 'sine', 0.1);
         this.vibratePickup();
         this.renderer.flash('#00ffaa', 0.4);
+
+        // Trigger anime-style focus lines effect for pickup
+        if (this.renderer.triggerFocusLines) {
+            this.renderer.triggerFocusLines(this.state.taxi.x, this.state.taxi.y, 0x00ffaa);
+        }
     }
 
     // ==================== WALKING STATE MACHINE ====================
@@ -655,6 +660,11 @@ class Game {
         this.vibratePickup();
         this.renderer.flash('#ffdd00', 0.5);
 
+        // Trigger anime-style focus lines effect for delivery
+        if (this.renderer.triggerFocusLines) {
+            this.renderer.triggerFocusLines(this.state.taxi.x, this.state.taxi.y, 0xffdd00);
+        }
+
         this.state.activePassenger.state = 'DONE';
         this.state.activeContract = null;
         this.ui.hideContractInfo();
@@ -670,6 +680,11 @@ class Game {
         this.vibrateDamage();
         this.renderer.flash('#ff0000', 0.6);
         this.state.shake = Math.max(this.state.shake, 20);
+
+        // Trigger anime-style impact frame effect
+        if (this.renderer.triggerImpactFrame) {
+            this.renderer.triggerImpactFrame(this.state.taxi.x, this.state.taxi.y, 0xff4444);
+        }
 
         this.ui.updateHull(this.state.run.hull, ROGUELIKE.maxHull);
         this.audio.playSound(150, 0.5, 'sawtooth', 0.3);

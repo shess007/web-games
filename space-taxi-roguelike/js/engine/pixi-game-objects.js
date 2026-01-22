@@ -7,6 +7,8 @@ const PixiGameObjectsMixin = {
     updateAsteroids(asteroids) {
         if (!asteroids) return;
 
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
         asteroids.forEach((a, idx) => {
             let sprite = this.asteroidSprites.get(idx);
 
@@ -19,6 +21,8 @@ const PixiGameObjectsMixin = {
 
             sprite.clear();
 
+            const baseColor = 0xFFCDB2; // Soft peach base color
+
             // Soft outer glow - cozy pastel (v7 API)
             const glowColor = 0xE2D1F9; // Lavender glow
             for (let i = 4; i >= 1; i--) {
@@ -29,21 +33,37 @@ const PixiGameObjectsMixin = {
                 sprite.endFill();
             }
 
-            // Draw soft rounded blob shape instead of jagged polygon (v7 API)
-            // Create organic rounded shape using the vertices as guide points
-            const baseColor = 0xFFCDB2; // Soft peach base color
+            // === ANIME STYLE: Draw outline FIRST ===
+            if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+                const outlineColor = AnimeStyleUtils.getOutlineColor(baseColor);
+                sprite.lineStyle(AnimeStyleConfig.outline.asteroidThickness, outlineColor, AnimeStyleConfig.outline.alpha);
+                sprite.drawCircle(0, 0, a.size * 0.85);
+                sprite.lineStyle(0);
+            }
+
+            // Draw soft rounded blob shape (v7 API)
             sprite.beginFill(baseColor);
-            sprite.lineStyle(2, 0xF5B7B1, 0.5); // Soft coral outline
+            if (!useAnimeStyle) {
+                sprite.lineStyle(2, 0xF5B7B1, 0.5); // Original soft coral outline
+            }
 
             if (a.vertices && a.vertices.length > 0) {
-                // Draw as a soft blob by using circles and curves
-                // Start with a base circle
                 sprite.drawCircle(0, 0, a.size * 0.85);
             } else {
-                // Fallback to simple circle
                 sprite.drawCircle(0, 0, a.size);
             }
             sprite.endFill();
+            sprite.lineStyle(0);
+
+            // === ANIME STYLE: Shadow crescent on bottom-right ===
+            if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
+                const shadowColor = AnimeStyleUtils.darkenColor(baseColor, AnimeStyleConfig.shading.shadowDarken);
+                sprite.beginFill(shadowColor, 0.4);
+                sprite.arc(0, 0, a.size * 0.85, 0.3, Math.PI * 0.9);
+                sprite.lineTo(0, 0);
+                sprite.closePath();
+                sprite.endFill();
+            }
 
             // Soft dimples instead of harsh craters (v7 API)
             sprite.beginFill(0xFAD7A0, 0.4); // Slightly darker warm peach
@@ -52,6 +72,11 @@ const PixiGameObjectsMixin = {
             sprite.beginFill(0xFAD7A0, 0.4);
             sprite.drawCircle(-a.size * 0.3, -a.size * 0.2, a.size * 0.1);
             sprite.endFill();
+
+            // === ANIME STYLE: Specular highlight ===
+            if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
+                AnimeStyleUtils.drawSpecularHighlight(sprite, 0, 0, a.size);
+            }
 
             sprite.x = a.x;
             sprite.y = a.y;
@@ -172,6 +197,8 @@ const PixiGameObjectsMixin = {
     updateMeteors(meteors) {
         if (!meteors) return;
 
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
         meteors.forEach((m, idx) => {
             let container = this.meteorSprites.get(idx);
 
@@ -203,11 +230,41 @@ const PixiGameObjectsMixin = {
                         trail.endFill();
                     }
                 });
+
+                // === ANIME STYLE: Manga speed lines in trail ===
+                if (useAnimeStyle && m.trail.length > 3) {
+                    const moveAngle = Math.atan2(m.vy, m.vx);
+                    const speed = Math.sqrt(m.vx * m.vx + m.vy * m.vy);
+
+                    if (speed > 2) {
+                        const numLines = Math.min(6, Math.floor(speed));
+                        trail.lineStyle(1.5, 0xffaa00, 0.4);
+
+                        for (let i = 0; i < numLines; i++) {
+                            const spread = (i / numLines - 0.5) * 0.5;
+                            const lineAngle = moveAngle + Math.PI + spread;
+                            const startDist = m.size * 1.5;
+                            const endDist = m.size * 3 + speed * 5;
+
+                            trail.moveTo(
+                                Math.cos(lineAngle) * startDist,
+                                Math.sin(lineAngle) * startDist
+                            );
+                            trail.lineTo(
+                                Math.cos(lineAngle) * endDist,
+                                Math.sin(lineAngle) * endDist
+                            );
+                        }
+                        trail.lineStyle(0);
+                    }
+                }
             }
 
             // Draw meteor body (v7 API)
             const body = container.bodyGraphics;
             body.clear();
+
+            const bodyColor = 0x993300;
 
             // Glow (v7 API)
             for (let i = 5; i >= 1; i--) {
@@ -218,8 +275,16 @@ const PixiGameObjectsMixin = {
                 body.endFill();
             }
 
+            // === ANIME STYLE: Body outline ===
+            if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+                const outlineColor = AnimeStyleUtils.darkenColor(bodyColor, 0.4);
+                body.lineStyle(2.5, outlineColor, 0.7);
+                body.drawCircle(0, 0, m.size);
+                body.lineStyle(0);
+            }
+
             // Body (v7 API)
-            body.beginFill(0x993300);
+            body.beginFill(bodyColor);
             body.drawCircle(0, 0, m.size);
             body.endFill();
 
@@ -242,6 +307,8 @@ const PixiGameObjectsMixin = {
     updateEnemies(enemies) {
         if (!enemies) return;
 
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
         enemies.forEach((e, idx) => {
             let container = this.enemySprites.get(idx);
 
@@ -254,6 +321,7 @@ const PixiGameObjectsMixin = {
             container.clear();
 
             const pulse = 0.5 + Math.sin(Date.now() / 200) * 0.5;
+            const bodyColor = 0xff3300;
 
             // Outer danger glow (v7 API)
             for (let i = 5; i >= 1; i--) {
@@ -262,6 +330,14 @@ const PixiGameObjectsMixin = {
                 container.beginFill(0xff0000, alpha);
                 container.drawCircle(0, 0, e.size * 3 * ratio);
                 container.endFill();
+            }
+
+            // === ANIME STYLE: Dramatic thick outline ===
+            if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+                const outlineColor = AnimeStyleUtils.darkenColor(bodyColor, 0.5); // Darker, more menacing
+                container.lineStyle(AnimeStyleConfig.outline.enemyThickness, outlineColor, 0.8);
+                container.drawCircle(0, 0, e.size / 2);
+                container.lineStyle(0);
             }
 
             // Inner glow (v7 API)
@@ -274,9 +350,16 @@ const PixiGameObjectsMixin = {
             }
 
             // Body (v7 API)
-            container.beginFill(0xff3300);
+            container.beginFill(bodyColor);
             container.drawCircle(0, 0, e.size / 2);
             container.endFill();
+
+            // === ANIME STYLE: Evil specular highlight ===
+            if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
+                container.beginFill(0xffffff, 0.3);
+                container.drawEllipse(-e.size * 0.15, -e.size * 0.2, e.size * 0.15, e.size * 0.08);
+                container.endFill();
+            }
 
             // Eyes (v7 API)
             container.beginFill(0xffffff);
@@ -294,7 +377,7 @@ const PixiGameObjectsMixin = {
             container.drawRect(3, -2, 1, 1);
             container.endFill();
 
-            // Animated tentacles (v7 API)
+            // Animated tentacles (v7 API) with anime-style outlines
             for (let i = 0; i < 6; i++) {
                 const a = (i / 6) * Math.PI * 2 + Date.now() / 300;
                 const wave = Math.sin(Date.now() / 100 + i) * 5;
@@ -302,6 +385,13 @@ const PixiGameObjectsMixin = {
                 const endY = Math.sin(a) * (e.size + wave);
                 const ctrlX = Math.cos(a + 0.3) * e.size * 0.5;
                 const ctrlY = Math.sin(a + 0.3) * e.size * 0.5;
+
+                // Tentacle outline (anime style)
+                if (useAnimeStyle) {
+                    container.lineStyle(5, 0x660000, 0.6);
+                    container.moveTo(0, 0);
+                    container.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+                }
 
                 container.lineStyle(3, 0xff5500, 1, 0.5, false);
                 container.moveTo(0, 0);
@@ -345,23 +435,42 @@ const PixiGameObjectsMixin = {
     drawWaitingPassenger(passenger) {
         const p = passenger;
         const teleportPulse = 0.5 + Math.sin(Date.now() / 150) * 0.5;
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+        const bodyColor = 0xf472b6;
+        const headColor = 0xfbcfe8;
 
         // Teleport glow underneath (v7 API)
         for (let i = 4; i >= 1; i--) {
             const ratio = i / 4;
             const alpha = 0.2 * teleportPulse * (1 - ratio);
-            this.passengerSprite.beginFill(0xf472b6, alpha);
+            this.passengerSprite.beginFill(bodyColor, alpha);
             this.passengerSprite.drawEllipse(0, 0, 25 * ratio, 12 * ratio);
             this.passengerSprite.endFill();
         }
 
+        // === ANIME STYLE: Body outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(bodyColor);
+            this.passengerSprite.lineStyle(AnimeStyleConfig.outline.passengerThickness, outlineColor, AnimeStyleConfig.outline.alpha);
+            this.passengerSprite.drawRect(-4, -12, 8, 12);
+            this.passengerSprite.lineStyle(0);
+        }
+
         // Body (v7 API)
-        this.passengerSprite.beginFill(0xf472b6);
+        this.passengerSprite.beginFill(bodyColor);
         this.passengerSprite.drawRect(-4, -12, 8, 12);
         this.passengerSprite.endFill();
 
+        // === ANIME STYLE: Head outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(headColor);
+            this.passengerSprite.lineStyle(AnimeStyleConfig.outline.passengerThickness, outlineColor, AnimeStyleConfig.outline.alpha);
+            this.passengerSprite.drawRect(-3, -18, 6, 6);
+            this.passengerSprite.lineStyle(0);
+        }
+
         // Head (v7 API)
-        this.passengerSprite.beginFill(0xfbcfe8);
+        this.passengerSprite.beginFill(headColor);
         this.passengerSprite.drawRect(-3, -18, 6, 6);
         this.passengerSprite.endFill();
 
@@ -375,7 +484,7 @@ const PixiGameObjectsMixin = {
         this.passengerSprite.endFill();
 
         // Pickup ring (v7 API)
-        this.passengerSprite.lineStyle(2, 0xf472b6, teleportPulse);
+        this.passengerSprite.lineStyle(2, bodyColor, teleportPulse);
         this.passengerSprite.drawCircle(0, -6, 15 + (1 - teleportPulse) * 10);
     },
 
@@ -385,6 +494,9 @@ const PixiGameObjectsMixin = {
         const legSwing = Math.sin(walkTime * 10 * WALKING_CONFIG.legAnimationSpeed * 50) * 4;
         const bodyBob = Math.abs(Math.sin(walkTime * 10 * WALKING_CONFIG.legAnimationSpeed * 50)) * 2;
         const armSwing = -legSwing * 0.6;
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+        const bodyColor = 0xf472b6;
+        const headColor = 0xfbcfe8;
 
         // Direction indicator (flipped based on walk direction)
         const dir = p.walkDirection || 1;
@@ -401,12 +513,20 @@ const PixiGameObjectsMixin = {
         this.passengerSprite.endFill();
 
         // Front leg
-        this.passengerSprite.beginFill(0xf472b6);
+        this.passengerSprite.beginFill(bodyColor);
         this.passengerSprite.drawRect(-1 - legSwing * 0.3, -3, 3, 5);
         this.passengerSprite.endFill();
 
+        // === ANIME STYLE: Body outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(bodyColor);
+            this.passengerSprite.lineStyle(AnimeStyleConfig.outline.passengerThickness, outlineColor, AnimeStyleConfig.outline.alpha);
+            this.passengerSprite.drawRect(-4, -12 - bodyBob, 8, 10);
+            this.passengerSprite.lineStyle(0);
+        }
+
         // Body (with bob)
-        this.passengerSprite.beginFill(0xf472b6);
+        this.passengerSprite.beginFill(bodyColor);
         this.passengerSprite.drawRect(-4, -12 - bodyBob, 8, 10);
         this.passengerSprite.endFill();
 
@@ -417,12 +537,20 @@ const PixiGameObjectsMixin = {
         this.passengerSprite.endFill();
 
         // Front arm
-        this.passengerSprite.beginFill(0xf472b6);
+        this.passengerSprite.beginFill(bodyColor);
         this.passengerSprite.drawRect(3 - armSwing * 0.2, -10 - bodyBob, 2, 6);
         this.passengerSprite.endFill();
 
+        // === ANIME STYLE: Head outline ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(headColor);
+            this.passengerSprite.lineStyle(AnimeStyleConfig.outline.passengerThickness, outlineColor, AnimeStyleConfig.outline.alpha);
+            this.passengerSprite.drawRect(-3, -18 - bodyBob, 6, 6);
+            this.passengerSprite.lineStyle(0);
+        }
+
         // Head (with slight bob)
-        this.passengerSprite.beginFill(0xfbcfe8);
+        this.passengerSprite.beginFill(headColor);
         this.passengerSprite.drawRect(-3, -18 - bodyBob, 6, 6);
         this.passengerSprite.endFill();
 

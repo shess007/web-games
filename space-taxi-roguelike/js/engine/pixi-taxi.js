@@ -127,16 +127,46 @@ const PixiTaxiMixin = {
         // CUTE CAR BODY - Side view profile (rotates)
         const body = new PIXI.Graphics();
 
+        // Base color for cel-shading
+        const baseColor = 0xF9E79F; // Butter yellow
+        const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
+
         // Soft shadow beneath the car
         body.beginFill(0x000000, 0.15);
         body.drawEllipse(0, 14, 20, 4);
         body.endFill();
 
+        // === ANIME STYLE: Draw outline FIRST ===
+        if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
+            const outlineColor = AnimeStyleUtils.getOutlineColor(baseColor);
+            const outlineThickness = AnimeStyleConfig.outline.taxiThickness;
+            const outlineAlpha = AnimeStyleConfig.outline.alpha;
+
+            body.lineStyle(outlineThickness, outlineColor, outlineAlpha);
+            body.moveTo(-20, 6);
+            body.lineTo(-20, -2);
+            body.lineTo(-18, -6);
+            body.quadraticCurveTo(-14, -12, -6, -12);
+            body.lineTo(4, -12);
+            body.quadraticCurveTo(12, -12, 16, -6);
+            body.lineTo(20, -2);
+            body.lineTo(22, 0);
+            body.lineTo(22, 6);
+            body.lineTo(14, 6);
+            body.quadraticCurveTo(12, 10, 8, 10);
+            body.quadraticCurveTo(4, 10, 2, 6);
+            body.lineTo(-6, 6);
+            body.quadraticCurveTo(-8, 10, -12, 10);
+            body.quadraticCurveTo(-16, 10, -18, 6);
+            body.closePath();
+            body.lineStyle(0);
+        }
+
         // === CLASSIC CAR SILHOUETTE - Side view ===
         // Using bezier curves for a proper car shape
 
         // Main car body with proper car profile
-        body.beginFill(0xF9E79F); // Butter yellow
+        body.beginFill(baseColor);
 
         // Draw car body as a proper side-view shape
         body.moveTo(-20, 6);      // rear bottom
@@ -156,6 +186,25 @@ const PixiTaxiMixin = {
         body.quadraticCurveTo(-16, 10, -18, 6);
         body.lineTo(-20, 6);      // back to start
         body.endFill();
+
+        // === ANIME STYLE: Cel-shading shadow band on bottom/right ===
+        if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
+            const shadowColor = AnimeStyleUtils.darkenColor(baseColor, AnimeStyleConfig.shading.shadowDarken);
+            body.beginFill(shadowColor, 0.5);
+            // Shadow on bottom portion of car body
+            body.moveTo(22, 2);
+            body.lineTo(22, 6);
+            body.lineTo(14, 6);
+            body.quadraticCurveTo(12, 10, 8, 10);
+            body.quadraticCurveTo(4, 10, 2, 6);
+            body.lineTo(-6, 6);
+            body.quadraticCurveTo(-8, 10, -12, 10);
+            body.quadraticCurveTo(-16, 10, -18, 6);
+            body.lineTo(-20, 6);
+            body.lineTo(-20, 2);
+            body.lineTo(22, 2);
+            body.endFill();
+        }
 
         // Lower body accent (soft peach trim)
         body.beginFill(0xFFCDB2); // Soft peach
@@ -183,6 +232,18 @@ const PixiTaxiMixin = {
         body.lineTo(-4, -12);
         body.endFill();
 
+        // === ANIME STYLE: Specular highlight on roof ===
+        if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
+            // Large anime-style specular ellipse
+            body.beginFill(0xffffff, AnimeStyleConfig.specular.alpha);
+            body.drawEllipse(-2, -11, 6, 2);
+            body.endFill();
+            // Small secondary highlight
+            body.beginFill(0xffffff, AnimeStyleConfig.specular.alpha * 0.7);
+            body.drawEllipse(6, -10, 3, 1.5);
+            body.endFill();
+        }
+
         // === WINDOWS ===
 
         // Rear window
@@ -206,13 +267,33 @@ const PixiTaxiMixin = {
         body.drawRoundedRect(-4, -10, 6, 5, 1);
         body.endFill();
 
-        // Window reflections
-        body.beginFill(0xffffff, 0.5);
-        body.drawRoundedRect(5, -9, 3, 2, 1);
-        body.endFill();
-        body.beginFill(0xffffff, 0.4);
-        body.drawRoundedRect(-14, -8, 3, 2, 1);
-        body.endFill();
+        // Window reflections - anime style enhanced
+        if (useAnimeStyle) {
+            // Front windshield - strong diagonal shine
+            body.beginFill(0xffffff, 0.6);
+            body.moveTo(5, -9);
+            body.lineTo(9, -9);
+            body.lineTo(6, -7);
+            body.lineTo(5, -7);
+            body.closePath();
+            body.endFill();
+            // Rear window - secondary shine
+            body.beginFill(0xffffff, 0.5);
+            body.moveTo(-14, -9);
+            body.lineTo(-11, -9);
+            body.lineTo(-13, -7);
+            body.lineTo(-14, -7);
+            body.closePath();
+            body.endFill();
+        } else {
+            // Original window reflections
+            body.beginFill(0xffffff, 0.5);
+            body.drawRoundedRect(5, -9, 3, 2, 1);
+            body.endFill();
+            body.beginFill(0xffffff, 0.4);
+            body.drawRoundedRect(-14, -8, 3, 2, 1);
+            body.endFill();
+        }
 
         // === TAXI SIGN ON ROOF ===
         body.beginFill(0xF5B7B1); // Soft coral
