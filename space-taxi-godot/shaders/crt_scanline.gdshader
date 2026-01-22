@@ -3,6 +3,7 @@ shader_type canvas_item;
 // CRT Scanline and Screen Curvature Effect
 // Perfect for retro-futuristic aesthetic
 
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform float scanline_strength : hint_range(0.0, 1.0) = 0.3;
 uniform float scanline_frequency : hint_range(0.0, 1000.0) = 500.0;
 uniform float curvature_amount : hint_range(0.0, 10.0) = 2.0;
@@ -24,7 +25,7 @@ float random(vec2 st) {
 }
 
 void fragment() {
-    vec2 curved_uv = curve_screen(UV);
+    vec2 curved_uv = curve_screen(SCREEN_UV);
 
     // Check if UV is out of bounds after curve
     if (curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0) {
@@ -33,9 +34,9 @@ void fragment() {
     }
 
     // Chromatic aberration (RGB split)
-    float r = texture(TEXTURE, curved_uv + vec2(chromatic_aberration, 0.0)).r;
-    float g = texture(TEXTURE, curved_uv).g;
-    float b = texture(TEXTURE, curved_uv - vec2(chromatic_aberration, 0.0)).b;
+    float r = texture(screen_texture, curved_uv + vec2(chromatic_aberration, 0.0)).r;
+    float g = texture(screen_texture, curved_uv).g;
+    float b = texture(screen_texture, curved_uv - vec2(chromatic_aberration, 0.0)).b;
     vec4 color = vec4(r, g, b, 1.0);
 
     // Scanlines

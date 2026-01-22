@@ -11,4 +11,6 @@ z_index = -10
 [node name="GameWorld" type="Node2D" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
 zoom = Vector2(1.5, 1.5)
+enabled = true

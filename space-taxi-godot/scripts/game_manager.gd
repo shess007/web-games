@@ -16,6 +16,9 @@ var taxi: Taxi
 var hud: HUD
 var contract_selection: ContractSelection
 var level_generator: LevelGenerator
+var visual_effects: VisualEffects
+var starfield: Starfield
+var post_processing: PostProcessing
 
 # Game state
 var current_job: Dictionary = {}
@@ -31,6 +34,19 @@ func _ready() -> void:
 	# Initialize level generator
 	level_generator = LevelGenerator.new()
 	add_child(level_generator)
+
+	# Create visual effects system
+	visual_effects = VisualEffects.new()
+	add_child(visual_effects)
+
+	# Create enhanced starfield
+	starfield = Starfield.new()
+	background.add_child(starfield)
+
+	# Create post-processing effects (CRT, speed lines, etc.)
+	# Temporarily disabled for debugging - uncomment when shaders are fixed
+	#post_processing = PostProcessing.new()
+	#add_child(post_processing)
 
 	# Create HUD
 	hud = HUD_SCENE.instantiate()
@@ -48,6 +64,9 @@ func _ready() -> void:
 	GameState.game_over_triggered.connect(_on_game_over)
 	GameState.run_complete_triggered.connect(_on_run_complete)
 
+	# Make camera current
+	camera.make_current()
+
 	# Start the game
 	_start_new_run()
 
@@ -58,8 +77,9 @@ func _process(delta: float) -> void:
 	# Update camera
 	_update_camera(delta)
 
-	# Screen shake
+	# Screen shake and visual effects decay
 	_update_shake(delta)
+	_update_post_effects(delta)
 
 	# Spawn meteors periodically in later sectors
 	_update_meteor_spawning(delta)
@@ -68,6 +88,14 @@ func _process(delta: float) -> void:
 	if taxi:
 		hud.update_velocity(taxi.get_speed())
 		hud.update_landing_indicator(taxi.is_safe_speed(), taxi.gear_extended)
+
+		# Update post-processing speed lines
+		if post_processing:
+			var speed_ratio = taxi.get_speed() / GameConfig.WORLD.max_velocity
+			if speed_ratio > 0.6:
+				post_processing.set_speed((speed_ratio - 0.6) / 0.4)
+			else:
+				post_processing.set_speed(0.0)
 
 func _update_camera(delta: float) -> void:
 	if not taxi:
@@ -103,6 +131,14 @@ func _update_shake(delta: float) -> void:
 		camera.offset = offset
 	else:
 		camera.offset = Vector2.ZERO
+
+func _update_post_effects(delta: float) -> void:
+	# Decay chromatic aberration back to normal
+	if post_processing and post_processing.crt_material:
+		var current_aberration = post_processing.crt_material.get_shader_parameter("chromatic_aberration")
+		if current_aberration > 0.002:  # Default value
+			var new_aberration = lerp(current_aberration, 0.002, delta * 5.0)
+			post_processing.set_chromatic_aberration(new_aberration)
 
 func _update_meteor_spawning(delta: float) -> void:
 	var sector_config = GameConfig.get_sector_config(GameState.current_sector)
@@ -162,67 +198,60 @@ func _spawn_taxi() -> void:
 	taxi.collision_occurred.connect(_on_taxi_collision)
 	taxi.gear_toggled.connect(_on_gear_toggled)
 
+	# Connect visual effects to taxi
+	taxi.setup_visual_effects(visual_effects)
+
 	game_world.add_child(taxi)
 	camera.position = taxi.position
 
 func _create_background() -> void:
-	# Clear existing background
+	# Clear existing background (except starfield)
 	for child in background.get_children():
-		child.queue_free()
+		if child != starfield:
+			child.queue_free()
 
-	var theme = GameConfig.get_random_theme()
 	var bounds = level_generator.get_world_bounds()
 
-	# Background color
+	# Dark space background with neon color scheme
 	var bg_rect = ColorRect.new()
-	bg_rect.color = theme.background
+	bg_rect.color = Color(0.04, 0.04, 0.1)  # Dark space (#0a0a1a)
 	bg_rect.size = bounds.size
 	bg_rect.position = Vector2.ZERO
+	bg_rect.z_index = -100
 	background.add_child(bg_rect)
 
-	# Stars
-	for i in range(100):
-		var star = ColorRect.new()
-		star.size = Vector2(2, 2)
-		star.position = Vector2(
-			randf_range(0, bounds.size.x),
-			randf_range(0, bounds.size.y)
-		)
-		star.color = theme.stars
-		star.color.a = randf_range(0.3, 1.0)
-		background.add_child(star)
+	# Setup enhanced starfield
+	if starfield:
+		starfield.setup(camera, bounds.size)
+		starfield.z_index = -50
 
-	# World boundaries (visual)
-	var border_color = Color(0.3, 0.3, 0.4, 0.5)
-	var border_thickness = 10.0
+	# World boundaries with neon glow
+	var border_color = Color(0.0, 0.5, 0.8, 0.4)  # Cyan border
+	var border_thickness = 5.0
 
-	# Top border
-	var top = ColorRect.new()
-	top.size = Vector2(bounds.size.x, border_thickness)
-	top.position = Vector2(0, 0)
-	top.color = border_color
-	background.add_child(top)
+	# Create glowing borders
+	_create_glowing_border(Vector2(0, 0), Vector2(bounds.size.x, border_thickness), border_color)
+	_create_glowing_border(Vector2(0, bounds.size.y - border_thickness), Vector2(bounds.size.x, border_thickness), border_color)
+	_create_glowing_border(Vector2(0, 0), Vector2(border_thickness, bounds.size.y), border_color)
+	_create_glowing_border(Vector2(bounds.size.x - border_thickness, 0), Vector2(border_thickness, bounds.size.y), border_color)
 
-	# Bottom border
-	var bottom = ColorRect.new()
-	bottom.size = Vector2(bounds.size.x, border_thickness)
-	bottom.position = Vector2(0, bounds.size.y - border_thickness)
-	bottom.color = border_color
-	background.add_child(bottom)
+func _create_glowing_border(pos: Vector2, size: Vector2, color: Color) -> void:
+	"""Create a border with neon glow effect"""
+	# Core border
+	var border = ColorRect.new()
+	border.size = size
+	border.position = pos
+	border.color = color
+	background.add_child(border)
 
-	# Left border
-	var left = ColorRect.new()
-	left.size = Vector2(border_thickness, bounds.size.y)
-	left.position = Vector2(0, 0)
-	left.color = border_color
-	background.add_child(left)
-
-	# Right border
-	var right = ColorRect.new()
-	right.size = Vector2(border_thickness, bounds.size.y)
-	right.position = Vector2(bounds.size.x - border_thickness, 0)
-	right.color = border_color
-	background.add_child(right)
+	# Glow layer
+	var glow = ColorRect.new()
+	glow.size = size + Vector2(4, 4)
+	glow.position = pos - Vector2(2, 2)
+	var glow_color = color
+	glow_color.a *= 0.3
+	glow.color = glow_color
+	background.add_child(glow)
 
 func _update_navigation() -> void:
 	if current_job.is_empty():
@@ -235,6 +264,11 @@ func _update_navigation() -> void:
 
 func _on_taxi_landed(platform: Platform) -> void:
 	AudioManager.play_sfx("land")
+
+	# Visual effects for landing
+	if visual_effects:
+		var success = taxi.get_speed() <= GameConfig.WORLD.safe_landing_speed and taxi.gear_extended
+		visual_effects.spawn_landing_effect(taxi.global_position, success)
 
 	# Check if this is the pickup platform
 	if not current_job.is_empty() and platform == current_job.from_platform:
@@ -253,6 +287,10 @@ func _on_taxi_collision(damage: int, source: String) -> void:
 	AudioManager.play_sfx("damage")
 	trigger_shake(damage * 3.0, 0.2)
 
+	# Add chromatic aberration on damage
+	if post_processing:
+		post_processing.set_chromatic_aberration(0.005 * damage)
+
 func _on_gear_toggled(extended: bool) -> void:
 	# Visual/audio feedback
 	pass
@@ -263,6 +301,11 @@ func _pickup_passenger() -> void:
 		passenger_data = GameConfig.get_random_passenger()
 
 	GameState.pickup_passenger(passenger_data)
+
+	# Visual effects for pickup
+	if visual_effects:
+		visual_effects.spawn_pickup_effect(taxi.global_position)
+		visual_effects.spawn_text_popup(taxi.global_position + Vector2(0, -40), "+PICKUP", Color.GREEN)
 
 	# Show contract selection
 	var is_vip = current_job.get("is_vip", false)
@@ -280,8 +323,14 @@ func _on_contract_selected(contract_type: int) -> void:
 	AudioManager.play_sfx("contract_select")
 
 func _deliver_passenger() -> void:
-	GameState.deliver_passenger()
+	var payout = GameState.deliver_passenger()
 	AudioManager.play_sfx("dropoff")
+
+	# Visual effects for delivery
+	if visual_effects:
+		visual_effects.spawn_neon_explosion(taxi.global_position, Color(0.0, 1.0, 0.5), 20, 0.5)
+		if payout > 0:
+			visual_effects.spawn_text_popup(taxi.global_position + Vector2(0, -40), "+$%d" % payout, Color(0.0, 1.0, 0.5))
 
 	# Show passenger comment
 	if current_job.has("passenger") and current_job.passenger:

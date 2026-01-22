@@ -16,6 +16,11 @@ signal speed_changed(speed: float)
 @onready var thrust_particles: GPUParticles2D = $ThrustParticles
 @onready var collision_shape: CollisionShape2D = $CollisionShape
 
+# Visual effects reference
+var visual_effects: VisualEffects = null
+var trail_spawn_timer: float = 0.0
+const TRAIL_SPAWN_INTERVAL = 0.05
+
 # State
 var gear_extended: bool = false
 var is_landed: bool = false
@@ -46,7 +51,7 @@ func _ready() -> void:
 	wheel_target_y = WHEEL_RETRACTED_Y
 
 func _create_taxi_visuals() -> void:
-	# Body - yellow ellipse-like shape
+	# Body - yellow ellipse-like shape with neon outline
 	var body_points = PackedVector2Array()
 	var segments = 16
 	var width = GameConfig.TAXI.width / 2.0
@@ -57,18 +62,18 @@ func _create_taxi_visuals() -> void:
 		body_points.append(Vector2(cos(angle) * width, sin(angle) * height))
 
 	body_sprite.polygon = body_points
-	body_sprite.color = Color(1.0, 0.85, 0.0)  # Yellow
+	body_sprite.color = Color(1.0, 0.85, 0.0)  # Neon yellow (#FFDD00)
 
-	# Window - cyan rectangle on top
+	# Window - neon cyan rectangle on top
 	window_sprite.polygon = PackedVector2Array([
 		Vector2(-8, -8),
 		Vector2(8, -8),
 		Vector2(10, -3),
 		Vector2(-10, -3)
 	])
-	window_sprite.color = Color(0.0, 0.9, 1.0)  # Cyan
+	window_sprite.color = Color(0.0, 1.0, 1.0)  # Neon cyan (#00FFFF)
 
-	# Wheels
+	# Wheels with darker color
 	var wheel_shape = PackedVector2Array([
 		Vector2(-4, -3),
 		Vector2(4, -3),
@@ -76,20 +81,24 @@ func _create_taxi_visuals() -> void:
 		Vector2(-4, 3)
 	])
 	left_wheel.polygon = wheel_shape
-	left_wheel.color = Color(0.3, 0.3, 0.3)
+	left_wheel.color = Color(0.2, 0.2, 0.3)
 	left_wheel.position = Vector2(-10, wheel_current_y)
 
 	right_wheel.polygon = wheel_shape
-	right_wheel.color = Color(0.3, 0.3, 0.3)
+	right_wheel.color = Color(0.2, 0.2, 0.3)
 	right_wheel.position = Vector2(10, wheel_current_y)
+
+func setup_visual_effects(effects: VisualEffects) -> void:
+	"""Connect to visual effects system"""
+	visual_effects = effects
 
 func _physics_process(delta: float) -> void:
 	if invulnerable_timer > 0:
 		invulnerable_timer -= delta
-		# Flash effect
-		modulate.a = 0.5 + 0.5 * sin(invulnerable_timer * 20.0)
+		# Flash effect with neon color
+		modulate = Color(1.0, 0.5, 0.5) if int(invulnerable_timer * 20.0) % 2 == 0 else Color.WHITE
 	else:
-		modulate.a = 1.0
+		modulate = Color.WHITE
 
 	if is_landed:
 		_handle_landed_state(delta)
@@ -101,6 +110,9 @@ func _physics_process(delta: float) -> void:
 
 	# Emit speed for UI
 	speed_changed.emit(custom_velocity.length())
+
+	# Update visual effects
+	_update_visual_effects(delta)
 
 func _handle_flying_state(delta: float) -> void:
 	# Get input
@@ -190,6 +202,29 @@ func _emit_thrust_particles(direction: Vector2) -> void:
 		if mat:
 			mat.direction = Vector3(direction.x, direction.y, 0)
 
+	# Spawn neon thrust particles
+	if visual_effects:
+		var particle_pos = global_position + direction * -15.0
+		visual_effects.spawn_thrust_particles(particle_pos, direction * 100, Color(1.0, 0.8, 0.2))
+
+func _update_visual_effects(delta: float) -> void:
+	"""Update visual effects like trails and speed lines"""
+	if not visual_effects:
+		return
+
+	# Spawn neon trail when moving
+	if not is_landed and custom_velocity.length() > 0.5:
+		trail_spawn_timer += delta
+		if trail_spawn_timer >= TRAIL_SPAWN_INTERVAL:
+			trail_spawn_timer = 0.0
+			var trail_color = Color.CYAN.lerp(Color.YELLOW, custom_velocity.length() / GameConfig.WORLD.max_velocity)
+			visual_effects.add_trail_point(global_position, trail_color)
+
+	# Update speed lines based on velocity
+	var speed_ratio = custom_velocity.length() / GameConfig.WORLD.max_velocity
+	if speed_ratio > 0.6:  # Only show when going fast
+		visual_effects.set_speed_lines((speed_ratio - 0.6) / 0.4)
+
 func land_on_platform(platform: Node2D) -> void:
 	var landing_speed = custom_velocity.length()
 
@@ -232,7 +267,10 @@ func take_damage(amount: int, source: String = "") -> void:
 	invulnerable_timer = 1.0  # 1 second invulnerability
 	collision_occurred.emit(amount, source)
 
-	# Screen flash/shake will be handled by the game manager
+	# Visual effects for damage
+	if visual_effects:
+		visual_effects.damage_flash()
+		visual_effects.spawn_spark_burst(global_position, 15, Color(1.0, 0.3, 0.3))
 
 func apply_knockback(from_position: Vector2, strength: float = 2.0) -> void:
 	var direction = (position - from_position).normalized()

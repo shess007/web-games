@@ -29,6 +29,12 @@ var has_passenger: bool = false
 # Current taxi
 var taxi_on_platform: Taxi = null
 
+# Visual effects
+var window_nodes: Array = []
+var landing_pad_left: ColorRect = null
+var landing_pad_right: ColorRect = null
+var window_flicker_timer: float = 0.0
+
 func _ready() -> void:
 	# Connect landing zone signals
 	landing_zone.body_entered.connect(_on_landing_zone_entered)
@@ -53,10 +59,10 @@ func _create_visuals() -> void:
 	shape.size = Vector2(platform_width, platform_height)
 	collision_shape.shape = shape
 
-	# Platform visual
+	# Platform visual - darker, more industrial
 	platform_visual.size = Vector2(platform_width, platform_height)
 	platform_visual.position = Vector2(-platform_width / 2.0, -platform_height / 2.0)
-	platform_visual.color = Color(0.3, 0.3, 0.4)
+	platform_visual.color = Color(0.15, 0.15, 0.25)
 
 	# Landing zone (slightly above platform)
 	var landing_shape = RectangleShape2D.new()
@@ -64,9 +70,13 @@ func _create_visuals() -> void:
 	landing_zone.get_node("CollisionShape2D").shape = landing_shape
 	landing_zone.position = Vector2(0, -30)
 
-	# Name label
+	# Add glowing landing pads
+	_create_landing_pads()
+
+	# Name label with neon style
 	name_label.text = platform_name
 	name_label.position = Vector2(-platform_width / 2.0, -platform_height / 2.0 - 20)
+	name_label.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))  # Cyan
 
 	# Passenger spawn point
 	passenger_spawn.position = Vector2(-platform_width / 4.0, -platform_height / 2.0 - 10)
@@ -74,27 +84,51 @@ func _create_visuals() -> void:
 	# Create building
 	_create_building()
 
+func _create_landing_pads() -> void:
+	"""Create glowing landing pad indicators"""
+	# Left pad
+	landing_pad_left = ColorRect.new()
+	landing_pad_left.size = Vector2(15, 5)
+	landing_pad_left.position = Vector2(-platform_width / 3.0, -platform_height / 2.0 - 3)
+	landing_pad_left.color = Color(0.0, 1.0, 0.5)  # Neon green
+	add_child(landing_pad_left)
+
+	# Right pad
+	landing_pad_right = ColorRect.new()
+	landing_pad_right.size = Vector2(15, 5)
+	landing_pad_right.position = Vector2(platform_width / 3.0 - 15, -platform_height / 2.0 - 3)
+	landing_pad_right.color = Color(0.0, 1.0, 0.5)  # Neon green
+	add_child(landing_pad_right)
+
 func _create_building() -> void:
 	var building_config = GameConfig.BUILDINGS[building_type]
 
-	# Building base
+	# Building base with darker colors
 	var building = ColorRect.new()
 	building.size = Vector2(building_config.width, building_config.height)
 	building.position = Vector2(-building_config.width / 2.0, -platform_height / 2.0 - building_config.height)
-	building.color = building_config.color
+	building.color = building_config.color.darkened(0.3)
 	building_container.add_child(building)
 
-	# Door
+	# Door with neon accent
 	var door = ColorRect.new()
 	door.size = Vector2(15, 25)
 	door.position = Vector2(
 		-building_config.width / 2.0 + building_config.door_offset,
 		-platform_height / 2.0 - 25
 	)
-	door.color = Color(0.2, 0.2, 0.2)
+	door.color = Color(0.1, 0.1, 0.15)
 	building_container.add_child(door)
 
-	# Windows
+	# Door light accent
+	var door_light = ColorRect.new()
+	door_light.size = Vector2(15, 2)
+	door_light.position = door.position + Vector2(0, -2)
+	door_light.color = Color(0.0, 1.0, 1.0)  # Cyan accent
+	building_container.add_child(door_light)
+
+	# Windows with neon glow
+	window_nodes.clear()
 	var window_count = int(building_config.width / 25)
 	for i in range(window_count):
 		var window = ColorRect.new()
@@ -103,20 +137,29 @@ func _create_building() -> void:
 			-building_config.width / 2.0 + 15 + i * 25,
 			-platform_height / 2.0 - building_config.height + 10
 		)
-		window.color = Color(0.8, 0.9, 1.0, 0.7)  # Lit window
+		window.color = Color(0.5, 0.8, 1.0, 0.8)  # Neon blue window
 		building_container.add_child(window)
+		window_nodes.append(window)
 
 	# Special decorations for fuel station
 	if is_fuel_station:
 		var pump = ColorRect.new()
 		pump.size = Vector2(20, 30)
 		pump.position = Vector2(platform_width / 4.0, -platform_height / 2.0 - 30)
-		pump.color = Color(0.2, 0.7, 0.3)
+		pump.color = Color(0.1, 0.4, 0.2)
 		building_container.add_child(pump)
 
+		# Glowing fuel indicator
+		var fuel_light = ColorRect.new()
+		fuel_light.size = Vector2(20, 5)
+		fuel_light.position = Vector2(platform_width / 4.0, -platform_height / 2.0 - 35)
+		fuel_light.color = Color(0.0, 1.0, 0.5)  # Neon green
+		building_container.add_child(fuel_light)
+
 		var fuel_label = Label.new()
-		fuel_label.text = "⛽ FUEL"
+		fuel_label.text = "FUEL"
 		fuel_label.position = Vector2(platform_width / 4.0 - 10, -platform_height / 2.0 - 50)
+		fuel_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.5))
 		building_container.add_child(fuel_label)
 
 func _on_landing_zone_entered(body: Node2D) -> void:
@@ -155,6 +198,12 @@ func get_door_position() -> Vector2:
 	)
 
 func _process(delta: float) -> void:
+	# Animate landing pads (pulsing glow)
+	_animate_landing_pads(delta)
+
+	# Animate windows (flickering)
+	_animate_windows(delta)
+
 	# Handle fueling when taxi is on platform
 	if taxi_on_platform and is_fuel_station and taxi_on_platform.is_landed:
 		if GameState.fuel < GameConfig.TAXI.max_fuel:
@@ -164,3 +213,31 @@ func _process(delta: float) -> void:
 					GameConfig.FUEL_STATION.refuel_rate * delta * 60.0,
 					fuel_cost
 				)
+
+func _animate_landing_pads(delta: float) -> void:
+	"""Pulsing glow effect on landing pads"""
+	var time = Time.get_ticks_msec() / 1000.0
+	var pulse = 0.6 + 0.4 * sin(time * 3.0)
+
+	if landing_pad_left:
+		var color = Color(0.0, 1.0, 0.5)
+		color.a = pulse
+		landing_pad_left.color = color
+
+	if landing_pad_right:
+		var color = Color(0.0, 1.0, 0.5)
+		color.a = pulse
+		landing_pad_right.color = color
+
+func _animate_windows(delta: float) -> void:
+	"""Random flickering window lights"""
+	window_flicker_timer += delta
+
+	if window_flicker_timer >= 0.1:  # Update every 0.1 seconds
+		window_flicker_timer = 0.0
+
+		for window in window_nodes:
+			# Random chance to flicker
+			if randf() < 0.05:  # 5% chance
+				var base_color = Color(0.5, 0.8, 1.0)
+				window.color = base_color if randf() > 0.5 else base_color * 0.5

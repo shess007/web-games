@@ -3,6 +3,7 @@ shader_type canvas_item;
 // Speed Lines Effect
 // Dynamic motion lines based on velocity
 
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform vec2 velocity_direction = vec2(1.0, 0.0);
 uniform float speed_intensity : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 line_color : source_color = vec4(1.0, 1.0, 1.0, 0.3);
@@ -14,7 +15,7 @@ float random(vec2 st) {
 }
 
 void fragment() {
-    vec4 original = texture(TEXTURE, UV);
+    vec4 original = texture(screen_texture, SCREEN_UV);
 
     if (speed_intensity < 0.01) {
         COLOR = original;
@@ -23,7 +24,7 @@ void fragment() {
 
     // Create radial lines from center
     vec2 center = vec2(0.5, 0.5);
-    vec2 dir = UV - center;
+    vec2 dir = SCREEN_UV - center;
     float angle = atan(dir.y, dir.x);
     float dist = length(dir);
 

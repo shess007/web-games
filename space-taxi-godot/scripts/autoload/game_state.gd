@@ -172,18 +172,18 @@ func accept_contract(contract_type: int) -> void:
 	contract_accepted.emit(current_contract)
 	current_state = State.PLAYING
 
-func deliver_passenger() -> void:
+func deliver_passenger() -> int:
 	if current_passenger.is_empty() or current_contract.is_empty():
-		return
+		return 0
 
 	# Check contract requirements
 	if current_contract.has("no_bumps") and bumped_during_contract:
 		fail_contract("VIP was bumped during ride!")
-		return
+		return 0
 
 	if current_contract.has("max_speed") and current_contract.get("max_speed", 0) > 0 and exceeded_speed_during_contract:
 		fail_contract("Exceeded speed limit!")
-		return
+		return 0
 
 	var payout = current_contract.get("payout", 0)
 	add_cash(payout)
@@ -195,6 +195,8 @@ func deliver_passenger() -> void:
 	current_passenger = {}
 	current_contract = {}
 	contract_timer = 0.0
+
+	return payout
 
 func fail_contract(reason: String) -> void:
 	contracts_failed += 1

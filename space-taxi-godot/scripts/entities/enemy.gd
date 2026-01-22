@@ -12,8 +12,16 @@ var orbit_speed: float = 0.0015
 var orbit_angle: float = 0.0
 var enemy_size: float = 20.0
 
+# Visual effects
+var pulse_time: float = 0.0
+var visual_effects: VisualEffects = null
+
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+
+func setup_visual_effects(effects: VisualEffects) -> void:
+	"""Connect to visual effects system"""
+	visual_effects = effects
 
 func setup(center: Vector2, radius: float = -1.0, speed: float = -1.0) -> void:
 	orbit_center = center
@@ -41,7 +49,7 @@ func setup(center: Vector2, radius: float = -1.0, speed: float = -1.0) -> void:
 	_update_position()
 
 func _create_visuals() -> void:
-	# Enemy body - spiky creature
+	# Enemy body - spiky creature with neon magenta
 	var points = PackedVector2Array()
 	var spikes = 6
 	for i in range(spikes * 2):
@@ -50,16 +58,16 @@ func _create_visuals() -> void:
 		points.append(Vector2(cos(angle) * r, sin(angle) * r))
 
 	visual.polygon = points
-	visual.color = Color(0.9, 0.2, 0.3)  # Red/hostile
+	visual.color = Color(1.0, 0.0, 1.0)  # Neon magenta (#FF00FF)
 
 	# Collision shape
 	var shape = CircleShape2D.new()
 	shape.radius = enemy_size
 	collision_shape.shape = shape
 
-	# Orbit path visualization (faint)
-	orbit_visual.width = 1.0
-	orbit_visual.default_color = Color(1.0, 0.3, 0.3, 0.2)
+	# Orbit path visualization with neon glow
+	orbit_visual.width = 2.0
+	orbit_visual.default_color = Color(1.0, 0.0, 1.0, 0.3)  # Magenta with transparency
 	var orbit_points = PackedVector2Array()
 	for i in range(33):
 		var angle = (i / 32.0) * TAU
@@ -76,6 +84,11 @@ func _process(delta: float) -> void:
 	# Rotate visual
 	visual.rotation += 0.02
 
+	# Pulsing glow effect
+	pulse_time += delta * 3.0
+	var pulse = 0.7 + 0.3 * sin(pulse_time)
+	visual.modulate = Color(1.0, pulse * 0.3, 1.0, 1.0)
+
 func _update_position() -> void:
 	position = orbit_center + Vector2(
 		cos(orbit_angle) * orbit_radius,
@@ -87,3 +100,7 @@ func _on_body_entered(body: Node2D) -> void:
 		var taxi = body as Taxi
 		taxi.take_damage(GameConfig.DAMAGE.enemy, "Enemy attack")
 		taxi.apply_knockback(global_position, 5.0)
+
+		# Visual feedback on collision
+		if visual_effects:
+			visual_effects.spawn_neon_explosion(global_position, Color(1.0, 0.0, 1.0), 15, 0.8)

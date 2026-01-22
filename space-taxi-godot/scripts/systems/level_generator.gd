@@ -126,6 +126,10 @@ func _generate_platforms(config: Dictionary, parent: Node2D) -> void:
 		# Get unique platform name
 		var platform_name = _get_unique_platform_name()
 
+		platform.position = pos
+		parent.add_child(platform)
+
+		# Setup must be called AFTER add_child so @onready vars are available
 		platform.setup({
 			"name": platform_name,
 			"id": i,
@@ -134,8 +138,6 @@ func _generate_platforms(config: Dictionary, parent: Node2D) -> void:
 			"height": 20.0
 		})
 
-		platform.position = pos
-		parent.add_child(platform)
 		platforms.append(platform)
 
 func _find_valid_position(margin: float, min_distance: float) -> Vector2:
@@ -181,8 +183,8 @@ func _generate_asteroids(config: Dictionary, parent: Node2D) -> void:
 			randf_range(100, world_width - 100),
 			randf_range(100, world_height - 100)
 		)
-		asteroid.setup()
 		parent.add_child(asteroid)
+		asteroid.setup()
 		asteroids.append(asteroid)
 
 func _generate_debris(config: Dictionary, parent: Node2D) -> void:
@@ -192,8 +194,8 @@ func _generate_debris(config: Dictionary, parent: Node2D) -> void:
 			randf_range(50, world_width - 50),
 			randf_range(50, world_height - 50)
 		)
-		debris.setup()
 		parent.add_child(debris)
+		debris.setup()
 		debris_items.append(debris)
 
 func _generate_enemies(config: Dictionary, parent: Node2D) -> void:
@@ -206,8 +208,8 @@ func _generate_enemies(config: Dictionary, parent: Node2D) -> void:
 			randf_range(200, world_height - 200)
 		)
 
-		enemy.setup(center)
 		parent.add_child(enemy)
+		enemy.setup(center)
 		enemies.append(enemy)
 
 func _generate_jobs(config: Dictionary, parent: Node2D) -> void:
@@ -236,9 +238,9 @@ func _generate_jobs(config: Dictionary, parent: Node2D) -> void:
 
 		# Create passenger
 		var passenger = PASSENGER_SCENE.instantiate() as Passenger
-		passenger.setup(passenger_data)
 		passenger.position = from_platform.get_door_position()
 		parent.add_child(passenger)
+		passenger.setup(passenger_data)
 		passengers.append(passenger)
 
 		# Add to pickup queue
@@ -290,8 +292,8 @@ func spawn_meteor(parent: Node2D) -> void:
 			vel = Vector2(randf_range(-6, -3), randf_range(-2, 2))
 
 	meteor.position = pos
-	meteor.setup(-1, vel)
 	parent.add_child(meteor)
+	meteor.setup(-1, vel)
 	meteors.append(meteor)
 
 func get_platform_by_id(id: int) -> Platform:
