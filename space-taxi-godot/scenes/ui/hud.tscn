@@ -1,0 +1,234 @@
+[gd_scene load_steps=2 format=3 uid="uid://hud001"]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="LeftSidebar" type="VBoxContainer" parent="."]
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 180.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="SidebarBG" type="ColorRect" parent="LeftSidebar"]
+show_behind_parent = true
+layout_mode = 2
+size_flags_vertical = 3
+color = Color(0.1, 0.1, 0.15, 0.9)
+
+[node name="Title" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "SPACE TAXI"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="LeftSidebar"]
+layout_mode = 2
+
+[node name="HullLabel" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "HULL"
+
+[node name="HullDisplay" type="HBoxContainer" parent="LeftSidebar"]
+layout_mode = 2
+
+[node name="SectorLabel" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "SECTOR 1 / 3"
+
+[node name="CashLabel" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "$0"
+theme_override_colors/font_color = Color(0.2, 0.9, 0.3, 1)
+
+[node name="HSeparator2" type="HSeparator" parent="LeftSidebar"]
+layout_mode = 2
+
+[node name="FuelLabel" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "FUEL"
+
+[node name="FuelGauge" type="ProgressBar" parent="LeftSidebar"]
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="HSeparator3" type="HSeparator" parent="LeftSidebar"]
+layout_mode = 2
+
+[node name="ModifiersLabel" type="Label" parent="LeftSidebar"]
+layout_mode = 2
+text = "MODIFIERS"
+
+[node name="ModifiersContainer" type="VBoxContainer" parent="LeftSidebar"]
+layout_mode = 2
+
+[node name="RightSidebar" type="VBoxContainer" parent="."]
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -180.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="SidebarBG" type="ColorRect" parent="RightSidebar"]
+show_behind_parent = true
+layout_mode = 2
+size_flags_vertical = 3
+color = Color(0.1, 0.1, 0.15, 0.9)
+
+[node name="PassengerTitle" type="Label" parent="RightSidebar"]
+layout_mode = 2
+text = "PASSENGER"
+horizontal_alignment = 1
+
+[node name="PassengerDisplay" type="VBoxContainer" parent="RightSidebar"]
+layout_mode = 2
+
+[node name="PassengerEmoji" type="Label" parent="RightSidebar/PassengerDisplay"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "—"
+horizontal_alignment = 1
+
+[node name="PassengerStatus" type="Label" parent="RightSidebar/PassengerDisplay"]
+layout_mode = 2
+text = "NO PASSENGER"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="RightSidebar"]
+layout_mode = 2
+
+[node name="NavTitle" type="Label" parent="RightSidebar"]
+layout_mode = 2
+text = "NAVIGATION"
+
+[node name="Navigation" type="VBoxContainer" parent="RightSidebar"]
+layout_mode = 2
+
+[node name="FromLabel" type="Label" parent="RightSidebar/Navigation"]
+layout_mode = 2
+text = "FROM: —"
+theme_override_font_sizes/font_size = 12
+
+[node name="ToLabel" type="Label" parent="RightSidebar/Navigation"]
+layout_mode = 2
+text = "TO: —"
+theme_override_font_sizes/font_size = 12
+
+[node name="HSeparator2" type="HSeparator" parent="RightSidebar"]
+layout_mode = 2
+
+[node name="VelocityTitle" type="Label" parent="RightSidebar"]
+layout_mode = 2
+text = "VELOCITY"
+
+[node name="VelocityGauge" type="ProgressBar" parent="RightSidebar"]
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="VelocityLabel" type="Label" parent="RightSidebar"]
+layout_mode = 2
+text = "0.0 u/s"
+horizontal_alignment = 1
+
+[node name="LandingIndicator" type="Label" parent="RightSidebar"]
+layout_mode = 2
+text = "🔼 GEAR UP"
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="RightSidebar"]
+layout_mode = 2
+
+[node name="ContractInfo" type="VBoxContainer" parent="RightSidebar"]
+visible = false
+layout_mode = 2
+
+[node name="ContractTitle" type="Label" parent="RightSidebar/ContractInfo"]
+layout_mode = 2
+text = "CONTRACT"
+
+[node name="ContractType" type="Label" parent="RightSidebar/ContractInfo"]
+layout_mode = 2
+text = "Standard"
+horizontal_alignment = 1
+
+[node name="ContractPayout" type="Label" parent="RightSidebar/ContractInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.9, 0.3, 1)
+text = "$100"
+horizontal_alignment = 1
+
+[node name="ContractTimer" type="ProgressBar" parent="RightSidebar/ContractInfo"]
+visible = false
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="CenterMessage" type="Label" parent="."]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 100.0
+offset_right = 200.0
+offset_bottom = 140.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 0.8, 1)
+theme_override_font_sizes/font_size = 24
+text = "MESSAGE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PassengerComment" type="Label" parent="."]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.8, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "\"Comment\""
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MinimapContainer" type="Control" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = -160.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="MinimapBG" type="ColorRect" parent="MinimapContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 0.8)
+
+[node name="MinimapViewport" type="SubViewport" parent="MinimapContainer"]
+size = Vector2i(200, 150)

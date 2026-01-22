@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://asteroid001"]
+
+[ext_resource type="Script" path="res://scripts/entities/asteroid.gd" id="1_asteroid"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_asteroid"]
+radius = 50.0
+
+[node name="Asteroid" type="Area2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_asteroid")
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_asteroid")

@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://meteor001"]
+
+[ext_resource type="Script" path="res://scripts/entities/meteor.gd" id="1_meteor"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_meteor"]
+radius = 15.0
+
+[node name="Meteor" type="Area2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_meteor")
+
+[node name="Visual" type="Polygon2D" parent="."]
+color = Color(1, 0.5, 0.2, 1)
+
+[node name="Trail" type="Line2D" parent="."]
+width = 10.0
+default_color = Color(1, 0.6, 0.1, 0.5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_meteor")
