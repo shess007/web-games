@@ -2243,7 +2243,7 @@ class PixiRenderer {
         this.taxiContainer.y = taxi.y;
         this.taxiSprites.body.rotation = taxi.angle || 0;
 
-        // Update landing gear animation
+        // Update wheel animation (wheels retract when flying)
         const gearTarget = (typeof taxi.gearOut === 'undefined') ? 1.0 : (taxi.gearOut ? 1.0 : 0.0);
         const gearSpeed = 0.15; // Animation speed
         if (this.gearAnimProgress < gearTarget) {
@@ -2251,9 +2251,9 @@ class PixiRenderer {
         } else if (this.gearAnimProgress > gearTarget) {
             this.gearAnimProgress = Math.max(gearTarget, this.gearAnimProgress - gearSpeed);
         }
-        // Apply animation - scale Y from 0 to 1
-        this.taxiSprites.gearLeft.scale.y = this.gearAnimProgress;
-        this.taxiSprites.gearRight.scale.y = this.gearAnimProgress;
+        // Apply animation - uniform scale for round wheels
+        this.taxiSprites.gearLeft.scale.set(this.gearAnimProgress);
+        this.taxiSprites.gearRight.scale.set(this.gearAnimProgress);
         // Hide completely when fully retracted
         this.taxiSprites.gearLeft.visible = this.gearAnimProgress > 0.01;
         this.taxiSprites.gearRight.visible = this.gearAnimProgress > 0.01;
@@ -2276,7 +2276,7 @@ class PixiRenderer {
         this.taxiContainer = new PIXI.Container();
         this.containers.taxi.addChild(this.taxiContainer);
 
-        // Ambient glow (always visible) - smooth gradient (v7 API)
+        // Ambient glow (always visible) - soft cozy glow
         const ambientGlow = new PIXI.Graphics();
         const ambientSteps = 15;
         for (let i = ambientSteps; i >= 1; i--) {
@@ -2284,279 +2284,288 @@ class PixiRenderer {
             const smoothRatio = Math.pow(ratio, 0.7);
             const alpha = 0.08 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            ambientGlow.beginFill(0xF9E79F, alpha); // Butter yellow glow (cozy)
+            ambientGlow.beginFill(0xF9E79F, alpha); // Butter yellow glow
             ambientGlow.drawCircle(0, 0, 50 * smoothRatio);
             ambientGlow.endFill();
         }
         this.taxiSprites.ambientGlow = ambientGlow;
         this.taxiContainer.addChild(ambientGlow);
 
-        // Engine glow (when thrusting up) - smooth gradient (v7 API)
+        // Engine glow (when thrusting up) - cute puff effect
         const engineGlow = new PIXI.Graphics();
-        const engineSteps = 20;
+        const engineSteps = 18;
         for (let i = engineSteps; i >= 1; i--) {
             const ratio = i / engineSteps;
             const smoothRatio = Math.pow(ratio, 0.6);
-            const alpha = 0.35 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+            const alpha = 0.25 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            engineGlow.beginFill(0xF9E79F, alpha); // Butter yellow engine (cozy)
-            engineGlow.drawEllipse(0, 18, 20 * smoothRatio, 35 * smoothRatio);
+            // Soft peach puff color
+            engineGlow.beginFill(0xFFCDB2, alpha);
+            engineGlow.drawEllipse(0, 20, 18 * smoothRatio, 30 * smoothRatio);
             engineGlow.endFill();
         }
-        // Hot core
-        engineGlow.beginFill(0xffffff, 0.6);
-        engineGlow.drawEllipse(0, 16, 5, 8);
+        // Warm center
+        engineGlow.beginFill(0xFFF5E4, 0.5);
+        engineGlow.drawEllipse(0, 18, 6, 10);
         engineGlow.endFill();
         engineGlow.visible = false;
         this.taxiSprites.engineGlow = engineGlow;
         this.taxiContainer.addChild(engineGlow);
 
-        // Side glow left - smooth gradient (v7 API)
+        // Side glow left - soft puff when turning
         const sideGlowLeft = new PIXI.Graphics();
-        const sideSteps = 15;
+        const sideSteps = 12;
         for (let i = sideSteps; i >= 1; i--) {
             const ratio = i / sideSteps;
             const smoothRatio = Math.pow(ratio, 0.6);
-            const alpha = 0.3 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+            const alpha = 0.2 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            sideGlowLeft.beginFill(0xE2D1F9, alpha); // Lavender side glow (cozy)
-            sideGlowLeft.drawCircle(-20, 0, 20 * smoothRatio);
+            sideGlowLeft.beginFill(0xE2D1F9, alpha); // Lavender puff
+            sideGlowLeft.drawCircle(-22, 0, 18 * smoothRatio);
             sideGlowLeft.endFill();
         }
-        sideGlowLeft.beginFill(0xffffff, 0.5);
-        sideGlowLeft.drawCircle(-20, 0, 4);
+        sideGlowLeft.beginFill(0xffffff, 0.4);
+        sideGlowLeft.drawCircle(-22, 0, 4);
         sideGlowLeft.endFill();
         sideGlowLeft.visible = false;
         this.taxiSprites.sideGlowLeft = sideGlowLeft;
         this.taxiContainer.addChild(sideGlowLeft);
 
-        // Side glow right - smooth gradient (v7 API)
+        // Side glow right - soft puff when turning
         const sideGlowRight = new PIXI.Graphics();
         for (let i = sideSteps; i >= 1; i--) {
             const ratio = i / sideSteps;
             const smoothRatio = Math.pow(ratio, 0.6);
-            const alpha = 0.3 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
+            const alpha = 0.2 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            sideGlowRight.beginFill(0xE2D1F9, alpha); // Lavender side glow (cozy)
-            sideGlowRight.drawCircle(20, 0, 20 * smoothRatio);
+            sideGlowRight.beginFill(0xE2D1F9, alpha); // Lavender puff
+            sideGlowRight.drawCircle(22, 0, 18 * smoothRatio);
             sideGlowRight.endFill();
         }
-        sideGlowRight.beginFill(0xffffff, 0.5);
-        sideGlowRight.drawCircle(20, 0, 4);
+        sideGlowRight.beginFill(0xffffff, 0.4);
+        sideGlowRight.drawCircle(22, 0, 4);
         sideGlowRight.endFill();
         sideGlowRight.visible = false;
         this.taxiSprites.sideGlowRight = sideGlowRight;
         this.taxiContainer.addChild(sideGlowRight);
 
-        // Taxi body container (rotates) (v7 API)
+        // CUTE CAR BODY - Side view profile (rotates)
         const body = new PIXI.Graphics();
 
-        // Shadow (elliptical for depth)
-        body.beginFill(0x000000, 0.25);
-        body.drawEllipse(0, 10, 14, 3);
+        // Soft shadow beneath the car
+        body.beginFill(0x000000, 0.15);
+        body.drawEllipse(0, 14, 20, 4);
         body.endFill();
 
-        // Main body - sleek hover car shape (cozy colors)
-        // Lower body (soft peach base - cozy)
-        body.beginFill(0xFFCDB2); // Soft peach (cozy)
-        body.drawPolygon([
-            -16, 2,     // left bottom
-            -14, 6,     // left wheel well
-            -8, 6,      // inner left
-            -6, 4,      // center bottom curve
-            6, 4,       // center bottom curve
-            8, 6,       // inner right
-            14, 6,      // right wheel well
-            16, 2,      // right bottom
-            14, -2,     // right side
-            -14, -2,    // left side
-        ]);
+        // === CLASSIC CAR SILHOUETTE - Side view ===
+        // Using bezier curves for a proper car shape
+
+        // Main car body with proper car profile
+        body.beginFill(0xF9E79F); // Butter yellow
+
+        // Draw car body as a proper side-view shape
+        body.moveTo(-20, 6);      // rear bottom
+        body.lineTo(-20, -2);     // rear up
+        body.lineTo(-18, -6);     // rear window slope start
+        body.quadraticCurveTo(-14, -12, -6, -12);  // roof curve back
+        body.lineTo(4, -12);      // roof top
+        body.quadraticCurveTo(12, -12, 16, -6);    // windshield curve
+        body.lineTo(20, -2);      // hood slope
+        body.lineTo(22, 0);       // front nose
+        body.lineTo(22, 6);       // front bottom
+        body.lineTo(14, 6);       // to front wheel well
+        body.quadraticCurveTo(12, 10, 8, 10);      // front wheel arch
+        body.quadraticCurveTo(4, 10, 2, 6);
+        body.lineTo(-6, 6);       // between wheels
+        body.quadraticCurveTo(-8, 10, -12, 10);    // rear wheel arch
+        body.quadraticCurveTo(-16, 10, -18, 6);
+        body.lineTo(-20, 6);      // back to start
         body.endFill();
 
-        // Upper body (main yellow)
-        body.beginFill(0xF9E79F); // Butter yellow (cozy)
-        body.drawPolygon([
-            -14, -2,    // left bottom
-            -15, -6,    // left side slant
-            -12, -10,   // left top corner
-            10, -10,    // right top front
-            14, -6,     // right front slope
-            14, -2,     // right bottom
-        ]);
+        // Lower body accent (soft peach trim)
+        body.beginFill(0xFFCDB2); // Soft peach
+        body.moveTo(-20, 4);
+        body.lineTo(22, 4);
+        body.lineTo(22, 6);
+        body.lineTo(14, 6);
+        body.quadraticCurveTo(12, 10, 8, 10);
+        body.quadraticCurveTo(4, 10, 2, 6);
+        body.lineTo(-6, 6);
+        body.quadraticCurveTo(-8, 10, -12, 10);
+        body.quadraticCurveTo(-16, 10, -18, 6);
+        body.lineTo(-20, 6);
+        body.lineTo(-20, 4);
         body.endFill();
 
-        // Hood/nose (front slope)
-        body.beginFill(0xF5DC85); // Lighter butter (cozy)
-        body.drawPolygon([
-            10, -10,    // top front
-            14, -6,     // front slope
-            16, -2,     // front bottom
-            16, 2,      // nose bottom
-            12, -4,     // nose curve
-        ]);
+        // Body highlight (roof shine)
+        body.beginFill(0xffffff, 0.3);
+        body.moveTo(-4, -12);
+        body.lineTo(2, -12);
+        body.quadraticCurveTo(8, -12, 12, -9);
+        body.lineTo(10, -9);
+        body.quadraticCurveTo(6, -11, 0, -11);
+        body.lineTo(-4, -11);
+        body.lineTo(-4, -12);
         body.endFill();
 
-        // Rear engine section
-        body.beginFill(0x444444);
-        body.drawPolygon([
-            -15, -6,    // top
-            -17, -4,    // rear top
-            -17, 2,     // rear bottom
-            -14, 4,     // bottom curve
-            -14, -2,    // body connection
-        ]);
+        // === WINDOWS ===
+
+        // Rear window
+        body.beginFill(0xE2D1F9, 0.85); // Lavender
+        body.moveTo(-16, -5);
+        body.quadraticCurveTo(-12, -10, -6, -10);
+        body.lineTo(-6, -5);
+        body.lineTo(-16, -5);
         body.endFill();
 
-        // Engine exhaust detail
-        body.beginFill(0x333333);
-        body.drawRect(-17, -2, 3, 4);
-        body.endFill();
-        body.beginFill(0x222222);
-        body.drawRect(-18, -1, 2, 2);
-        body.endFill();
-
-        // Body highlight (top shine)
-        body.beginFill(0xffffff, 0.25);
-        body.drawPolygon([
-            -12, -10,   // left top
-            -11, -9,    // inner left
-            8, -9,      // inner right
-            10, -10,    // right top
-        ]);
+        // Front windshield (angled)
+        body.beginFill(0xE2D1F9, 0.85); // Lavender
+        body.moveTo(4, -10);
+        body.quadraticCurveTo(10, -10, 14, -5);
+        body.lineTo(4, -5);
+        body.lineTo(4, -10);
         body.endFill();
 
-        // Side stripe (taxi detail)
-        body.beginFill(0x000000, 0.6);
-        body.drawPolygon([
-            -10, -4,
-            10, -4,
-            12, -3,
-            -10, -3,
-        ]);
+        // Middle side window
+        body.beginFill(0xE2D1F9, 0.75); // Lavender
+        body.drawRoundedRect(-4, -10, 6, 5, 1);
         body.endFill();
 
-        // Cockpit windshield (angled) - lavender (cozy)
-        body.beginFill(0xE2D1F9, 0.9); // Lavender (cozy)
-        body.drawPolygon([
-            2, -9,      // top left
-            10, -9,     // top right
-            12, -5,     // bottom right
-            4, -5,      // bottom left
-        ]);
-        body.endFill();
-
-        // Cockpit shine (reflection)
+        // Window reflections
         body.beginFill(0xffffff, 0.5);
-        body.drawPolygon([
-            3, -8,
-            6, -8,
-            7, -6,
-            4, -6,
-        ]);
-        body.endFill();
-
-        // Side window
-        body.beginFill(0xC6ADE1, 0.7); // Softer lavender (cozy)
-        body.drawPolygon([
-            -8, -8,
-            0, -8,
-            0, -5,
-            -6, -5,
-        ]);
-        body.endFill();
-
-        // Roof light (taxi sign) - butter yellow (cozy)
-        body.beginFill(0xF9E79F); // Butter yellow (cozy)
-        body.drawRoundedRect(-4, -12, 8, 3, 1);
+        body.drawRoundedRect(5, -9, 3, 2, 1);
         body.endFill();
         body.beginFill(0xffffff, 0.4);
-        body.drawRect(-3, -11, 6, 1);
+        body.drawRoundedRect(-14, -8, 3, 2, 1);
         body.endFill();
 
-        // Front headlight
-        body.beginFill(0xffffee);
-        body.drawEllipse(15, -1, 2, 2);
+        // === TAXI SIGN ON ROOF ===
+        body.beginFill(0xF5B7B1); // Soft coral
+        body.drawRoundedRect(-4, -15, 8, 3, 1.5);
         body.endFill();
-        body.beginFill(0xffffff, 0.6);
-        body.drawEllipse(15, -1, 1, 1);
+        body.beginFill(0xffffff, 0.5);
+        body.drawRoundedRect(-3, -14.5, 6, 1, 0.5);
+        body.endFill();
+
+        // === HEADLIGHT (front) ===
+        body.beginFill(0xFFF5E4); // Warm cream
+        body.drawCircle(20, 0, 3);
+        body.endFill();
+        body.beginFill(0xffffff, 0.8);
+        body.drawCircle(20, 0, 2);
+        body.endFill();
+        body.beginFill(0xffffff);
+        body.drawCircle(21, -1, 0.8);
+        body.endFill();
+
+        // === TAIL LIGHT (rear) ===
+        body.beginFill(0xF5B7B1); // Soft coral
+        body.drawRoundedRect(-21, -2, 2, 4, 1);
+        body.endFill();
+
+        // === DOOR DETAILS ===
+        body.lineStyle(1, 0x000000, 0.2);
+        body.moveTo(-2, -4);
+        body.lineTo(-2, 4);
+        body.lineStyle(0);
+
+        // Door handle
+        body.beginFill(0xD4A5A5); // Dusty rose
+        body.drawRoundedRect(0, 0, 3, 1.5, 0.5);
+        body.endFill();
+
+        // === CUTE BLUSH on side ===
+        body.beginFill(0xFFB5BA, 0.25); // Soft pink
+        body.drawEllipse(12, 0, 3, 2);
         body.endFill();
 
         this.taxiSprites.body = body;
         this.taxiContainer.addChild(body);
 
-        // Landing gear (separate so we can animate extend/retract) (v7 API)
-        // Draw gear relative to pivot at y=0, actual position offset by container y
+        // === WHEELS - Cute round wheels in wheel wells ===
+
+        // Rear wheel (left in side view)
         const gearLeft = new PIXI.Graphics();
-        // Landing strut
-        gearLeft.beginFill(0x666666);
-        gearLeft.drawPolygon([
-            -10, 0,
-            -8, 0,
-            -7, 4,
-            -11, 4,
-        ]);
+
+        // Tire (dusty rose)
+        gearLeft.beginFill(0xC49A9A); // Slightly darker dusty rose
+        gearLeft.drawCircle(0, 0, 5);
         gearLeft.endFill();
-        // Landing pad
-        gearLeft.beginFill(0x555555);
-        gearLeft.drawRoundedRect(-13, 4, 8, 2, 1);
+
+        // Wheel rim
+        gearLeft.beginFill(0xD4A5A5); // Dusty rose
+        gearLeft.drawCircle(0, 0, 3.5);
         gearLeft.endFill();
-        // Landing light
-        gearLeft.beginFill(0xB8E0D2); // Soft mint (cozy)
-        gearLeft.drawCircle(-9, 5, 1.5);
+
+        // Hub cap
+        gearLeft.beginFill(0xE8D0D0);
+        gearLeft.drawCircle(0, 0, 2);
         gearLeft.endFill();
-        gearLeft.y = 6; // Base position (where gear attaches to taxi)
+
+        // Shine
+        gearLeft.beginFill(0xffffff, 0.5);
+        gearLeft.drawCircle(-1, -1, 1);
+        gearLeft.endFill();
+
+        gearLeft.x = -12;
+        gearLeft.y = 10;
         this.taxiSprites.gearLeft = gearLeft;
         this.taxiContainer.addChild(gearLeft);
 
+        // Front wheel (right in side view)
         const gearRight = new PIXI.Graphics();
-        // Landing strut
-        gearRight.beginFill(0x666666);
-        gearRight.drawPolygon([
-            8, 0,
-            10, 0,
-            11, 4,
-            7, 4,
-        ]);
+
+        // Tire (dusty rose)
+        gearRight.beginFill(0xC49A9A);
+        gearRight.drawCircle(0, 0, 5);
         gearRight.endFill();
-        // Landing pad
-        gearRight.beginFill(0x555555);
-        gearRight.drawRoundedRect(5, 4, 8, 2, 1);
+
+        // Wheel rim
+        gearRight.beginFill(0xD4A5A5);
+        gearRight.drawCircle(0, 0, 3.5);
         gearRight.endFill();
-        // Landing light
-        gearRight.beginFill(0xB8E0D2); // Soft mint (cozy)
-        gearRight.drawCircle(9, 5, 1.5);
+
+        // Hub cap
+        gearRight.beginFill(0xE8D0D0);
+        gearRight.drawCircle(0, 0, 2);
         gearRight.endFill();
-        gearRight.y = 6; // Base position (where gear attaches to taxi)
+
+        // Shine
+        gearRight.beginFill(0xffffff, 0.5);
+        gearRight.drawCircle(-1, -1, 1);
+        gearRight.endFill();
+
+        gearRight.x = 10;
+        gearRight.y = 10;
         this.taxiSprites.gearRight = gearRight;
         this.taxiContainer.addChild(gearRight);
 
-        // Nav lights (blinking) (v7 API)
+        // === INDICATOR LIGHTS (turn signals) ===
+
+        // Rear indicator (coral blinker)
         const navLightRed = new PIXI.Graphics();
-        // Glow effect
-        navLightRed.beginFill(0xF5B7B1, 0.3); // Soft coral instead of harsh red (cozy)
-        navLightRed.drawCircle(-16, -4, 4);
+        navLightRed.beginFill(0xF5B7B1, 0.4); // Soft coral glow
+        navLightRed.drawCircle(-20, 2, 4);
         navLightRed.endFill();
-        // Core light
-        navLightRed.beginFill(0xF5B7B1); // Soft coral (cozy)
-        navLightRed.drawCircle(-16, -4, 2);
+        navLightRed.beginFill(0xF5B7B1);
+        navLightRed.drawCircle(-20, 2, 2);
         navLightRed.endFill();
-        navLightRed.beginFill(0xffffff, 0.5);
-        navLightRed.drawCircle(-16, -4, 1);
+        navLightRed.beginFill(0xffffff, 0.6);
+        navLightRed.drawCircle(-20, 2, 0.8);
         navLightRed.endFill();
         this.taxiSprites.navLightRed = navLightRed;
         this.taxiContainer.addChild(navLightRed);
 
+        // Front indicator (mint blinker)
         const navLightGreen = new PIXI.Graphics();
-        // Glow effect
-        navLightGreen.beginFill(0xB8E0D2, 0.3); // Soft mint instead of harsh green (cozy)
-        navLightGreen.drawCircle(16, -4, 4);
+        navLightGreen.beginFill(0xB8E0D2, 0.4); // Soft mint glow
+        navLightGreen.drawCircle(22, 2, 4);
         navLightGreen.endFill();
-        // Core light
-        navLightGreen.beginFill(0xB8E0D2); // Soft mint (cozy)
-        navLightGreen.drawCircle(16, -4, 2);
+        navLightGreen.beginFill(0xB8E0D2);
+        navLightGreen.drawCircle(22, 2, 2);
         navLightGreen.endFill();
-        navLightGreen.beginFill(0xffffff, 0.5);
-        navLightGreen.drawCircle(16, -4, 1);
+        navLightGreen.beginFill(0xffffff, 0.6);
+        navLightGreen.drawCircle(22, 2, 0.8);
         navLightGreen.endFill();
         this.taxiSprites.navLightGreen = navLightGreen;
         this.taxiContainer.addChild(navLightGreen);
