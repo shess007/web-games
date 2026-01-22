@@ -329,17 +329,19 @@ class PixiRenderer {
                           AnimeStyleConfig.background.sparkleStars;
 
         if (useSparkle) {
-            // === ANIME STYLE: 4-point sparkle star ===
-            const armLength = halfSize;
-            const armWidth = halfSize * 0.2;
+            // === RADICAL ANIME: 8-point sparkle star ===
+            const armLength = halfSize * 1.1;
+            const armWidth = halfSize * 0.15;
+            const diagLength = halfSize * 0.7;
+            const diagWidth = halfSize * 0.1;
 
             // Outer glow
-            graphics.beginFill(color, 0.2);
-            graphics.drawCircle(halfSize, halfSize, halfSize * 0.8);
+            graphics.beginFill(color, 0.25);
+            graphics.drawCircle(halfSize, halfSize, halfSize * 0.9);
             graphics.endFill();
 
-            // Vertical arm
-            graphics.beginFill(color, 0.7);
+            // Main vertical arm (longest)
+            graphics.beginFill(color, 0.85);
             graphics.moveTo(halfSize, halfSize - armLength);
             graphics.lineTo(halfSize + armWidth, halfSize);
             graphics.lineTo(halfSize, halfSize + armLength);
@@ -347,18 +349,46 @@ class PixiRenderer {
             graphics.closePath();
             graphics.endFill();
 
-            // Horizontal arm
-            graphics.beginFill(color, 0.7);
-            graphics.moveTo(halfSize - armLength, halfSize);
+            // Main horizontal arm
+            graphics.beginFill(color, 0.85);
+            graphics.moveTo(halfSize - armLength * 0.9, halfSize);
             graphics.lineTo(halfSize, halfSize + armWidth);
-            graphics.lineTo(halfSize + armLength, halfSize);
+            graphics.lineTo(halfSize + armLength * 0.9, halfSize);
             graphics.lineTo(halfSize, halfSize - armWidth);
             graphics.closePath();
             graphics.endFill();
 
+            // Diagonal arms (4 of them, shorter)
+            const diagonals = [
+                { angle: Math.PI / 4 },
+                { angle: 3 * Math.PI / 4 },
+                { angle: 5 * Math.PI / 4 },
+                { angle: 7 * Math.PI / 4 }
+            ];
+
+            graphics.beginFill(color, 0.6);
+            for (const diag of diagonals) {
+                const cos = Math.cos(diag.angle);
+                const sin = Math.sin(diag.angle);
+                const perpCos = Math.cos(diag.angle + Math.PI / 2);
+                const perpSin = Math.sin(diag.angle + Math.PI / 2);
+
+                graphics.moveTo(halfSize + cos * diagLength, halfSize + sin * diagLength);
+                graphics.lineTo(halfSize + perpCos * diagWidth, halfSize + perpSin * diagWidth);
+                graphics.lineTo(halfSize - cos * diagLength * 0.3, halfSize - sin * diagLength * 0.3);
+                graphics.lineTo(halfSize - perpCos * diagWidth, halfSize - perpSin * diagWidth);
+                graphics.closePath();
+            }
+            graphics.endFill();
+
             // Bright center core
+            graphics.beginFill(0xffffff, 1.0);
+            graphics.drawCircle(halfSize, halfSize, size * 0.12);
+            graphics.endFill();
+
+            // Extra bright center point
             graphics.beginFill(0xffffff, 0.9);
-            graphics.drawCircle(halfSize, halfSize, size * 0.1);
+            graphics.drawCircle(halfSize, halfSize, size * 0.06);
             graphics.endFill();
         } else {
             // Original: Smooth glow (v7 API)

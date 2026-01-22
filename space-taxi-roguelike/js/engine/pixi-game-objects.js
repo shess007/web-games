@@ -13,7 +13,6 @@ const PixiGameObjectsMixin = {
             let sprite = this.asteroidSprites.get(idx);
 
             if (!sprite) {
-                // Create asteroid graphics
                 sprite = new PIXI.Graphics();
                 this.asteroidSprites.set(idx, sprite);
                 this.containers.asteroids.addChild(sprite);
@@ -22,9 +21,10 @@ const PixiGameObjectsMixin = {
             sprite.clear();
 
             const baseColor = 0xFFCDB2; // Soft peach base color
+            const radius = a.size * 0.85;
 
-            // Soft outer glow - cozy pastel (v7 API)
-            const glowColor = 0xE2D1F9; // Lavender glow
+            // Soft outer glow
+            const glowColor = 0xE2D1F9;
             for (let i = 4; i >= 1; i--) {
                 const ratio = i / 4;
                 const alpha = 0.12 * (1 - ratio);
@@ -33,47 +33,45 @@ const PixiGameObjectsMixin = {
                 sprite.endFill();
             }
 
-            // === ANIME STYLE: Draw outline FIRST ===
+            // === RADICAL ANIME: BOLD outline FIRST ===
             if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
                 const outlineColor = AnimeStyleUtils.getOutlineColor(baseColor);
                 sprite.lineStyle(AnimeStyleConfig.outline.asteroidThickness, outlineColor, AnimeStyleConfig.outline.alpha);
-                sprite.drawCircle(0, 0, a.size * 0.85);
+                sprite.drawCircle(0, 0, radius);
                 sprite.lineStyle(0);
             }
 
-            // Draw soft rounded blob shape (v7 API)
+            // Main body fill
             sprite.beginFill(baseColor);
             if (!useAnimeStyle) {
-                sprite.lineStyle(2, 0xF5B7B1, 0.5); // Original soft coral outline
+                sprite.lineStyle(2, 0xF5B7B1, 0.5);
             }
-
-            if (a.vertices && a.vertices.length > 0) {
-                sprite.drawCircle(0, 0, a.size * 0.85);
-            } else {
-                sprite.drawCircle(0, 0, a.size);
-            }
+            sprite.drawCircle(0, 0, radius);
             sprite.endFill();
             sprite.lineStyle(0);
 
-            // === ANIME STYLE: Shadow crescent on bottom-right ===
+            // === RADICAL ANIME: Hard-edge cel-shading ===
             if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
-                const shadowColor = AnimeStyleUtils.darkenColor(baseColor, AnimeStyleConfig.shading.shadowDarken);
-                sprite.beginFill(shadowColor, 0.4);
-                sprite.arc(0, 0, a.size * 0.85, 0.3, Math.PI * 0.9);
-                sprite.lineTo(0, 0);
-                sprite.closePath();
-                sprite.endFill();
+                // Full cel-shading with hard edges
+                AnimeStyleUtils.drawCelShadingCircle(sprite, 0, 0, radius, baseColor);
+
+                // Rim light on edge
+                AnimeStyleUtils.drawRimLight(sprite, 0, 0, radius, baseColor);
             }
 
-            // Soft dimples instead of harsh craters (v7 API)
-            sprite.beginFill(0xFAD7A0, 0.4); // Slightly darker warm peach
+            // Craters/dimples (with outline in anime mode)
+            if (useAnimeStyle) {
+                sprite.lineStyle(1.5, AnimeStyleUtils.darkenColor(0xFAD7A0, 0.3), 0.5);
+            }
+            sprite.beginFill(0xFAD7A0, 0.5);
             sprite.drawCircle(a.size * 0.2, a.size * 0.1, a.size * 0.15);
             sprite.endFill();
             sprite.beginFill(0xFAD7A0, 0.4);
             sprite.drawCircle(-a.size * 0.3, -a.size * 0.2, a.size * 0.1);
             sprite.endFill();
+            sprite.lineStyle(0);
 
-            // === ANIME STYLE: Specular highlight ===
+            // === RADICAL ANIME: BIG dramatic specular highlights ===
             if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
                 AnimeStyleUtils.drawSpecularHighlight(sprite, 0, 0, a.size);
             }

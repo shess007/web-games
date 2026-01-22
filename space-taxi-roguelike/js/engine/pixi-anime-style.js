@@ -1,63 +1,107 @@
 /**
- * Anime Style Configuration and Utilities
- * Provides cel-shading, outline, and specular highlight functions
+ * RADICAL Anime Style Configuration and Utilities
+ * Full cel-shading, bold outlines, dramatic effects
  */
 
 const AnimeStyleConfig = {
     // Master toggle
     enabled: true,
 
-    // Outline settings
+    // BOLD outline settings
     outline: {
         enabled: true,
-        thickness: 2.5,        // Base outline thickness
-        alpha: 0.6,            // Outline opacity
-        darkenAmount: 0.35,    // How much darker than base color
-        // Special cases
-        taxiThickness: 2.5,
-        asteroidThickness: 2.5,
-        buildingThickness: 2.0,
-        enemyThickness: 4.0,   // Thicker, more dramatic for enemies
-        passengerThickness: 2.0
+        thickness: 3.5,          // Thick bold outlines
+        alpha: 0.85,             // Strong visibility
+        darkenAmount: 0.5,       // Much darker for contrast
+        // Object-specific thickness
+        taxiThickness: 4.0,      // Hero gets boldest outline
+        asteroidThickness: 3.5,
+        buildingThickness: 3.0,
+        enemyThickness: 5.0,     // VERY thick for menacing look
+        passengerThickness: 2.5,
+        platformThickness: 3.0,
+        // Rim light (bright edge on opposite side of shadow)
+        rimLightEnabled: true,
+        rimLightColor: 0xffffff,
+        rimLightAlpha: 0.4,
+        rimLightThickness: 1.5
     },
 
-    // Cel-shading settings
+    // HARD EDGE cel-shading settings
     shading: {
         enabled: true,
-        shadowDarken: 0.25,    // 25% darker for shadow
-        highlightLighten: 0.15, // 15% lighter for highlight
-        // Implied light direction (top-left)
-        lightAngle: -Math.PI / 4
+        // Three distinct bands with hard edges
+        shadowDarken: 0.4,       // 40% darker - dramatic shadow
+        highlightLighten: 0.25,  // 25% lighter - bright highlight
+        // Hard edge positions (0-1 from shadow to light)
+        shadowCutoff: 0.4,       // Where shadow ends
+        highlightCutoff: 0.75,   // Where highlight begins
+        // Implied light direction (top-left, 45 degrees)
+        lightAngle: -Math.PI / 4,
+        // Cross-hatching for deep shadows
+        crossHatchEnabled: true,
+        crossHatchDensity: 4,
+        crossHatchAlpha: 0.2
     },
 
-    // Specular highlight settings
+    // DRAMATIC specular highlight settings
     specular: {
         enabled: true,
-        alpha: 0.4,
-        size: 0.15,            // Relative to object size
-        offsetX: -0.2,         // Relative offset from center
-        offsetY: -0.25
+        alpha: 0.7,              // Very bright
+        size: 0.25,              // Large anime shine
+        offsetX: -0.25,          // Top-left position
+        offsetY: -0.3,
+        // Secondary smaller highlight
+        secondaryEnabled: true,
+        secondaryAlpha: 0.5,
+        secondarySize: 0.12,
+        // Animated sparkle
+        sparkleEnabled: true,
+        sparkleSpeed: 3.0
     },
 
     // Background effects
     background: {
-        sparkleStars: true,    // Use 4-point sparkles instead of round stars
-        bandedNebulas: true,   // Use distinct color bands
-        nebulaSteps: 4         // Number of color bands
+        sparkleStars: true,
+        bandedNebulas: true,
+        nebulaSteps: 3,          // Fewer steps = harder bands
+        // Dramatic vignette
+        vignetteEnabled: true,
+        vignetteStrength: 0.3
+    },
+
+    // ACTION effects
+    action: {
+        // Screen flash on events
+        flashEnabled: true,
+        flashIntensity: 0.8,
+        // Action lines around screen border
+        actionLinesEnabled: true,
+        actionLinesCount: 24,
+        // Impact stars
+        impactStarsEnabled: true,
+        // Dramatic zoom effect
+        zoomPulseEnabled: true,
+        zoomPulseAmount: 0.02
+    },
+
+    // Color enhancement
+    colors: {
+        saturationBoost: 1.2,    // More vivid colors
+        contrastBoost: 1.15      // Higher contrast
     }
 };
 
 const AnimeStyleUtils = {
     /**
-     * Get outline color (darkened version of base color)
+     * Get bold outline color (much darker than base)
      */
     getOutlineColor(baseColor, darkenAmount = AnimeStyleConfig.outline.darkenAmount) {
         return this.darkenColor(baseColor, darkenAmount);
     },
 
     /**
-     * Get shading bands from base color
-     * Returns { shadow, mid, highlight }
+     * Get THREE distinct shading bands with hard edges
      */
     getShadingBands(baseColor) {
         return {
@@ -88,90 +132,164 @@ const AnimeStyleUtils = {
     },
 
     /**
-     * Draw anime-style specular highlight ellipse
+     * Boost color saturation
+     */
+    saturateColor(color, amount = AnimeStyleConfig.colors.saturationBoost) {
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        const newR = Math.min(255, Math.max(0, Math.round(gray + (r - gray) * amount)));
+        const newG = Math.min(255, Math.max(0, Math.round(gray + (g - gray) * amount)));
+        const newB = Math.min(255, Math.max(0, Math.round(gray + (b - gray) * amount)));
+
+        return (newR << 16) | (newG << 8) | newB;
+    },
+
+    /**
+     * Draw DRAMATIC anime-style specular highlight
      */
     drawSpecularHighlight(graphics, centerX, centerY, objectSize, color = 0xffffff) {
         if (!AnimeStyleConfig.specular.enabled) return;
 
-        const size = objectSize * AnimeStyleConfig.specular.size;
-        const offsetX = objectSize * AnimeStyleConfig.specular.offsetX;
-        const offsetY = objectSize * AnimeStyleConfig.specular.offsetY;
+        const config = AnimeStyleConfig.specular;
+        const size = objectSize * config.size;
+        const offsetX = objectSize * config.offsetX;
+        const offsetY = objectSize * config.offsetY;
 
-        // Main specular
-        graphics.beginFill(color, AnimeStyleConfig.specular.alpha);
+        // Main large specular - anime style ellipse
+        graphics.beginFill(color, config.alpha);
         graphics.drawEllipse(
             centerX + offsetX,
             centerY + offsetY,
-            size * 1.2,
-            size * 0.6
+            size * 1.5,
+            size * 0.7
         );
         graphics.endFill();
 
-        // Small secondary highlight
-        graphics.beginFill(color, AnimeStyleConfig.specular.alpha * 0.6);
-        graphics.drawEllipse(
-            centerX + offsetX * 0.5,
-            centerY + offsetY * 0.8,
-            size * 0.5,
-            size * 0.3
-        );
-        graphics.endFill();
+        // Secondary smaller highlight
+        if (config.secondaryEnabled) {
+            graphics.beginFill(color, config.secondaryAlpha);
+            graphics.drawEllipse(
+                centerX + offsetX * 0.3,
+                centerY + offsetY * 0.6,
+                size * config.secondarySize * 3,
+                size * config.secondarySize * 1.5
+            );
+            graphics.endFill();
+        }
+
+        // Animated sparkle cross
+        if (config.sparkleEnabled) {
+            const sparkleTime = Date.now() / 1000 * config.sparkleSpeed;
+            const sparkleAlpha = 0.3 + Math.sin(sparkleTime) * 0.2;
+            const sparkleSize = size * 0.4;
+
+            graphics.lineStyle(1.5, color, sparkleAlpha);
+            // Vertical line
+            graphics.moveTo(centerX + offsetX, centerY + offsetY - sparkleSize);
+            graphics.lineTo(centerX + offsetX, centerY + offsetY + sparkleSize);
+            // Horizontal line
+            graphics.moveTo(centerX + offsetX - sparkleSize, centerY + offsetY);
+            graphics.lineTo(centerX + offsetX + sparkleSize, centerY + offsetY);
+            graphics.lineStyle(0);
+        }
     },
 
     /**
-     * Draw soft outline for a circular object
+     * Draw BOLD outline for a shape path
      */
-    drawCircleOutline(graphics, x, y, radius, baseColor, thickness = null) {
+    drawBoldOutline(graphics, drawPath, baseColor, thickness = null) {
         if (!AnimeStyleConfig.outline.enabled) return;
 
         const outlineThickness = thickness || AnimeStyleConfig.outline.thickness;
         const outlineColor = this.getOutlineColor(baseColor);
 
+        // Draw outline
         graphics.lineStyle(outlineThickness, outlineColor, AnimeStyleConfig.outline.alpha);
-        graphics.drawCircle(x, y, radius);
+        drawPath(graphics);
         graphics.lineStyle(0);
+
+        // Draw rim light on opposite side
+        if (AnimeStyleConfig.outline.rimLightEnabled) {
+            graphics.lineStyle(
+                AnimeStyleConfig.outline.rimLightThickness,
+                AnimeStyleConfig.outline.rimLightColor,
+                AnimeStyleConfig.outline.rimLightAlpha
+            );
+            drawPath(graphics);
+            graphics.lineStyle(0);
+        }
     },
 
     /**
-     * Draw soft outline for a rectangular object
+     * Draw hard-edge cel-shading on a circular object
      */
-    drawRectOutline(graphics, x, y, width, height, baseColor, thickness = null) {
-        if (!AnimeStyleConfig.outline.enabled) return;
-
-        const outlineThickness = thickness || AnimeStyleConfig.outline.thickness;
-        const outlineColor = this.getOutlineColor(baseColor);
-
-        graphics.lineStyle(outlineThickness, outlineColor, AnimeStyleConfig.outline.alpha);
-        graphics.drawRect(x, y, width, height);
-        graphics.lineStyle(0);
-    },
-
-    /**
-     * Draw shadow crescent on one side of a circular object (cel-shading effect)
-     */
-    drawShadowCrescent(graphics, x, y, radius, baseColor) {
+    drawCelShadingCircle(graphics, x, y, radius, baseColor) {
         if (!AnimeStyleConfig.shading.enabled) return;
 
-        const shadowColor = this.darkenColor(baseColor, AnimeStyleConfig.shading.shadowDarken);
+        const bands = this.getShadingBands(baseColor);
+        const lightAngle = AnimeStyleConfig.shading.lightAngle;
 
-        // Draw shadow arc on bottom-right (opposite of light source)
-        graphics.beginFill(shadowColor, 0.4);
-        graphics.arc(x, y, radius, 0, Math.PI * 0.8);
+        // Shadow crescent (bottom-right, hard edge)
+        graphics.beginFill(bands.shadow, 0.7);
+        graphics.arc(x, y, radius, lightAngle + Math.PI * 0.3, lightAngle + Math.PI * 1.2);
         graphics.lineTo(x, y);
         graphics.closePath();
         graphics.endFill();
+
+        // Highlight crescent (top-left, hard edge)
+        graphics.beginFill(bands.highlight, 0.5);
+        graphics.arc(x, y, radius * 0.9, lightAngle - Math.PI * 0.4, lightAngle + Math.PI * 0.2);
+        graphics.lineTo(x, y);
+        graphics.closePath();
+        graphics.endFill();
+
+        // Cross-hatching in deep shadow
+        if (AnimeStyleConfig.shading.crossHatchEnabled) {
+            this.drawCrossHatching(graphics, x + radius * 0.3, y + radius * 0.3, radius * 0.5, bands.shadow);
+        }
     },
 
     /**
-     * Draw 4-point anime sparkle star
+     * Draw cross-hatching pattern for deep shadows
+     */
+    drawCrossHatching(graphics, x, y, size, color) {
+        const density = AnimeStyleConfig.shading.crossHatchDensity;
+        const alpha = AnimeStyleConfig.shading.crossHatchAlpha;
+        const spacing = size / density;
+
+        graphics.lineStyle(1, color, alpha);
+
+        // Diagonal lines (top-left to bottom-right)
+        for (let i = -density; i <= density; i++) {
+            const offset = i * spacing;
+            graphics.moveTo(x - size + offset, y - size);
+            graphics.lineTo(x + offset, y + size);
+        }
+
+        // Cross lines (top-right to bottom-left)
+        for (let i = -density; i <= density; i++) {
+            const offset = i * spacing;
+            graphics.moveTo(x + size + offset, y - size);
+            graphics.lineTo(x + offset, y + size);
+        }
+
+        graphics.lineStyle(0);
+    },
+
+    /**
+     * Draw 4-point anime sparkle star (BIGGER)
      */
     drawSparkle(graphics, x, y, size, color, alpha = 1.0) {
-        const armLength = size;
-        const armWidth = size * 0.15;
+        const armLength = size * 1.2;
+        const armWidth = size * 0.2;
 
         graphics.beginFill(color, alpha);
 
-        // Vertical arm
+        // Vertical arm (taller)
         graphics.moveTo(x, y - armLength);
         graphics.lineTo(x + armWidth, y);
         graphics.lineTo(x, y + armLength);
@@ -179,38 +297,57 @@ const AnimeStyleUtils = {
         graphics.closePath();
 
         // Horizontal arm
-        graphics.moveTo(x - armLength, y);
+        graphics.moveTo(x - armLength * 0.8, y);
         graphics.lineTo(x, y + armWidth);
-        graphics.lineTo(x + armLength, y);
+        graphics.lineTo(x + armLength * 0.8, y);
         graphics.lineTo(x, y - armWidth);
         graphics.closePath();
 
         graphics.endFill();
 
         // Bright center
-        graphics.beginFill(0xffffff, alpha * 0.8);
-        graphics.drawCircle(x, y, size * 0.15);
+        graphics.beginFill(0xffffff, alpha);
+        graphics.drawCircle(x, y, size * 0.2);
+        graphics.endFill();
+
+        // Small diagonal arms for extra sparkle
+        const diagLength = armLength * 0.5;
+        const diagWidth = armWidth * 0.7;
+        graphics.beginFill(color, alpha * 0.7);
+
+        // Diagonal 1
+        graphics.moveTo(x - diagLength * 0.7, y - diagLength * 0.7);
+        graphics.lineTo(x + diagWidth * 0.5, y - diagWidth * 0.5);
+        graphics.lineTo(x + diagLength * 0.7, y + diagLength * 0.7);
+        graphics.lineTo(x - diagWidth * 0.5, y + diagWidth * 0.5);
+        graphics.closePath();
+
         graphics.endFill();
     },
 
     /**
-     * Create manga-style speed lines emanating from a point
+     * Draw DRAMATIC manga speed lines
      */
-    drawSpeedLines(graphics, centerX, centerY, angle, intensity, color = 0xffffff, alpha = 0.4) {
-        const numLines = Math.floor(8 + intensity * 12);
-        const spread = Math.PI * 0.8; // Angular spread
-
-        graphics.lineStyle(1.5, color, alpha * intensity);
+    drawSpeedLines(graphics, centerX, centerY, angle, intensity, color = 0xffffff, alpha = 0.6) {
+        const numLines = Math.floor(12 + intensity * 20);
+        const spread = Math.PI * 0.7;
+        const baseAlpha = alpha * intensity;
 
         for (let i = 0; i < numLines; i++) {
             const lineAngle = angle + (i / numLines - 0.5) * spread;
-            const innerRadius = 40 + Math.random() * 30;
-            const outerRadius = 150 + Math.random() * 100;
+            const randomOffset = (Math.random() - 0.5) * 0.15;
 
-            const x1 = centerX + Math.cos(lineAngle) * innerRadius;
-            const y1 = centerY + Math.sin(lineAngle) * innerRadius;
-            const x2 = centerX + Math.cos(lineAngle) * outerRadius;
-            const y2 = centerY + Math.sin(lineAngle) * outerRadius;
+            const innerRadius = 30 + Math.random() * 20;
+            const outerRadius = 200 + Math.random() * 150;
+            const lineWidth = 1.5 + Math.random() * 2.5;
+            const lineAlpha = baseAlpha * (0.4 + Math.random() * 0.6);
+
+            graphics.lineStyle(lineWidth, color, lineAlpha);
+
+            const x1 = centerX + Math.cos(lineAngle + randomOffset) * innerRadius;
+            const y1 = centerY + Math.sin(lineAngle + randomOffset) * innerRadius;
+            const x2 = centerX + Math.cos(lineAngle + randomOffset) * outerRadius;
+            const y2 = centerY + Math.sin(lineAngle + randomOffset) * outerRadius;
 
             graphics.moveTo(x1, y1);
             graphics.lineTo(x2, y2);
@@ -220,25 +357,139 @@ const AnimeStyleUtils = {
     },
 
     /**
-     * Draw focus/converging lines (for pickup/dropoff events)
+     * Draw focus/converging lines (DRAMATIC version)
      */
-    drawFocusLines(graphics, centerX, centerY, radius, numLines = 16, color = 0xffffff, alpha = 0.5) {
-        graphics.lineStyle(2, color, alpha);
+    drawFocusLines(graphics, centerX, centerY, radius, numLines = 24, color = 0xffffff, alpha = 0.7) {
+        // Outer glow ring
+        graphics.lineStyle(4, color, alpha * 0.3);
+        graphics.drawCircle(centerX, centerY, radius);
+
+        graphics.lineStyle(3, color, alpha);
 
         for (let i = 0; i < numLines; i++) {
             const angle = (i / numLines) * Math.PI * 2;
-            const innerRadius = radius * 0.3;
+            const innerRadius = radius * 0.15;
             const outerRadius = radius;
+
+            // Vary line length
+            const lengthVar = 0.8 + Math.random() * 0.4;
 
             const x1 = centerX + Math.cos(angle) * innerRadius;
             const y1 = centerY + Math.sin(angle) * innerRadius;
-            const x2 = centerX + Math.cos(angle) * outerRadius;
-            const y2 = centerY + Math.sin(angle) * outerRadius;
+            const x2 = centerX + Math.cos(angle) * outerRadius * lengthVar;
+            const y2 = centerY + Math.sin(angle) * outerRadius * lengthVar;
 
             graphics.moveTo(x1, y1);
             graphics.lineTo(x2, y2);
         }
 
+        graphics.lineStyle(0);
+    },
+
+    /**
+     * Draw impact star burst
+     */
+    drawImpactStar(graphics, x, y, size, color = 0xffffff, alpha = 1.0) {
+        const points = 8;
+        const outerRadius = size;
+        const innerRadius = size * 0.4;
+
+        graphics.beginFill(color, alpha);
+
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const px = x + Math.cos(angle) * radius;
+            const py = y + Math.sin(angle) * radius;
+
+            if (i === 0) {
+                graphics.moveTo(px, py);
+            } else {
+                graphics.lineTo(px, py);
+            }
+        }
+
+        graphics.closePath();
+        graphics.endFill();
+
+        // Center glow
+        graphics.beginFill(0xffffff, alpha * 0.8);
+        graphics.drawCircle(x, y, size * 0.2);
+        graphics.endFill();
+    },
+
+    /**
+     * Draw action frame border lines
+     */
+    drawActionFrameBorder(graphics, width, height, intensity = 1.0, color = 0x000000) {
+        const lineCount = Math.floor(8 + intensity * 16);
+        const maxLength = Math.min(width, height) * 0.15;
+
+        graphics.lineStyle(3, color, 0.8 * intensity);
+
+        // Top-left corner
+        for (let i = 0; i < lineCount / 4; i++) {
+            const angle = -Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+            const length = maxLength * (0.5 + Math.random() * 0.5);
+            const startX = Math.random() * width * 0.2;
+            const startY = Math.random() * height * 0.2;
+
+            graphics.moveTo(startX, startY);
+            graphics.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+        }
+
+        // Top-right corner
+        for (let i = 0; i < lineCount / 4; i++) {
+            const angle = -Math.PI * 3 / 4 + (Math.random() - 0.5) * 0.5;
+            const length = maxLength * (0.5 + Math.random() * 0.5);
+            const startX = width - Math.random() * width * 0.2;
+            const startY = Math.random() * height * 0.2;
+
+            graphics.moveTo(startX, startY);
+            graphics.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+        }
+
+        // Bottom-left corner
+        for (let i = 0; i < lineCount / 4; i++) {
+            const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+            const length = maxLength * (0.5 + Math.random() * 0.5);
+            const startX = Math.random() * width * 0.2;
+            const startY = height - Math.random() * height * 0.2;
+
+            graphics.moveTo(startX, startY);
+            graphics.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+        }
+
+        // Bottom-right corner
+        for (let i = 0; i < lineCount / 4; i++) {
+            const angle = Math.PI * 3 / 4 + (Math.random() - 0.5) * 0.5;
+            const length = maxLength * (0.5 + Math.random() * 0.5);
+            const startX = width - Math.random() * width * 0.2;
+            const startY = height - Math.random() * height * 0.2;
+
+            graphics.moveTo(startX, startY);
+            graphics.lineTo(startX + Math.cos(angle) * length, startY + Math.sin(angle) * length);
+        }
+
+        graphics.lineStyle(0);
+    },
+
+    /**
+     * Draw rim light on edge of circular object
+     */
+    drawRimLight(graphics, x, y, radius, baseColor) {
+        if (!AnimeStyleConfig.outline.rimLightEnabled) return;
+
+        const lightAngle = AnimeStyleConfig.shading.lightAngle;
+        const rimAngle = lightAngle + Math.PI; // Opposite side from light
+
+        graphics.lineStyle(
+            AnimeStyleConfig.outline.rimLightThickness * 2,
+            AnimeStyleConfig.outline.rimLightColor,
+            AnimeStyleConfig.outline.rimLightAlpha
+        );
+
+        graphics.arc(x, y, radius - 1, rimAngle - Math.PI * 0.4, rimAngle + Math.PI * 0.4);
         graphics.lineStyle(0);
     }
 };

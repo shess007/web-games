@@ -124,24 +124,28 @@ const PixiTaxiMixin = {
         this.taxiSprites.sideGlowRight = sideGlowRight;
         this.taxiContainer.addChild(sideGlowRight);
 
-        // CUTE CAR BODY - Side view profile (rotates)
+        // CUTE CAR BODY - Side view profile (rotates) - RADICAL ANIME STYLE
         const body = new PIXI.Graphics();
 
         // Base color for cel-shading
         const baseColor = 0xF9E79F; // Butter yellow
         const useAnimeStyle = typeof AnimeStyleConfig !== 'undefined' && AnimeStyleConfig.enabled;
 
+        // Get shading bands for cel-shading
+        const bands = useAnimeStyle ? AnimeStyleUtils.getShadingBands(baseColor) : null;
+
         // Soft shadow beneath the car
-        body.beginFill(0x000000, 0.15);
-        body.drawEllipse(0, 14, 20, 4);
+        body.beginFill(0x000000, useAnimeStyle ? 0.3 : 0.15);
+        body.drawEllipse(0, 14, 22, 5);
         body.endFill();
 
-        // === ANIME STYLE: Draw outline FIRST ===
+        // === RADICAL ANIME: Draw BOLD outline FIRST ===
         if (useAnimeStyle && AnimeStyleConfig.outline.enabled) {
             const outlineColor = AnimeStyleUtils.getOutlineColor(baseColor);
             const outlineThickness = AnimeStyleConfig.outline.taxiThickness;
             const outlineAlpha = AnimeStyleConfig.outline.alpha;
 
+            // Main bold outline
             body.lineStyle(outlineThickness, outlineColor, outlineAlpha);
             body.moveTo(-20, 6);
             body.lineTo(-20, -2);
@@ -160,39 +164,48 @@ const PixiTaxiMixin = {
             body.quadraticCurveTo(-16, 10, -18, 6);
             body.closePath();
             body.lineStyle(0);
+
+            // === RIM LIGHT on top edge (opposite of shadow) ===
+            if (AnimeStyleConfig.outline.rimLightEnabled) {
+                body.lineStyle(
+                    AnimeStyleConfig.outline.rimLightThickness,
+                    AnimeStyleConfig.outline.rimLightColor,
+                    AnimeStyleConfig.outline.rimLightAlpha
+                );
+                body.moveTo(-6, -12);
+                body.lineTo(4, -12);
+                body.quadraticCurveTo(10, -12, 14, -8);
+                body.lineStyle(0);
+            }
         }
 
         // === CLASSIC CAR SILHOUETTE - Side view ===
-        // Using bezier curves for a proper car shape
 
-        // Main car body with proper car profile
+        // Main car body - base mid-tone
         body.beginFill(baseColor);
-
-        // Draw car body as a proper side-view shape
-        body.moveTo(-20, 6);      // rear bottom
-        body.lineTo(-20, -2);     // rear up
-        body.lineTo(-18, -6);     // rear window slope start
-        body.quadraticCurveTo(-14, -12, -6, -12);  // roof curve back
-        body.lineTo(4, -12);      // roof top
-        body.quadraticCurveTo(12, -12, 16, -6);    // windshield curve
-        body.lineTo(20, -2);      // hood slope
-        body.lineTo(22, 0);       // front nose
-        body.lineTo(22, 6);       // front bottom
-        body.lineTo(14, 6);       // to front wheel well
-        body.quadraticCurveTo(12, 10, 8, 10);      // front wheel arch
+        body.moveTo(-20, 6);
+        body.lineTo(-20, -2);
+        body.lineTo(-18, -6);
+        body.quadraticCurveTo(-14, -12, -6, -12);
+        body.lineTo(4, -12);
+        body.quadraticCurveTo(12, -12, 16, -6);
+        body.lineTo(20, -2);
+        body.lineTo(22, 0);
+        body.lineTo(22, 6);
+        body.lineTo(14, 6);
+        body.quadraticCurveTo(12, 10, 8, 10);
         body.quadraticCurveTo(4, 10, 2, 6);
-        body.lineTo(-6, 6);       // between wheels
-        body.quadraticCurveTo(-8, 10, -12, 10);    // rear wheel arch
+        body.lineTo(-6, 6);
+        body.quadraticCurveTo(-8, 10, -12, 10);
         body.quadraticCurveTo(-16, 10, -18, 6);
-        body.lineTo(-20, 6);      // back to start
+        body.lineTo(-20, 6);
         body.endFill();
 
-        // === ANIME STYLE: Cel-shading shadow band on bottom/right ===
+        // === RADICAL ANIME: Hard-edge cel-shading ===
         if (useAnimeStyle && AnimeStyleConfig.shading.enabled) {
-            const shadowColor = AnimeStyleUtils.darkenColor(baseColor, AnimeStyleConfig.shading.shadowDarken);
-            body.beginFill(shadowColor, 0.5);
-            // Shadow on bottom portion of car body
-            body.moveTo(22, 2);
+            // DARK SHADOW BAND - bottom and right (hard edge!)
+            body.beginFill(bands.shadow, 0.7);
+            body.moveTo(22, 0);
             body.lineTo(22, 6);
             body.lineTo(14, 6);
             body.quadraticCurveTo(12, 10, 8, 10);
@@ -201,9 +214,32 @@ const PixiTaxiMixin = {
             body.quadraticCurveTo(-8, 10, -12, 10);
             body.quadraticCurveTo(-16, 10, -18, 6);
             body.lineTo(-20, 6);
-            body.lineTo(-20, 2);
-            body.lineTo(22, 2);
+            body.lineTo(-20, 0);
+            body.lineTo(22, 0);
             body.endFill();
+
+            // HIGHLIGHT BAND - top-left area (hard edge!)
+            body.beginFill(bands.highlight, 0.6);
+            body.moveTo(-18, -6);
+            body.quadraticCurveTo(-14, -12, -6, -12);
+            body.lineTo(4, -12);
+            body.quadraticCurveTo(8, -12, 10, -10);
+            body.lineTo(-4, -10);
+            body.quadraticCurveTo(-12, -10, -16, -6);
+            body.closePath();
+            body.endFill();
+
+            // Cross-hatching in deep shadow area
+            if (AnimeStyleConfig.shading.crossHatchEnabled) {
+                body.lineStyle(1, bands.shadow, AnimeStyleConfig.shading.crossHatchAlpha);
+                const hatchSpacing = 4;
+                for (let i = 0; i < 8; i++) {
+                    const x = -16 + i * hatchSpacing;
+                    body.moveTo(x, 3);
+                    body.lineTo(x + 6, 8);
+                }
+                body.lineStyle(0);
+            }
         }
 
         // Lower body accent (soft peach trim)
@@ -222,7 +258,7 @@ const PixiTaxiMixin = {
         body.endFill();
 
         // Body highlight (roof shine)
-        body.beginFill(0xffffff, 0.3);
+        body.beginFill(0xffffff, useAnimeStyle ? 0.5 : 0.3);
         body.moveTo(-4, -12);
         body.lineTo(2, -12);
         body.quadraticCurveTo(8, -12, 12, -9);
@@ -232,16 +268,36 @@ const PixiTaxiMixin = {
         body.lineTo(-4, -12);
         body.endFill();
 
-        // === ANIME STYLE: Specular highlight on roof ===
+        // === RADICAL ANIME: BIG specular highlights on roof ===
         if (useAnimeStyle && AnimeStyleConfig.specular.enabled) {
-            // Large anime-style specular ellipse
+            // Main LARGE anime-style specular ellipse
             body.beginFill(0xffffff, AnimeStyleConfig.specular.alpha);
-            body.drawEllipse(-2, -11, 6, 2);
+            body.drawEllipse(-1, -11.5, 8, 2.5);
             body.endFill();
-            // Small secondary highlight
-            body.beginFill(0xffffff, AnimeStyleConfig.specular.alpha * 0.7);
-            body.drawEllipse(6, -10, 3, 1.5);
+
+            // Secondary bright spot
+            body.beginFill(0xffffff, AnimeStyleConfig.specular.alpha * 0.8);
+            body.drawEllipse(8, -9, 4, 2);
             body.endFill();
+
+            // Small tertiary highlight (sparkle point)
+            body.beginFill(0xffffff, 1.0);
+            body.drawCircle(-4, -11, 1.5);
+            body.endFill();
+
+            // Animated sparkle cross on main highlight
+            if (AnimeStyleConfig.specular.sparkleEnabled) {
+                const sparkleTime = Date.now() / 1000 * AnimeStyleConfig.specular.sparkleSpeed;
+                const sparkleAlpha = 0.4 + Math.sin(sparkleTime) * 0.3;
+                body.lineStyle(1.5, 0xffffff, sparkleAlpha);
+                // Vertical
+                body.moveTo(-1, -14);
+                body.lineTo(-1, -9);
+                // Horizontal
+                body.moveTo(-5, -11.5);
+                body.lineTo(3, -11.5);
+                body.lineStyle(0);
+            }
         }
 
         // === WINDOWS ===
@@ -267,24 +323,57 @@ const PixiTaxiMixin = {
         body.drawRoundedRect(-4, -10, 6, 5, 1);
         body.endFill();
 
-        // Window reflections - anime style enhanced
+        // Window reflections - RADICAL anime style
         if (useAnimeStyle) {
-            // Front windshield - strong diagonal shine
-            body.beginFill(0xffffff, 0.6);
-            body.moveTo(5, -9);
-            body.lineTo(9, -9);
-            body.lineTo(6, -7);
-            body.lineTo(5, -7);
+            // Front windshield - BOLD diagonal shine stripe
+            body.beginFill(0xffffff, 0.8);
+            body.moveTo(5, -10);
+            body.lineTo(12, -10);
+            body.lineTo(8, -6);
+            body.lineTo(5, -6);
             body.closePath();
             body.endFill();
-            // Rear window - secondary shine
+
+            // Secondary shine line
             body.beginFill(0xffffff, 0.5);
-            body.moveTo(-14, -9);
-            body.lineTo(-11, -9);
-            body.lineTo(-13, -7);
-            body.lineTo(-14, -7);
+            body.moveTo(7, -8);
+            body.lineTo(11, -8);
+            body.lineTo(10, -6);
+            body.lineTo(7, -6);
             body.closePath();
             body.endFill();
+
+            // Rear window - diagonal shine
+            body.beginFill(0xffffff, 0.7);
+            body.moveTo(-15, -9);
+            body.lineTo(-10, -9);
+            body.lineTo(-13, -6);
+            body.lineTo(-15, -6);
+            body.closePath();
+            body.endFill();
+
+            // Middle window shine
+            body.beginFill(0xffffff, 0.6);
+            body.moveTo(-3, -9);
+            body.lineTo(0, -9);
+            body.lineTo(-1, -7);
+            body.lineTo(-3, -7);
+            body.closePath();
+            body.endFill();
+
+            // Window frame outlines (bold)
+            body.lineStyle(1.5, 0x000000, 0.4);
+            // Front windshield frame
+            body.moveTo(4, -10);
+            body.quadraticCurveTo(10, -10, 14, -5);
+            body.lineTo(4, -5);
+            body.lineTo(4, -10);
+            // Rear window frame
+            body.moveTo(-16, -5);
+            body.quadraticCurveTo(-12, -10, -6, -10);
+            body.lineTo(-6, -5);
+            body.lineTo(-16, -5);
+            body.lineStyle(0);
         } else {
             // Original window reflections
             body.beginFill(0xffffff, 0.5);
