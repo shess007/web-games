@@ -1,7 +1,7 @@
 /* FLIGHT DECK */
 #flight-deck {
     flex: 1;
-    background: #020204;
+    background: linear-gradient(180deg, #FDEBD0 0%, #FFF5E4 50%, #FFCDB2 100%); /* Soft warm gradient */
     position: relative;
     display: flex;
     align-items: center;
@@ -9,9 +9,10 @@
 }
 
 canvas {
-    background: #000;
+    background: linear-gradient(180deg, #FDEBD0 0%, #FFF5E4 50%, #FFCDB2 100%); /* Matches flight deck */
     max-width: 100%;
     max-height: 100%;
+    border-radius: 8px; /* Slightly round the canvas corners */
 }
 
 /* Start Screen Wrapper */
@@ -27,8 +28,8 @@ canvas {
 }
 
 @keyframes flash-red {
-    from { border-color: rgba(255, 62, 62, 0.2); }
-    to { border-color: var(--alert-red); background: rgba(255, 62, 62, 0.1); }
+    from { border-color: rgba(245, 176, 65, 0.2); } /* Warm orange */
+    to { border-color: #F5B041; background: rgba(245, 176, 65, 0.15); }
 }
 
 @media (orientation: portrait) {

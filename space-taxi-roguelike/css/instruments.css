@@ -10,8 +10,8 @@
 .sector-value {
     font-size: 32px;
     font-weight: bold;
-    color: var(--neon-blue);
-    text-shadow: 0 0 10px var(--neon-blue);
+    color: #C6ADE1; /* Lavender */
+    text-shadow: 0 2px 8px rgba(226, 209, 249, 0.2); /* Very soft glow */
 }
 
 .sector-divider {
@@ -35,15 +35,15 @@
 
 .cash-symbol-main {
     font-size: 18px;
-    color: var(--warn-yellow);
+    color: #F9E79F; /* Butter yellow */
     margin-right: 2px;
 }
 
 .cash-value-main {
     font-size: 28px;
     font-weight: bold;
-    color: var(--warn-yellow);
-    text-shadow: 0 0 10px rgba(255, 223, 0, 0.6);
+    color: #F9E79F; /* Butter yellow */
+    text-shadow: 0 2px 8px rgba(249, 231, 159, 0.2); /* Very soft glow */
 }
 
 /* PASSENGER DISPLAY */
@@ -60,9 +60,10 @@
 .avatar-ring {
     position: absolute;
     inset: 0;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(226, 209, 249, 0.3); /* Lavender border */
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.5); /* Light background */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); /* Soft shadow */
 }
 
 .avatar-icon {
@@ -72,14 +73,14 @@
 }
 
 .avatar-display.has-passenger .avatar-ring {
-    border-color: var(--neon-blue);
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    border-color: #E2D1F9; /* Lavender */
+    box-shadow: 0 4px 16px rgba(226, 209, 249, 0.25); /* Soft glow */
     animation: avatarPulse 2s ease-in-out infinite;
 }
 
 @keyframes avatarPulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
-    50% { box-shadow: 0 0 20px rgba(0, 210, 255, 0.5); }
+    0%, 100% { box-shadow: 0 4px 12px rgba(226, 209, 249, 0.2); }
+    50% { box-shadow: 0 6px 20px rgba(226, 209, 249, 0.3); }
 }
 
 .passenger-status {
@@ -91,7 +92,7 @@
 }
 
 .passenger-status.active {
-    color: var(--neon-blue);
+    color: #C6ADE1; /* Lavender */
 }
 
 /* NAVIGATION DISPLAY */
@@ -123,8 +124,8 @@
 }
 
 .target-value {
-    color: var(--neon-blue);
-    text-shadow: 0 0 5px var(--neon-blue);
+    color: #C6ADE1; /* Lavender */
+    text-shadow: 0 1px 4px rgba(226, 209, 249, 0.2);
 }
 
 .fare-value {
@@ -133,16 +134,18 @@
 
 /* SCANNER */
 .scanner-box {
-    border: 1px solid rgba(0, 210, 255, 0.2);
-    background: rgba(0, 210, 255, 0.05);
+    border: none;
+    background: rgba(226, 209, 249, 0.15); /* Soft lavender */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* LOG */
 .comm-log {
     font-size: 12px;
     line-height: 1.1;
-    color: var(--terminal-green);
-    text-shadow: 0 0 3px var(--terminal-green);
+    color: #92CCBE; /* Soft mint */
+    text-shadow: 0 1px 3px rgba(184, 224, 210, 0.15);
     overflow: hidden;
 }
 

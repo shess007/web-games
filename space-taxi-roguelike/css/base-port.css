@@ -3,13 +3,13 @@
 .base-hangar {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #0a0a12 0%, #0d0d1a 50%, #080810 100%);
+    background: linear-gradient(180deg, #FDEBD0 0%, #FFF5E4 50%, #FFCDB2 100%); /* Warm cozy gradient */
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-/* Animated grid floor */
+/* Soft cozy floor pattern */
 .hangar-floor {
     position: absolute;
     bottom: 0;
@@ -17,8 +17,8 @@
     right: 0;
     height: 40%;
     background:
-        linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(90deg, rgba(226, 209, 249, 0.08) 1px, transparent 1px), /* Lavender grid */
+        linear-gradient(0deg, rgba(226, 209, 249, 0.08) 1px, transparent 1px);
     background-size: 40px 40px;
     transform: perspective(500px) rotateX(60deg);
     transform-origin: bottom;
@@ -26,21 +26,22 @@
 }
 
 @keyframes gridPulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.8; }
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
 }
 
-/* Hangar ceiling lights */
+/* Soft warm ceiling lights */
 .hangar-light {
     position: absolute;
     top: 0;
-    width: 4px;
+    width: 6px;
     height: 100%;
     background: linear-gradient(180deg,
-        rgba(0, 210, 255, 0.8) 0%,
-        rgba(0, 210, 255, 0.1) 30%,
+        rgba(249, 231, 159, 0.4) 0%, /* Warm butter yellow light */
+        rgba(249, 231, 159, 0.1) 30%,
         transparent 60%);
     animation: lightFlicker 3s ease-in-out infinite;
+    border-radius: 3px;
 }
 
 .hangar-light-1 { left: 20%; animation-delay: 0s; }
@@ -48,8 +49,8 @@
 .hangar-light-3 { left: 80%; animation-delay: 2s; }
 
 @keyframes lightFlicker {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
 }
 
 /* Header */
@@ -62,15 +63,15 @@
 .base-title {
     font-size: 32px;
     font-weight: bold;
-    color: #00d2ff;
-    text-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 40px rgba(0, 210, 255, 0.4);
+    color: #C6ADE1; /* Lavender */
+    text-shadow: 0 4px 16px rgba(226, 209, 249, 0.3); /* Soft glow */
     letter-spacing: 8px;
     margin-bottom: 8px;
 }
 
 .base-title.victory {
-    color: #00ff41;
-    text-shadow: 0 0 20px rgba(0, 255, 65, 0.8), 0 0 40px rgba(0, 255, 65, 0.4);
+    color: #92CCBE; /* Soft mint */
+    text-shadow: 0 4px 16px rgba(184, 224, 210, 0.3); /* Soft glow */
 }
 
 .base-status {
@@ -99,18 +100,19 @@
 }
 
 .panel-section {
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 210, 255, 0.2);
-    padding: 15px;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.5); /* Soft white */
+    border: none;
+    padding: 16px;
+    border-radius: 16px; /* Very rounded */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); /* Soft shadow */
 }
 
 .panel-label {
     font-size: 11px;
-    color: #00d2ff;
+    color: #C6ADE1; /* Lavender */
     letter-spacing: 2px;
     margin-bottom: 10px;
-    text-shadow: 0 0 5px rgba(0, 210, 255, 0.5);
+    text-shadow: 0 1px 4px rgba(226, 209, 249, 0.2);
 }
 
 /* Cash display */
@@ -122,15 +124,15 @@
 
 .cash-symbol {
     font-size: 20px;
-    color: #ffdd00;
+    color: #F9E79F; /* Butter yellow */
     margin-right: 4px;
 }
 
 .cash-value {
     font-size: 36px;
     font-weight: bold;
-    color: #ffdd00;
-    text-shadow: 0 0 10px rgba(255, 221, 0, 0.6);
+    color: #F9E79F; /* Butter yellow */
+    text-shadow: 0 2px 8px rgba(249, 231, 159, 0.2);
 }
 
 /* Hull grid */
@@ -287,18 +289,19 @@
 
 .base-btn-primary {
     position: relative;
-    padding: 18px 40px;
-    background: linear-gradient(180deg, #1a3a1a 0%, #0d260d 100%);
-    border: 2px solid #00ff41;
-    color: #00ff41;
+    padding: 20px 44px;
+    background: linear-gradient(180deg, #E2D1F9 0%, #C6ADE1 100%); /* Lavender gradient */
+    border: none;
+    color: #ffffff;
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
-    text-shadow: 0 0 10px #00ff41;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     box-shadow:
-        0 0 20px rgba(0, 255, 65, 0.3),
-        inset 0 0 20px rgba(0, 255, 65, 0.1);
+        0 8px 24px rgba(226, 209, 249, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.1);
     animation: btnPulse 2s ease-in-out infinite;
     overflow: hidden;
+    border-radius: 20px; /* Very rounded */
 }
 
 .base-btn-primary::before {
@@ -308,29 +311,30 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     animation: btnShine 3s ease-in-out infinite;
+    border-radius: 20px;
 }
 
 .base-btn-primary::after {
     content: '';
     position: absolute;
-    inset: 3px;
-    border: 1px solid rgba(0, 255, 65, 0.3);
+    inset: 0;
+    border: none;
     pointer-events: none;
+    border-radius: 20px;
 }
 
 @keyframes btnPulse {
     0%, 100% {
         box-shadow:
-            0 0 20px rgba(0, 255, 65, 0.3),
-            inset 0 0 20px rgba(0, 255, 65, 0.1);
+            0 8px 24px rgba(226, 209, 249, 0.3),
+            0 2px 8px rgba(0, 0, 0, 0.1);
     }
     50% {
         box-shadow:
-            0 0 30px rgba(0, 255, 65, 0.5),
-            0 0 60px rgba(0, 255, 65, 0.2),
-            inset 0 0 30px rgba(0, 255, 65, 0.15);
+            0 10px 32px rgba(226, 209, 249, 0.4),
+            0 4px 12px rgba(0, 0, 0, 0.12);
     }
 }
 
@@ -340,19 +344,22 @@
 }
 
 .base-btn-primary:hover {
-    background: linear-gradient(180deg, #00ff41 0%, #00cc33 100%);
-    color: #000;
-    text-shadow: none;
-    transform: scale(1.02);
+    background: linear-gradient(180deg, #F9E79F 0%, #F5DC85 100%); /* Butter yellow on hover */
+    color: #5a5a5a;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: scale(1.03) translateY(-2px);
     box-shadow:
-        0 0 40px rgba(0, 255, 65, 0.6),
-        0 0 80px rgba(0, 255, 65, 0.3);
+        0 12px 32px rgba(249, 231, 159, 0.35),
+        0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .base-btn-primary:active {
-    transform: scale(0.98);
-    background: #00ff41;
-    color: #000;
+    transform: scale(0.97) translateY(0);
+    background: linear-gradient(180deg, #F5DC85 0%, #F1D16B 100%);
+    color: #5a5a5a;
+    box-shadow:
+        0 4px 16px rgba(249, 231, 159, 0.25),
+        0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .base-btn-secondary {

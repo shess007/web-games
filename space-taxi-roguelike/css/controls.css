@@ -2,32 +2,37 @@
 .mobile-btn-rect {
     width: 60px;
     height: 50px;
-    background: rgba(0, 255, 65, 0.05);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    color: var(--terminal-green);
+    background: rgba(184, 224, 210, 0.2); /* Soft mint */
+    border: none;
+    color: #92CCBE; /* Soft mint */
     font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 16px; /* Very rounded */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Soft shadow */
+    transition: all 0.2s ease;
 }
 
 .mobile-btn-up {
     width: 80px;
     height: 80px;
-    background: rgba(0, 210, 255, 0.1);
-    border: 2px solid var(--neon-blue);
-    color: var(--neon-blue);
+    background: rgba(226, 209, 249, 0.25); /* Lavender */
+    border: none;
+    color: #C6ADE1; /* Lavender */
     font-size: 18px;
-    border-radius: 50%;
+    border-radius: 50%; /* Completely round, pillowy */
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    box-shadow: 0 6px 20px rgba(226, 209, 249, 0.2); /* Soft diffuse glow */
+    transition: all 0.2s ease;
 }
 
 .mobile-btn-rect:active, .mobile-btn-up:active {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95); /* Slightly squish on press */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Hide mobile controls on desktop */

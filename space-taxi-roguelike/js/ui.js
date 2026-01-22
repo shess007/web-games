@@ -91,14 +91,14 @@ class UIManager {
             this.els.fuelVal.innerText = Math.floor(state.fuel);
             // Update fuel value color based on level
             if (state.fuel < 25) {
-                this.els.fuelVal.style.color = '#ff3e3e';
-                this.els.fuelVal.style.textShadow = '0 0 10px #ff3e3e';
+                this.els.fuelVal.style.color = '#F5B041'; // Warm orange (cozy)
+                this.els.fuelVal.style.textShadow = '0 2px 8px rgba(245, 176, 65, 0.2)';
             } else if (state.fuel < 50) {
-                this.els.fuelVal.style.color = '#ffdf00';
-                this.els.fuelVal.style.textShadow = '0 0 10px #ffdf00';
+                this.els.fuelVal.style.color = '#F9E79F'; // Butter yellow (cozy)
+                this.els.fuelVal.style.textShadow = '0 2px 8px rgba(249, 231, 159, 0.2)';
             } else {
-                this.els.fuelVal.style.color = '#00ff41';
-                this.els.fuelVal.style.textShadow = '0 0 10px #00ff41';
+                this.els.fuelVal.style.color = '#92CCBE'; // Soft mint (cozy)
+                this.els.fuelVal.style.textShadow = '0 2px 8px rgba(184, 224, 210, 0.2)';
             }
         }
         if (this.els.fuelBar) {

@@ -1,11 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
-    --cockpit-bg: #09090b;
-    --terminal-green: #00ff41;
-    --neon-blue: #00d2ff;
-    --alert-red: #ff3e3e;
-    --warn-yellow: #ffdf00;
+    /* Cozy-Plushcore Color Palette */
+    --cockpit-bg: #FAF3E0; /* Warm off-white */
+    --cozy-peach: #FFCDB2; /* Soft peach - primary */
+    --cozy-cream: #FFF5E4; /* Warm cream - primary */
+    --cozy-lavender: #E2D1F9; /* Lavender - secondary */
+    --cozy-mint: #B8E0D2; /* Soft mint - secondary */
+    --cozy-rose: #D4A5A5; /* Dusty rose - accent */
+    --cozy-butter: #F9E79F; /* Butter yellow - accent */
+    --cozy-coral: #F5B7B1; /* Soft coral - accent */
+    --cozy-blush: #FDEBD0; /* Soft blush - background */
+    --cozy-orange: #F5B041; /* Warm orange - for warnings (replaces harsh red) */
+
+    /* Legacy variable names mapped to cozy palette */
+    --terminal-green: #B8E0D2; /* Soft mint */
+    --neon-blue: #E2D1F9; /* Lavender */
+    --alert-red: #F5B041; /* Warm orange instead of harsh red */
+    --warn-yellow: #F9E79F; /* Butter yellow */
 }
 
 * {
@@ -16,10 +28,10 @@
 }
 
 body {
-    background-color: #000;
+    background-color: var(--cozy-blush);
     overflow: hidden;
     font-family: 'VT323', monospace;
-    color: #fff;
+    color: #4a4a4a; /* Soft dark gray for text instead of harsh white */
     user-select: none;
     touch-action: none;
 }
@@ -28,7 +40,7 @@ body {
     width: 100vw;
     height: 100vh;
     display: flex;
-    background: #000;
+    background: linear-gradient(180deg, var(--cozy-blush) 0%, var(--cozy-cream) 50%, var(--cozy-peach) 100%);
 }
 
 /* CRITICAL: HIDDEN CLASS */

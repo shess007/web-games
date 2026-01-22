@@ -2,11 +2,11 @@
    SPACE TAXI ROGUELIKE - CINEMATIC START SCREEN
    ═══════════════════════════════════════════════════════════════ */
 
-/* STARFIELD CONTAINER */
+/* COZY STARFIELD CONTAINER */
 #start-screen {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #000000 0%, #050510 40%, #0a0a20 100%);
+    background: linear-gradient(180deg, #FDEBD0 0%, #FFF5E4 40%, #FFCDB2 100%); /* Warm sunset gradient */
     z-index: 500;
     display: flex;
     flex-direction: column;
@@ -32,35 +32,35 @@
 
 .stars-layer-1 {
     background-image:
-        radial-gradient(1px 1px at 20px 30px, white, transparent),
-        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 90px 40px, white, transparent),
-        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1.5px 1.5px at 160px 120px, white, transparent),
-        radial-gradient(1px 1px at 200px 200px, rgba(255,255,255,0.5), transparent);
+        radial-gradient(2px 2px at 20px 30px, #F9E79F, transparent), /* Butter yellow stars */
+        radial-gradient(2px 2px at 40px 70px, rgba(249, 231, 159, 0.8), transparent),
+        radial-gradient(1.5px 1.5px at 50px 160px, rgba(226, 209, 249, 0.6), transparent), /* Lavender stars */
+        radial-gradient(2px 2px at 90px 40px, #FFCDB2, transparent), /* Peach stars */
+        radial-gradient(1.5px 1.5px at 130px 80px, rgba(212, 165, 165, 0.7), transparent), /* Rose stars */
+        radial-gradient(2.5px 2.5px at 160px 120px, #F9E79F, transparent),
+        radial-gradient(2px 2px at 200px 200px, rgba(184, 224, 210, 0.5), transparent); /* Mint stars */
     background-size: 250px 250px;
     animation-duration: 60s;
-    opacity: 0.8;
+    opacity: 0.6;
 }
 
 .stars-layer-2 {
     background-image:
-        radial-gradient(1.5px 1.5px at 100px 50px, #00d2ff, transparent),
-        radial-gradient(2px 2px at 200px 150px, #ffdf00, transparent),
-        radial-gradient(1.5px 1.5px at 300px 100px, white, transparent),
-        radial-gradient(1px 1px at 400px 200px, #ff6b6b, transparent),
-        radial-gradient(2px 2px at 500px 50px, white, transparent);
+        radial-gradient(3px 3px at 100px 50px, #E2D1F9, transparent), /* Lavender */
+        radial-gradient(3px 3px at 200px 150px, #F9E79F, transparent), /* Butter yellow */
+        radial-gradient(2.5px 2.5px at 300px 100px, #FFCDB2, transparent), /* Peach */
+        radial-gradient(2px 2px at 400px 200px, #F5B7B1, transparent), /* Coral */
+        radial-gradient(3px 3px at 500px 50px, #B8E0D2, transparent); /* Mint */
     background-size: 550px 300px;
     animation-duration: 90s;
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .stars-layer-3 {
     background-image:
-        radial-gradient(2.5px 2.5px at 150px 100px, white, transparent),
-        radial-gradient(3px 3px at 350px 250px, #00ff41, transparent),
-        radial-gradient(2px 2px at 450px 150px, #ff3e3e, transparent);
+        radial-gradient(4px 4px at 150px 100px, #D4A5A5, transparent), /* Dusty rose */
+        radial-gradient(4px 4px at 350px 250px, #B8E0D2, transparent), /* Mint */
+        radial-gradient(3px 3px at 450px 150px, #F5B041, transparent); /* Warm orange */
     background-size: 700px 400px;
     animation-duration: 120s;
     opacity: 0.4;
@@ -71,20 +71,20 @@
     to { transform: translateY(-50%); }
 }
 
-/* NEBULA GLOW */
+/* COZY CLOUD GLOW */
 .nebula {
     position: absolute;
     width: 100%;
     height: 100%;
     background:
-        radial-gradient(ellipse 80% 50% at 20% 80%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0, 210, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 62, 62, 0.05) 0%, transparent 40%);
+        radial-gradient(ellipse 80% 50% at 20% 80%, rgba(226, 209, 249, 0.2) 0%, transparent 50%), /* Lavender cloud */
+        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(184, 224, 210, 0.15) 0%, transparent 50%), /* Mint cloud */
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 205, 178, 0.1) 0%, transparent 40%); /* Peach cloud */
     animation: nebula-pulse 8s ease-in-out infinite alternate;
 }
 
 @keyframes nebula-pulse {
-    0% { opacity: 0.6; }
+    0% { opacity: 0.7; }
     100% { opacity: 1; }
 }
 
@@ -98,27 +98,25 @@
     text-align: center;
 }
 
-/* TAXI LIGHT / NEON SIGN */
+/* COZY TAXI SIGN */
 .taxi-sign {
     position: relative;
     margin-bottom: 15px;
 }
 
 .taxi-sign-inner {
-    background: linear-gradient(180deg, #ffdf00 0%, #ffb700 50%, #ff9500 100%);
-    color: #000;
+    background: linear-gradient(180deg, #F9E79F 0%, #F5DC85 50%, #F1D16B 100%); /* Butter yellow gradient */
+    color: #5a5a5a; /* Soft dark text instead of harsh black */
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
     letter-spacing: 8px;
-    padding: 8px 25px 10px;
-    border-radius: 4px;
+    padding: 10px 28px 12px;
+    border-radius: 16px; /* Very rounded */
     position: relative;
     box-shadow:
-        0 0 10px #ffdf00,
-        0 0 20px #ffdf0080,
-        0 0 40px #ffdf0040,
-        inset 0 -3px 6px rgba(0,0,0,0.3),
-        inset 0 3px 6px rgba(255,255,255,0.3);
+        0 6px 20px rgba(249, 231, 159, 0.25), /* Soft diffuse glow */
+        inset 0 -2px 4px rgba(0,0,0,0.08),
+        inset 0 2px 4px rgba(255,255,255,0.5);
     animation: taxi-glow 2s ease-in-out infinite alternate;
 }
 
@@ -136,16 +134,15 @@
 @keyframes taxi-glow {
     0% {
         box-shadow:
-            0 0 10px #ffdf00,
-            0 0 20px #ffdf0080,
-            0 0 40px #ffdf0040;
+            0 6px 20px rgba(249, 231, 159, 0.25),
+            inset 0 -2px 4px rgba(0,0,0,0.08),
+            inset 0 2px 4px rgba(255,255,255,0.5);
     }
     100% {
         box-shadow:
-            0 0 15px #ffdf00,
-            0 0 30px #ffdf0090,
-            0 0 60px #ffdf0060,
-            0 0 80px #ffdf0030;
+            0 8px 28px rgba(249, 231, 159, 0.35),
+            inset 0 -2px 4px rgba(0,0,0,0.08),
+            inset 0 2px 4px rgba(255,255,255,0.5);
     }
 }
 
@@ -159,18 +156,18 @@
     font-family: 'Press Start 2P', monospace;
     font-size: clamp(28px, 6vw, 48px);
     color: transparent;
-    background: linear-gradient(180deg, #ffffff 0%, #00d2ff 50%, #0099cc 100%);
+    background: linear-gradient(180deg, #D4A5A5 0%, #E2D1F9 50%, #C6ADE1 100%); /* Rose to lavender gradient */
     -webkit-background-clip: text;
     background-clip: text;
     text-shadow:
-        0 0 30px rgba(0, 210, 255, 0.8),
-        0 0 60px rgba(0, 210, 255, 0.4);
+        0 4px 16px rgba(226, 209, 249, 0.3), /* Soft lavender glow */
+        0 2px 8px rgba(212, 165, 165, 0.2); /* Soft rose glow */
     letter-spacing: 4px;
     animation: title-flicker 4s ease-in-out infinite;
     position: relative;
 }
 
-/* Scan line effect over title */
+/* Soft shimmer effect over title (replacing harsh scan line) */
 .title-main::after {
     content: 'SPACE TAXI';
     position: absolute;
@@ -178,11 +175,12 @@
     left: 0;
     right: 0;
     color: transparent;
-    background: linear-gradient(180deg, #ffffff 0%, #00d2ff 50%, #0099cc 100%);
+    background: linear-gradient(180deg, #FFF5E4 0%, #FFCDB2 50%, #F5B7B1 100%); /* Warm peachy shimmer */
     -webkit-background-clip: text;
     background-clip: text;
     clip-path: polygon(0 0, 100% 0, 100% 10%, 0 10%);
     animation: scan-line 3s linear infinite;
+    opacity: 0.4; /* Very subtle */
 }
 
 @keyframes title-flicker {
@@ -203,12 +201,12 @@
 .title-sub {
     font-family: 'VT323', monospace;
     font-size: clamp(18px, 3vw, 28px);
-    color: #ff3e3e;
+    color: #F5B041; /* Warm orange instead of harsh red */
     letter-spacing: 12px;
     text-transform: uppercase;
     text-shadow:
-        0 0 10px #ff3e3e,
-        0 0 20px rgba(255, 62, 62, 0.5);
+        0 2px 8px rgba(245, 176, 65, 0.3), /* Soft warm glow */
+        0 1px 4px rgba(245, 176, 65, 0.2);
     margin-bottom: 30px;
     animation: subtitle-pulse 2s ease-in-out infinite alternate;
 }
@@ -218,14 +216,16 @@
     100% { opacity: 1; letter-spacing: 14px; }
 }
 
-/* DISPATCH TRANSMISSION BOX */
+/* COZY DISPATCH BOX */
 .dispatch-box {
     position: relative;
     max-width: 380px;
-    padding: 20px 25px;
-    background: rgba(0, 20, 30, 0.85);
-    border: 1px solid rgba(0, 210, 255, 0.3);
+    padding: 22px 28px;
+    background: rgba(255, 255, 255, 0.6); /* Soft white/cream background */
+    border: none;
     margin-bottom: 30px;
+    border-radius: 20px; /* Very rounded, pillowy */
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08); /* Soft diffuse shadow */
 }
 
 .dispatch-box::before {
@@ -234,23 +234,19 @@
     top: -1px;
     left: 20px;
     right: 20px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #00d2ff, transparent);
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(226, 209, 249, 0.4), transparent); /* Soft lavender shimmer */
     animation: dispatch-scan 2s ease-in-out infinite;
+    border-radius: 2px;
 }
 
 .dispatch-box::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 210, 255, 0.03) 2px,
-        rgba(0, 210, 255, 0.03) 4px
-    );
+    background: none; /* Remove harsh scan lines for cozy feel */
     pointer-events: none;
+    border-radius: 20px;
 }
 
 @keyframes dispatch-scan {
@@ -265,27 +261,27 @@
     gap: 10px;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+    border-bottom: 2px solid rgba(226, 209, 249, 0.2); /* Soft lavender divider */
 }
 
 .dispatch-icon {
     width: 12px;
     height: 12px;
-    background: #00ff41;
+    background: #B8E0D2; /* Soft mint */
     border-radius: 50%;
     animation: blink-green 1s ease-in-out infinite;
-    box-shadow: 0 0 10px #00ff41;
+    box-shadow: 0 2px 8px rgba(184, 224, 210, 0.3); /* Soft glow */
 }
 
 @keyframes blink-green {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+    50% { opacity: 0.5; } /* Less harsh blink */
 }
 
 .dispatch-label {
     font-family: 'VT323', monospace;
     font-size: 14px;
-    color: #00d2ff;
+    color: #C6ADE1; /* Lavender */
     letter-spacing: 3px;
     text-transform: uppercase;
 }
@@ -293,19 +289,19 @@
 .dispatch-text {
     font-family: 'VT323', monospace;
     font-size: 18px;
-    color: #c0c0c0;
+    color: #6a6a6a; /* Soft dark gray */
     line-height: 1.8;
     text-align: center;
 }
 
 .dispatch-text .highlight {
-    color: #ffdf00;
-    text-shadow: 0 0 8px rgba(255, 223, 0, 0.5);
+    color: #F1D16B; /* Butter yellow */
+    text-shadow: 0 1px 4px rgba(249, 231, 159, 0.3); /* Soft glow */
 }
 
 .dispatch-text .danger {
-    color: #ff3e3e;
-    text-shadow: 0 0 8px rgba(255, 62, 62, 0.5);
+    color: #F19829; /* Warm orange */
+    text-shadow: 0 1px 4px rgba(245, 176, 65, 0.3); /* Soft glow */
 }
 
 /* MISSION BRIEFING */
@@ -315,7 +311,7 @@
     gap: 25px;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid rgba(226, 209, 249, 0.15); /* Soft lavender divider */
 }
 
 .stat-item {
@@ -328,35 +324,36 @@
 .stat-value {
     font-family: 'Press Start 2P', monospace;
     font-size: 16px;
-    color: #00ff41;
-    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    color: #92CCBE; /* Soft mint */
+    text-shadow: 0 2px 8px rgba(184, 224, 210, 0.25); /* Soft glow */
 }
 
 .stat-label {
     font-family: 'VT323', monospace;
     font-size: 12px;
-    color: #666;
+    color: #999; /* Slightly lighter gray */
     letter-spacing: 2px;
     text-transform: uppercase;
 }
 
-/* START BUTTON */
+/* COZY START BUTTON */
 .start-button {
     position: relative;
-    padding: 18px 50px;
-    background: linear-gradient(180deg, #1a3a1a 0%, #0d260d 100%);
-    border: 2px solid #00ff41;
-    color: #00ff41;
+    padding: 20px 54px;
+    background: linear-gradient(180deg, #E2D1F9 0%, #C6ADE1 100%); /* Lavender gradient */
+    border: none;
+    color: #ffffff; /* White text for contrast */
     font-family: 'Press Start 2P', monospace;
     font-size: clamp(12px, 2vw, 16px);
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
-    text-shadow: 0 0 10px #00ff41;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Subtle shadow for depth */
     box-shadow:
-        0 0 20px rgba(0, 255, 65, 0.3),
-        inset 0 0 20px rgba(0, 255, 65, 0.1);
+        0 8px 24px rgba(226, 209, 249, 0.3), /* Soft diffuse glow */
+        0 2px 8px rgba(0, 0, 0, 0.1);
     animation: button-pulse 2s ease-in-out infinite;
+    border-radius: 20px; /* Very rounded, pillowy */
 }
 
 .start-button::before {
@@ -366,28 +363,29 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); /* White shimmer */
     animation: button-shine 3s ease-in-out infinite;
+    border-radius: 20px;
 }
 
 .start-button::after {
     content: '';
     position: absolute;
-    inset: 3px;
-    border: 1px solid rgba(0, 255, 65, 0.3);
+    inset: 0;
+    border: none; /* Remove inner border for cleaner look */
+    border-radius: 20px;
 }
 
 @keyframes button-pulse {
     0%, 100% {
         box-shadow:
-            0 0 20px rgba(0, 255, 65, 0.3),
-            inset 0 0 20px rgba(0, 255, 65, 0.1);
+            0 8px 24px rgba(226, 209, 249, 0.3),
+            0 2px 8px rgba(0, 0, 0, 0.1);
     }
     50% {
         box-shadow:
-            0 0 30px rgba(0, 255, 65, 0.5),
-            0 0 60px rgba(0, 255, 65, 0.2),
-            inset 0 0 30px rgba(0, 255, 65, 0.15);
+            0 10px 32px rgba(226, 209, 249, 0.4),
+            0 4px 12px rgba(0, 0, 0, 0.12);
     }
 }
 
@@ -397,17 +395,20 @@
 }
 
 .start-button:hover {
-    background: linear-gradient(180deg, #00ff41 0%, #00cc33 100%);
-    color: #000;
-    text-shadow: none;
-    transform: scale(1.02);
+    background: linear-gradient(180deg, #F9E79F 0%, #F5DC85 100%); /* Butter yellow on hover */
+    color: #5a5a5a; /* Darker text on light background */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: scale(1.03) translateY(-2px); /* Lift up slightly */
     box-shadow:
-        0 0 40px rgba(0, 255, 65, 0.6),
-        0 0 80px rgba(0, 255, 65, 0.3);
+        0 12px 32px rgba(249, 231, 159, 0.35),
+        0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .start-button:active {
-    transform: scale(0.98);
+    transform: scale(0.97) translateY(0); /* Squish on press */
+    box-shadow:
+        0 4px 16px rgba(226, 209, 249, 0.25),
+        0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* FLYING TAXI SILHOUETTE */
@@ -542,25 +543,9 @@
     letter-spacing: 1px;
 }
 
-/* CRT SCANLINE OVERLAY */
+/* CRT SCANLINE OVERLAY - Disabled for Cozy-Plushcore aesthetic */
 .crt-overlay {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.15) 2px,
-        rgba(0, 0, 0, 0.15) 4px
-    );
-    pointer-events: none;
-    z-index: 100;
-    animation: scanlines-move 10s linear infinite;
-}
-
-@keyframes scanlines-move {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 100px; }
+    display: none;
 }
 
 /* VIGNETTE EFFECT */

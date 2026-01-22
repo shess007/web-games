@@ -92,27 +92,27 @@ var CONTRACT_TYPES = {
         name: "Standard",
         payout: 100,
         description: "Normal delivery",
-        color: "#00ff41"
+        color: "#B8E0D2" // Soft mint (cozy)
     },
     express: {
         name: "Express",
         payout: 150,
         description: "30 second time limit",
-        color: "#ff6600",
+        color: "#F5B041", // Warm orange (cozy)
         timeLimit: 30000
     },
     hazard: {
         name: "Hazard Pay",
         payout: 200,
         description: "Route through enemies",
-        color: "#ff0000",
+        color: "#F5B041", // Warm orange instead of harsh red (cozy)
         hazardZone: true
     },
     vip: {
         name: "VIP",
         payout: 300,
         description: "No bumps, soft landing",
-        color: "#ffdd00",
+        color: "#F9E79F", // Butter yellow (cozy)
         maxSpeed: 0.8,
         noBumps: true
     },
@@ -120,7 +120,7 @@ var CONTRACT_TYPES = {
         name: "Fragile Cargo",
         payout: 180,
         description: "Max speed 2.0",
-        color: "#00d2ff",
+        color: "#E2D1F9", // Lavender (cozy)
         maxSpeed: 2.0
     }
 };
@@ -259,90 +259,90 @@ var PASSENGER_COMMENTS = {
 var ENVIRONMENT_THEMES = [
     {
         name: "DEEP SPACE",
-        bgColor: "#050510",
-        wallColor: "#2a2a4a",
-        wallHighlight: "#4a4a6a",
-        platformColor: "#00ff41",
-        platformHighlight: "#88ff88",
-        fuelColor: "#00d2ff",
-        starColors: ["#ffffff", "#aaaaff", "#ffaaaa"],
+        bgColor: "#FDEBD0", // Soft blush (cozy)
+        wallColor: "#D4A5A5", // Dusty rose (cozy)
+        wallHighlight: "#E5B9B9", // Lighter rose
+        platformColor: "#B8E0D2", // Soft mint (cozy)
+        platformHighlight: "#D0EBE2", // Lighter mint
+        fuelColor: "#E2D1F9", // Lavender (cozy)
+        starColors: ["#FFCDB2", "#E2D1F9", "#F9E79F"], // Peach, lavender, butter
         ambientParticles: null
     },
     {
         name: "NEBULA ZONE",
-        bgColor: "#100818",
-        wallColor: "#3a1a4a",
-        wallHighlight: "#6a2a7a",
-        platformColor: "#ff00ff",
-        platformHighlight: "#ff88ff",
-        fuelColor: "#00ffaa",
-        starColors: ["#ff88ff", "#8888ff", "#ffffff"],
+        bgColor: "#FFF5E4", // Warm cream (cozy)
+        wallColor: "#E2D1F9", // Lavender (cozy)
+        wallHighlight: "#EDE3FB", // Lighter lavender
+        platformColor: "#F5B7B1", // Soft coral (cozy)
+        platformHighlight: "#F9CBC7", // Lighter coral
+        fuelColor: "#B8E0D2", // Soft mint (cozy)
+        starColors: ["#F5B7B1", "#E2D1F9", "#FFCDB2"], // Coral, lavender, peach
         ambientParticles: "nebula"
     },
     {
         name: "ICE FIELDS",
-        bgColor: "#081018",
-        wallColor: "#2a4a6a",
-        wallHighlight: "#4a8aaa",
-        platformColor: "#00ffff",
-        platformHighlight: "#88ffff",
-        fuelColor: "#ffff00",
-        starColors: ["#aaffff", "#ffffff", "#88aaff"],
+        bgColor: "#FAF3E0", // Warm off-white (cozy)
+        wallColor: "#B8E0D2", // Soft mint (cozy)
+        wallHighlight: "#D0EBE2", // Lighter mint
+        platformColor: "#C6ADE1", // Lavender (cozy)
+        platformHighlight: "#DCCBEC", // Lighter lavender
+        fuelColor: "#F9E79F", // Butter yellow (cozy)
+        starColors: ["#B8E0D2", "#FFCDB2", "#E2D1F9"], // Mint, peach, lavender
         ambientParticles: "snow"
     },
     {
         name: "LAVA SECTOR",
-        bgColor: "#180808",
-        wallColor: "#4a2a1a",
-        wallHighlight: "#8a4a2a",
-        platformColor: "#ff6600",
-        platformHighlight: "#ffaa44",
-        fuelColor: "#00ff88",
-        starColors: ["#ff8844", "#ffaa00", "#ffffff"],
+        bgColor: "#FDEBD0", // Soft blush (cozy)
+        wallColor: "#F5B7B1", // Soft coral (cozy)
+        wallHighlight: "#F9CBC7", // Lighter coral
+        platformColor: "#F5B041", // Warm orange (cozy)
+        platformHighlight: "#F8C466", // Lighter orange
+        fuelColor: "#B8E0D2", // Soft mint (cozy)
+        starColors: ["#F5B041", "#F9E79F", "#FFCDB2"], // Orange, butter, peach
         ambientParticles: "embers"
     },
     {
         name: "ASTEROID BELT",
-        bgColor: "#0a0a0a",
-        wallColor: "#4a4a4a",
-        wallHighlight: "#6a6a6a",
-        platformColor: "#ffaa00",
-        platformHighlight: "#ffdd44",
-        fuelColor: "#00aaff",
-        starColors: ["#888888", "#aaaaaa", "#ffffff"],
+        bgColor: "#FFF5E4", // Warm cream (cozy)
+        wallColor: "#D4A5A5", // Dusty rose (cozy)
+        wallHighlight: "#E5B9B9", // Lighter rose
+        platformColor: "#F9E79F", // Butter yellow (cozy)
+        platformHighlight: "#FBEDB3", // Lighter butter
+        fuelColor: "#E2D1F9", // Lavender (cozy)
+        starColors: ["#D4A5A5", "#E5B9B9", "#FFCDB2"], // Rose tones, peach
         ambientParticles: "dust"
     },
     {
         name: "VOID RIFT",
-        bgColor: "#080010",
-        wallColor: "#1a0a3a",
-        wallHighlight: "#3a1a6a",
-        platformColor: "#aa00ff",
-        platformHighlight: "#cc44ff",
-        fuelColor: "#00ffff",
-        starColors: ["#aa44ff", "#4444ff", "#ffffff"],
+        bgColor: "#FAF3E0", // Warm off-white (cozy)
+        wallColor: "#C6ADE1", // Lavender (cozy)
+        wallHighlight: "#DCCBEC", // Lighter lavender
+        platformColor: "#E2D1F9", // Lavender (cozy)
+        platformHighlight: "#EDE3FB", // Lighter lavender
+        fuelColor: "#B8E0D2", // Soft mint (cozy)
+        starColors: ["#E2D1F9", "#C6ADE1", "#FFCDB2"], // Lavender tones, peach
         ambientParticles: "void"
     },
     {
         name: "SOLAR FLARE",
-        bgColor: "#181008",
-        wallColor: "#5a4a1a",
-        wallHighlight: "#8a7a3a",
-        platformColor: "#ffff00",
-        platformHighlight: "#ffff88",
-        fuelColor: "#ff4400",
-        starColors: ["#ffff44", "#ffaa00", "#ffffff"],
+        bgColor: "#FDEBD0", // Soft blush (cozy)
+        wallColor: "#F9E79F", // Butter yellow (cozy)
+        wallHighlight: "#FBEDB3", // Lighter butter
+        platformColor: "#F5B041", // Warm orange (cozy)
+        platformHighlight: "#F8C466", // Lighter orange
+        fuelColor: "#F5B7B1", // Soft coral (cozy)
+        starColors: ["#F9E79F", "#F5B041", "#FFCDB2"], // Butter, orange, peach
         ambientParticles: "plasma"
     },
     {
         name: "CRYSTAL CAVES",
-        bgColor: "#080818",
-        wallColor: "#2a3a5a",
-        wallHighlight: "#4a6a8a",
-        platformColor: "#44ffaa",
-        platformHighlight: "#88ffcc",
-        fuelColor: "#ff44aa",
-        starColors: ["#44ffff", "#ff44ff", "#ffffff"],
+        bgColor: "#FFF5E4", // Warm cream (cozy)
+        wallColor: "#B8E0D2", // Soft mint (cozy)
+        wallHighlight: "#D0EBE2", // Lighter mint
+        platformColor: "#E2D1F9", // Lavender (cozy)
+        platformHighlight: "#EDE3FB", // Lighter lavender
+        fuelColor: "#F5B7B1", // Soft coral (cozy)
+        starColors: ["#B8E0D2", "#E2D1F9", "#F5B7B1"], // Mint, lavender, coral
         ambientParticles: "crystals"
     }
 ];
@@ -812,13 +812,13 @@ var sectorGenerator = new SectorGenerator();
 // ==================== BUILDING TYPES ====================
 
 var BUILDING_TYPES = {
-    space_house: { width: 40, height: 50, doorX: 18, color: 0x2a4a6a, style: 'residential' },
-    space_villa: { width: 60, height: 65, doorX: 28, color: 0x3a5a7a, style: 'luxury' },
-    space_factory: { width: 70, height: 55, doorX: 35, color: 0x4a4a4a, style: 'industrial' },
-    space_disco: { width: 50, height: 45, doorX: 22, color: 0x3a1a4a, style: 'entertainment' },
-    space_pub: { width: 45, height: 40, doorX: 20, color: 0x4a3a2a, style: 'hospitality' },
-    fuel_station: { width: 50, height: 35, doorX: 25, color: 0x1a3a5a, style: 'fuel' },
-    base_port: { width: 80, height: 60, doorX: 40, color: 0x2a3a5a, style: 'base_port' }
+    space_house: { width: 40, height: 50, doorX: 18, color: 0xE2D1F9, style: 'residential' }, // Lavender (cozy)
+    space_villa: { width: 60, height: 65, doorX: 28, color: 0xD4A5A5, style: 'luxury' }, // Dusty rose (cozy)
+    space_factory: { width: 70, height: 55, doorX: 35, color: 0xB8E0D2, style: 'industrial' }, // Soft mint (cozy)
+    space_disco: { width: 50, height: 45, doorX: 22, color: 0xF5B7B1, style: 'entertainment' }, // Soft coral (cozy)
+    space_pub: { width: 45, height: 40, doorX: 20, color: 0xF9E79F, style: 'hospitality' }, // Butter yellow (cozy)
+    fuel_station: { width: 50, height: 35, doorX: 25, color: 0xFFCDB2, style: 'fuel' }, // Soft peach (cozy)
+    base_port: { width: 80, height: 60, doorX: 40, color: 0xC6ADE1, style: 'base_port' } // Lavender (cozy)
 };
 
 // Only regular building types for random assignment to passenger platforms (exclude fuel_station and base_port)

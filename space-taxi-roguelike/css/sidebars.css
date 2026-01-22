@@ -1,32 +1,33 @@
 /* SIDEBARS */
 .cockpit-panel {
     width: 160px;
-    background: var(--cockpit-bg);
-    border-color: rgba(0, 255, 65, 0.1);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 245, 228, 0.8) 100%); /* Warm creamy gradient */
+    border-color: transparent;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 12px;
     z-index: 100;
-    box-shadow: inset 0 0 30px rgba(0,0,0,1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* Soft outer shadow instead of harsh inset */
 }
 
-.sidebar-left { border-right: 1px solid rgba(0, 255, 65, 0.1); }
-.sidebar-right { border-left: 1px solid rgba(0, 255, 65, 0.1); }
+.sidebar-left { border-right: none; }
+.sidebar-right { border-left: none; }
 
 /* INSTRUMENTS */
 .instrument-pod {
-    background: rgba(0, 255, 65, 0.02);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    padding: 8px;
+    background: rgba(255, 255, 255, 0.5); /* Soft white */
+    border: none;
+    padding: 10px;
     margin-bottom: 15px;
-    border-radius: 2px;
+    border-radius: 16px; /* Very rounded */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); /* Soft diffuse shadow */
 }
 
 .label-retro {
     font-size: 14px;
-    color: var(--neon-blue);
-    text-shadow: 0 0 5px var(--neon-blue);
-    margin-bottom: 5px;
+    color: #C6ADE1; /* Lavender */
+    text-shadow: 0 1px 4px rgba(226, 209, 249, 0.2); /* Very soft glow */
+    margin-bottom: 6px;
     display: block;
 }

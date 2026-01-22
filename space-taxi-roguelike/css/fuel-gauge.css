@@ -5,10 +5,11 @@
     align-items: center;
     flex: 1;
     min-height: 0;
-    padding: 8px;
-    background: rgba(0, 255, 65, 0.02);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    border-radius: 2px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.4); /* Soft white background */
+    border: none;
+    border-radius: 20px; /* Very rounded, pillowy edges */
+    box-shadow: 0 8px 24px rgba(184, 224, 210, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08); /* Soft diffuse shadow */
 }
 
 .fuel-gauge-outer {
@@ -32,9 +33,10 @@
 
 .fuel-gauge-ticks .tick {
     position: relative;
-    height: 1px;
-    background: rgba(0, 255, 65, 0.3);
+    height: 2px;
+    background: rgba(184, 224, 210, 0.3); /* Soft mint */
     width: 12px;
+    border-radius: 2px; /* Round the tick marks */
 }
 
 .fuel-gauge-ticks .tick[data-label]::after {
@@ -44,7 +46,7 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 9px;
-    color: rgba(0, 255, 65, 0.5);
+    color: rgba(184, 224, 210, 0.7); /* Soft mint */
     width: 20px;
     text-align: right;
 }
@@ -52,11 +54,11 @@
 .fuel-gauge-inner {
     position: relative;
     flex: 1;
-    background: #000;
-    border: 2px solid #222;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.6); /* Light creamy background */
+    border: none;
+    border-radius: 16px; /* Very rounded */
     overflow: hidden;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
 }
 
 #fuel-bar {
@@ -66,27 +68,28 @@
     right: 0;
     height: 100%;
     background: linear-gradient(180deg,
-        rgba(0, 255, 65, 1) 0%,
-        rgba(0, 200, 50, 0.9) 50%,
-        rgba(0, 150, 40, 0.8) 100%);
+        #B8E0D2 0%, /* Soft mint */
+        #A5D6C8 50%,
+        #92CCBE 100%);
     transition: height 0.1s ease-out, background 0.3s ease;
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+    box-shadow: 0 4px 12px rgba(184, 224, 210, 0.3); /* Soft diffuse glow */
+    border-radius: 12px; /* Rounded edges */
 }
 
 #fuel-bar.warning {
     background: linear-gradient(180deg,
-        rgba(255, 223, 0, 1) 0%,
-        rgba(200, 170, 0, 0.9) 50%,
-        rgba(150, 130, 0, 0.8) 100%);
-    box-shadow: 0 0 20px rgba(255, 223, 0, 0.5);
+        #F9E79F 0%, /* Butter yellow */
+        #F5DC85 50%,
+        #F1D16B 100%);
+    box-shadow: 0 4px 12px rgba(249, 231, 159, 0.3); /* Soft warm glow */
 }
 
 #fuel-bar.critical {
     background: linear-gradient(180deg,
-        rgba(255, 62, 62, 1) 0%,
-        rgba(200, 40, 40, 0.9) 50%,
-        rgba(150, 30, 30, 0.8) 100%);
-    box-shadow: 0 0 25px rgba(255, 62, 62, 0.6);
+        #F5B041 0%, /* Warm orange */
+        #F3A435 50%,
+        #F19829 100%);
+    box-shadow: 0 4px 12px rgba(245, 176, 65, 0.3); /* Soft warm glow */
     animation: fuelPulse 0.5s ease-in-out infinite alternate;
 }
 
@@ -115,13 +118,13 @@
 .fuel-value {
     font-size: 28px;
     font-weight: bold;
-    color: var(--terminal-green);
-    text-shadow: 0 0 10px var(--terminal-green);
+    color: #92CCBE; /* Soft mint green */
+    text-shadow: 0 2px 8px rgba(184, 224, 210, 0.2); /* Very soft glow */
 }
 
 .fuel-unit {
     font-size: 14px;
-    color: var(--terminal-green);
+    color: #92CCBE;
     opacity: 0.7;
     margin-left: 2px;
 }

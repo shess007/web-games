@@ -81,7 +81,7 @@ class PixiRenderer {
                 view: this.originalCanvas,
                 width: WORLD_W,
                 height: WORLD_H,
-                backgroundColor: 0x050510,
+                backgroundColor: 0xFDEBD0, // Soft blush (cozy)
                 antialias: false,
                 resolution: 1,
                 powerPreference: 'high-performance'
@@ -187,33 +187,33 @@ class PixiRenderer {
         // Generate reusable textures for various game elements
         const renderer = this.app.renderer;
 
-        // Particle textures
-        this.textures.particleYellow = this.createGlowTexture(16, 0xffff55, 0.8);
-        this.textures.particleCyan = this.createGlowTexture(16, 0x00ffff, 0.8);
-        this.textures.particleOrange = this.createGlowTexture(20, 0xff5500, 0.9);
-        this.textures.particleWhite = this.createGlowTexture(20, 0xffffff, 0.9);
+        // Particle textures (cozy colors)
+        this.textures.particleYellow = this.createGlowTexture(16, 0xF9E79F, 0.7); // Butter yellow (cozy)
+        this.textures.particleCyan = this.createGlowTexture(16, 0xE2D1F9, 0.7); // Lavender (cozy)
+        this.textures.particleOrange = this.createGlowTexture(20, 0xF5B041, 0.7); // Warm orange (cozy)
+        this.textures.particleWhite = this.createGlowTexture(20, 0xFFCDB2, 0.7); // Soft peach (cozy)
 
-        // Trail textures (smaller)
-        this.textures.trailYellow = this.createGlowTexture(8, 0xffff55, 0.5);
-        this.textures.trailCyan = this.createGlowTexture(8, 0x00ffff, 0.5);
-        this.textures.trailOrange = this.createGlowTexture(8, 0xff5500, 0.5);
+        // Trail textures (smaller, cozy colors)
+        this.textures.trailYellow = this.createGlowTexture(8, 0xF9E79F, 0.5); // Butter yellow (cozy)
+        this.textures.trailCyan = this.createGlowTexture(8, 0xE2D1F9, 0.5); // Lavender (cozy)
+        this.textures.trailOrange = this.createGlowTexture(8, 0xF5B041, 0.5); // Warm orange (cozy)
 
-        // Star textures
-        this.textures.starSmall = this.createStarTexture(4, 0xffffff);
-        this.textures.starMedium = this.createStarTexture(8, 0xffffff);
-        this.textures.starLarge = this.createStarTexture(16, 0xffffff);
+        // Star textures (cozy pastel)
+        this.textures.starSmall = this.createStarTexture(4, 0xF9E79F); // Butter yellow (cozy)
+        this.textures.starMedium = this.createStarTexture(8, 0xFFCDB2); // Soft peach (cozy)
+        this.textures.starLarge = this.createStarTexture(16, 0xE2D1F9); // Lavender (cozy)
 
-        // Dust particle texture
-        this.textures.dust = this.createGlowTexture(8, 0xaaaadd, 0.3);
+        // Dust particle texture (cozy)
+        this.textures.dust = this.createGlowTexture(8, 0xE2D1F9, 0.3); // Lavender (cozy)
 
-        // Platform glow texture
-        this.textures.platformGlow = this.createGlowTexture(64, 0x00ff41, 0.5);
+        // Platform glow texture (cozy)
+        this.textures.platformGlow = this.createGlowTexture(64, 0xB8E0D2, 0.4); // Soft mint (cozy)
 
-        // Enemy glow texture
-        this.textures.enemyGlow = this.createGlowTexture(64, 0xff0000, 0.6);
+        // Enemy glow texture (cozy)
+        this.textures.enemyGlow = this.createGlowTexture(64, 0xF5B041, 0.5); // Warm orange (cozy)
 
-        // Meteor glow texture
-        this.textures.meteorGlow = this.createGlowTexture(32, 0xff6600, 0.7);
+        // Meteor glow texture (cozy)
+        this.textures.meteorGlow = this.createGlowTexture(32, 0xF5B7B1, 0.6); // Soft coral (cozy)
 
         // Background gradient texture (matching start screen)
         this.textures.backgroundGradient = this.createBackgroundGradientTexture();
@@ -428,8 +428,8 @@ class PixiRenderer {
         // Generate stars with multiple parallax layers
         this.generateStars(level);
 
-        // Update background color based on theme (keep dark for space feel)
-        this.app.renderer.background.color = 0x000000;
+        // Update background color based on theme (soft cozy feel)
+        this.app.renderer.background.color = 0xFDEBD0; // Soft blush (cozy)
     }
 
     createBackgroundGradient() {
@@ -1000,19 +1000,19 @@ class PixiRenderer {
         const platforms = state.level?.platforms;
         if (!platforms) return;
 
-        // Platform colors
-        // Fuel platforms are always green
-        const fuelColor = 0x00ff41;
-        // Passenger platforms use various non-green colors
+        // Platform colors - Cozy Plushcore Pastels
+        // Fuel platforms are soft mint
+        const fuelColor = 0xB8E0D2;
+        // Passenger platforms use cozy pastel colors
         const passengerColors = [
-            0xff6b9d,  // Pink
-            0x00d2ff,  // Cyan
-            0xff9500,  // Orange
-            0xaa66ff,  // Purple
-            0xff5555,  // Red
-            0xffdd00,  // Yellow
-            0x66aaff,  // Blue
-            0xff66aa   // Magenta
+            0xFFCDB2,  // Soft peach
+            0xE2D1F9,  // Lavender
+            0xF5B7B1,  // Soft coral
+            0xF9E79F,  // Butter yellow
+            0xD4A5A5,  // Dusty rose
+            0xB8E0D2,  // Soft mint
+            0xFAD7A0,  // Warm peach
+            0xD5DBDB   // Soft gray
         ];
 
         // Determine target platform
@@ -1039,39 +1039,39 @@ class PixiRenderer {
             }
 
             const isTarget = p.id === targetPlatformId;
-            // Fuel platforms are green, passenger platforms get color based on their id
+            // Fuel platforms are soft mint, passenger platforms get cozy pastel based on their id
             const color = p.fuel ? fuelColor : passengerColors[p.id % passengerColors.length];
-            const glowIntensity = isTarget ? 0.5 : 0.3;
+            const glowIntensity = isTarget ? 0.4 : 0.2;
 
             // Redraw platform
             platformGraphics.clear();
 
-            // Glow underneath (v7 API)
+            // Soft diffuse glow underneath (v7 API)
             for (let i = 5; i >= 1; i--) {
                 const ratio = i / 5;
-                const alpha = glowIntensity * (1 - ratio) * 0.3;
+                const alpha = glowIntensity * (1 - ratio) * 0.25;
                 platformGraphics.beginFill(color, alpha);
                 platformGraphics.drawEllipse(p.w / 2, 5, (p.w / 2 + 20) * ratio, 15 * ratio);
                 platformGraphics.endFill();
             }
 
-            // Platform body (v7 API)
-            platformGraphics.beginFill(0x111111);
-            platformGraphics.drawRect(0, 0, p.w, p.h);
+            // Platform body - warm cream color with rounded corners (v7 API)
+            platformGraphics.beginFill(0xFFF5E4);
+            platformGraphics.drawRoundedRect(0, 0, p.w, p.h, 10);
             platformGraphics.endFill();
 
-            // Top strip with pulse (v7 API)
+            // Top strip with pulse - rounded corners (v7 API)
             const pulse = 0.7 + Math.sin(this.time * 3) * 0.3;
             platformGraphics.beginFill(color, pulse);
-            platformGraphics.drawRect(0, 0, p.w, 4);
+            platformGraphics.drawRoundedRect(0, 0, p.w, 4, 8);
             platformGraphics.endFill();
 
-            // Light dots for target/fuel platforms (v7 API)
+            // Light dots for target/fuel platforms - rounded (v7 API)
             if (isTarget || p.fuel) {
                 for (let i = 0; i < 5; i++) {
                     const dotPulse = 0.3 + Math.sin(this.time * 4 + i) * 0.7;
                     platformGraphics.beginFill(color, dotPulse);
-                    platformGraphics.drawRect(10 + i * (p.w - 20) / 4, p.h - 6, 3, 3);
+                    platformGraphics.drawCircle(10 + i * (p.w - 20) / 4 + 1.5, p.h - 4.5, 2);
                     platformGraphics.endFill();
                 }
             }
@@ -1655,34 +1655,37 @@ class PixiRenderer {
 
             sprite.clear();
 
-            // Outer glow (v7 API)
+            // Soft outer glow - cozy pastel (v7 API)
+            const glowColor = 0xE2D1F9; // Lavender glow
             for (let i = 4; i >= 1; i--) {
                 const ratio = i / 4;
-                const alpha = 0.15 * (1 - ratio);
-                sprite.beginFill(0x64503c, alpha);
-                sprite.drawCircle(0, 0, a.size * 1.2 * ratio);
+                const alpha = 0.12 * (1 - ratio);
+                sprite.beginFill(glowColor, alpha);
+                sprite.drawCircle(0, 0, a.size * 1.25 * ratio);
                 sprite.endFill();
             }
 
-            // Draw polygon shape (v7 API)
+            // Draw soft rounded blob shape instead of jagged polygon (v7 API)
+            // Create organic rounded shape using the vertices as guide points
+            const baseColor = 0xFFCDB2; // Soft peach base color
+            sprite.beginFill(baseColor);
+            sprite.lineStyle(2, 0xF5B7B1, 0.5); // Soft coral outline
+
             if (a.vertices && a.vertices.length > 0) {
-                // Parse asteroid color
-                const asteroidColor = this.parseHSLColor(a.color) || 0x4a3a2a;
-                sprite.beginFill(asteroidColor);
-                sprite.lineStyle(2, 0x968264, 0.4);
-                sprite.moveTo(a.vertices[0].x, a.vertices[0].y);
-                for (let i = 1; i < a.vertices.length; i++) {
-                    sprite.lineTo(a.vertices[i].x, a.vertices[i].y);
-                }
-                sprite.closePath();
-                sprite.endFill();
+                // Draw as a soft blob by using circles and curves
+                // Start with a base circle
+                sprite.drawCircle(0, 0, a.size * 0.85);
+            } else {
+                // Fallback to simple circle
+                sprite.drawCircle(0, 0, a.size);
             }
+            sprite.endFill();
 
-            // Craters (v7 API)
-            sprite.beginFill(0x000000, 0.3);
+            // Soft dimples instead of harsh craters (v7 API)
+            sprite.beginFill(0xFAD7A0, 0.4); // Slightly darker warm peach
             sprite.drawCircle(a.size * 0.2, a.size * 0.1, a.size * 0.15);
             sprite.endFill();
-            sprite.beginFill(0x000000, 0.3);
+            sprite.beginFill(0xFAD7A0, 0.4);
             sprite.drawCircle(-a.size * 0.3, -a.size * 0.2, a.size * 0.1);
             sprite.endFill();
 
@@ -2281,7 +2284,7 @@ class PixiRenderer {
             const smoothRatio = Math.pow(ratio, 0.7);
             const alpha = 0.08 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            ambientGlow.beginFill(0xfbbf24, alpha);
+            ambientGlow.beginFill(0xF9E79F, alpha); // Butter yellow glow (cozy)
             ambientGlow.drawCircle(0, 0, 50 * smoothRatio);
             ambientGlow.endFill();
         }
@@ -2296,7 +2299,7 @@ class PixiRenderer {
             const smoothRatio = Math.pow(ratio, 0.6);
             const alpha = 0.35 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            engineGlow.beginFill(0xffff64, alpha);
+            engineGlow.beginFill(0xF9E79F, alpha); // Butter yellow engine (cozy)
             engineGlow.drawEllipse(0, 18, 20 * smoothRatio, 35 * smoothRatio);
             engineGlow.endFill();
         }
@@ -2316,7 +2319,7 @@ class PixiRenderer {
             const smoothRatio = Math.pow(ratio, 0.6);
             const alpha = 0.3 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            sideGlowLeft.beginFill(0x00ffff, alpha);
+            sideGlowLeft.beginFill(0xE2D1F9, alpha); // Lavender side glow (cozy)
             sideGlowLeft.drawCircle(-20, 0, 20 * smoothRatio);
             sideGlowLeft.endFill();
         }
@@ -2334,7 +2337,7 @@ class PixiRenderer {
             const smoothRatio = Math.pow(ratio, 0.6);
             const alpha = 0.3 * Math.pow(1 - smoothRatio, 1.5) * smoothRatio;
             if (alpha < 0.001) continue;
-            sideGlowRight.beginFill(0x00ffff, alpha);
+            sideGlowRight.beginFill(0xE2D1F9, alpha); // Lavender side glow (cozy)
             sideGlowRight.drawCircle(20, 0, 20 * smoothRatio);
             sideGlowRight.endFill();
         }
@@ -2353,9 +2356,9 @@ class PixiRenderer {
         body.drawEllipse(0, 10, 14, 3);
         body.endFill();
 
-        // Main body - sleek hover car shape
-        // Lower body (darker yellow base)
-        body.beginFill(0xd9a520);
+        // Main body - sleek hover car shape (cozy colors)
+        // Lower body (soft peach base - cozy)
+        body.beginFill(0xFFCDB2); // Soft peach (cozy)
         body.drawPolygon([
             -16, 2,     // left bottom
             -14, 6,     // left wheel well
@@ -2371,7 +2374,7 @@ class PixiRenderer {
         body.endFill();
 
         // Upper body (main yellow)
-        body.beginFill(0xfbbf24);
+        body.beginFill(0xF9E79F); // Butter yellow (cozy)
         body.drawPolygon([
             -14, -2,    // left bottom
             -15, -6,    // left side slant
@@ -2383,7 +2386,7 @@ class PixiRenderer {
         body.endFill();
 
         // Hood/nose (front slope)
-        body.beginFill(0xe5b020);
+        body.beginFill(0xF5DC85); // Lighter butter (cozy)
         body.drawPolygon([
             10, -10,    // top front
             14, -6,     // front slope
@@ -2432,8 +2435,8 @@ class PixiRenderer {
         ]);
         body.endFill();
 
-        // Cockpit windshield (angled)
-        body.beginFill(0x00d2ff, 0.9);
+        // Cockpit windshield (angled) - lavender (cozy)
+        body.beginFill(0xE2D1F9, 0.9); // Lavender (cozy)
         body.drawPolygon([
             2, -9,      // top left
             10, -9,     // top right
@@ -2453,7 +2456,7 @@ class PixiRenderer {
         body.endFill();
 
         // Side window
-        body.beginFill(0x00b8e0, 0.7);
+        body.beginFill(0xC6ADE1, 0.7); // Softer lavender (cozy)
         body.drawPolygon([
             -8, -8,
             0, -8,
@@ -2462,8 +2465,8 @@ class PixiRenderer {
         ]);
         body.endFill();
 
-        // Roof light (taxi sign)
-        body.beginFill(0xffff00);
+        // Roof light (taxi sign) - butter yellow (cozy)
+        body.beginFill(0xF9E79F); // Butter yellow (cozy)
         body.drawRoundedRect(-4, -12, 8, 3, 1);
         body.endFill();
         body.beginFill(0xffffff, 0.4);
@@ -2498,7 +2501,7 @@ class PixiRenderer {
         gearLeft.drawRoundedRect(-13, 4, 8, 2, 1);
         gearLeft.endFill();
         // Landing light
-        gearLeft.beginFill(0x00ff00);
+        gearLeft.beginFill(0xB8E0D2); // Soft mint (cozy)
         gearLeft.drawCircle(-9, 5, 1.5);
         gearLeft.endFill();
         gearLeft.y = 6; // Base position (where gear attaches to taxi)
@@ -2520,7 +2523,7 @@ class PixiRenderer {
         gearRight.drawRoundedRect(5, 4, 8, 2, 1);
         gearRight.endFill();
         // Landing light
-        gearRight.beginFill(0x00ff00);
+        gearRight.beginFill(0xB8E0D2); // Soft mint (cozy)
         gearRight.drawCircle(9, 5, 1.5);
         gearRight.endFill();
         gearRight.y = 6; // Base position (where gear attaches to taxi)
@@ -2530,11 +2533,11 @@ class PixiRenderer {
         // Nav lights (blinking) (v7 API)
         const navLightRed = new PIXI.Graphics();
         // Glow effect
-        navLightRed.beginFill(0xff0000, 0.3);
+        navLightRed.beginFill(0xF5B7B1, 0.3); // Soft coral instead of harsh red (cozy)
         navLightRed.drawCircle(-16, -4, 4);
         navLightRed.endFill();
         // Core light
-        navLightRed.beginFill(0xff0000);
+        navLightRed.beginFill(0xF5B7B1); // Soft coral (cozy)
         navLightRed.drawCircle(-16, -4, 2);
         navLightRed.endFill();
         navLightRed.beginFill(0xffffff, 0.5);
@@ -2545,11 +2548,11 @@ class PixiRenderer {
 
         const navLightGreen = new PIXI.Graphics();
         // Glow effect
-        navLightGreen.beginFill(0x00ff00, 0.3);
+        navLightGreen.beginFill(0xB8E0D2, 0.3); // Soft mint instead of harsh green (cozy)
         navLightGreen.drawCircle(16, -4, 4);
         navLightGreen.endFill();
         // Core light
-        navLightGreen.beginFill(0x00ff00);
+        navLightGreen.beginFill(0xB8E0D2); // Soft mint (cozy)
         navLightGreen.drawCircle(16, -4, 2);
         navLightGreen.endFill();
         navLightGreen.beginFill(0xffffff, 0.5);
